@@ -1,0 +1,85 @@
+# ── Other projects in this workspace (not part of this repo) ─────────────────
+abandoned_cart/
+automations/
+birthday_invite*
+build_flow.py
+cod_flow*.json
+current_flow.json
+email_marketing/
+generate_video.py
+img2cdr/
+inventory_alerts/
+meta_marketing/
+pehnava*/
+photo.jpg
+razorpay/
+review_collector/
+shopify_blog/
+social_engine/
+store_tools/
+vectorize_pro/
+whatsapp/
+content_generator.py
+
+# ── Claude workspace files ────────────────────────────────────────────────────
+.claude/
+
+# ── Secrets — NEVER commit these ─────────────────────────────────────────────
+.env
+.env.*
+*.env
+secrets.json
+service_account*.json
+
+# ── Runtime output — regenerated on every run ─────────────────────────────────
+output/
+logs/
+run_log.json
+content_memory.json
+
+# ── Database files ────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── Lock files ────────────────────────────────────────────────────────────────
+.running
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ── Virtual environments ──────────────────────────────────────────────────────
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Test artefacts ────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ── Jupyter ───────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Node (if any frontend tooling) ───────────────────────────────────────────
+node_modules/

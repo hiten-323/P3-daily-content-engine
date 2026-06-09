@@ -1,0 +1,269 @@
+"""
+Generation pipeline.
+
+Phase 1 — 8 independent tasks run in parallel via ThreadPoolExecutor:
+    reel_1, reel_2, instagram_post, carousel, linkedin_post, blog_post, stories, yt_short
+
+Phase 2 — depends on phase 1 results:
+    video_prompts (needs reel_1, reel_2, yt_short)
+
+Image prompts are generated locally (no LLM call).
+
+New parameters:
+    research_context — optional dict from agents.research.run_research()
+                       Injects trend + competitor + strategy context into every prompt.
+"""
+import os
+import json
+import logging
+import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from content_generator.rotation import (
+    HOOK_ARCHETYPES, SAVE_MECHANICS, LINKEDIN_ANGLES, PRODUCTS,
+    get_day_number, get_todays_blog_topic, pick,
+)
+from content_generator.prompts import (
+    reels, instagram_post, carousel, linkedin, blog, stories, yt_short, video_prompts,
+)
+from content_generator.prompts.brand import build_avoid_block
+from content_generator.providers.llm_router import call as llm_call, get_usage_log
+
+logger = logging.getLogger(__name__)
+
+
+# ── Image prompts — generated locally, no LLM ─────────────────────────────────
+
+def _image_prompts() -> dict:
+    return {
+        "ai_image_prompts": [
+            {
+                "id":      "img_carousel_cover",
+                "use_for": "Instagram carousel cover (1080x1080)",
+                "prompt": (
+                    "Cinematic dark espresso tones — Purity Beans jar centred on black marble, "
+                    "single diagonal golden beam from upper right, micro coffee granules scattered, "
+                    "editorial luxury food photography, deep shadows, faint cream steam wisps, "
+                    "razor-sharp product label"
+                ),
+            },
+            {
+                "id":      "img_reel_cover",
+                "use_for": "Instagram Reel thumbnail (1080x1920 vertical)",
+                "prompt": (
+                    "Vertical cinematic coffee portrait — Purity Beans jar as sole hero, "
+                    "warm amber backlight through frosted glass, shallow depth of field, "
+                    "single thread of steam, dark moody atmosphere, no people, no text, editorial quality"
+                ),
+            },
+            {
+                "id":      "img_linkedin_banner",
+                "use_for": "LinkedIn post image (1200x628)",
+                "prompt": (
+                    "Wide editorial product landscape — Purity Beans jar on dark weathered wooden desk, "
+                    "MacBook soft-blurred at left edge, single warm desk lamp, professional but human, "
+                    "documentary texture, 16:9 wide composition, no text"
+                ),
+            },
+            {
+                "id":      "img_blog_hero",
+                "use_for": "Blog hero image (1200x630)",
+                "prompt": (
+                    "Lifestyle editorial — Indian professional hands cradling a dark ceramic mug, "
+                    "Purity Beans jar visible soft-focus on desk, warm morning window light from left, "
+                    "genuine moment not staged, documentary grain, 16:9 crop"
+                ),
+            },
+            {
+                "id":      "img_story_bg",
+                "use_for": "Instagram Story background (1080x1920)",
+                "prompt": (
+                    "Vertical dark editorial — heavily blurred Purity Beans jar in background "
+                    "with deep amber bokeh, top two-thirds empty for text overlay, grain texture, "
+                    "deep blacks, warm gold accent light"
+                ),
+            },
+        ]
+    }
+
+
+# ── Research context helpers ──────────────────────────────────────────────────
+
+def _build_context_suffix(research: dict) -> str:
+    """
+    Build a prompt suffix from research intelligence.
+    Appended to every LLM prompt so all content is trend-aware and
+    competitor-differentiated.
+    """
+    if not research:
+        return ""
+    parts: list[str] = []
+
+    if research.get("trends_prompt_block"):
+        parts.append(research["trends_prompt_block"])
+
+    if research.get("competitor_prompt_block"):
+        parts.append(research["competitor_prompt_block"])
+
+    sc = research.get("strategy_context", {})
+    if sc.get("top_performing_hook"):
+        parts.append(
+            f"PERFORMANCE INSIGHT: The '{sc['top_performing_hook']}' hook archetype "
+            f"currently averages {sc['top_hook_avg_views']:,} views for Purity Beans. "
+            f"Lean into this archetype where it fits naturally."
+        )
+
+    return ("\n\n" + "\n\n".join(parts)) if parts else ""
+
+
+def _optimized_pick(bank: list, day: int, label: str = "", offset: int = 0):
+    """
+    Pick a bank item biased toward top performers.
+    Falls back to plain round-robin if no performance data exists.
+    """
+    try:
+        from content_generator.analytics.optimizer import get_optimized_pick
+        return get_optimized_pick(bank, day, label=label, offset=offset)
+    except Exception:
+        return pick(bank, day, offset)
+
+
+# ── Pipeline ───────────────────────────────────────────────────────────────────
+
+def generate_daily_content(
+    day_number: int  = None,
+    research_context: dict = None,
+) -> dict:
+    """
+    Generate a full day's content via a two-phase parallel pipeline.
+
+    Args:
+        day_number:       Override the auto-computed day counter (for testing).
+        research_context: Output of agents.research.run_research() — injects
+                          trends, competitor data, and performance insights into
+                          every prompt. Pass None to skip (safe default).
+
+    Returns a dict with these keys:
+        date, day_number, reels, instagram_post, carousel, linkedin_post,
+        blog_post, stories, yt_short, video_prompts, ai_image_prompts,
+        performance_targets
+    """
+    if day_number is None:
+        day_number = get_day_number()
+
+    if day_number < 0:
+        raise ValueError(f"day_number must be >= 0, got {day_number}")
+
+    todays_date = datetime.date.today().strftime("%B %d, %Y")
+    avoid       = build_avoid_block()
+
+    # Optimizer-biased selections (falls back to round-robin if no data)
+    product = pick(PRODUCTS, day_number)
+    arch_1  = _optimized_pick(HOOK_ARCHETYPES, day_number, label="reel_1_hook")
+    arch_2  = _optimized_pick(HOOK_ARCHETYPES, day_number, label="reel_2_hook", offset=5)
+    mech    = _optimized_pick(SAVE_MECHANICS,  day_number, label="carousel_mech")
+    angle   = _optimized_pick(LINKEDIN_ANGLES, day_number, label="linkedin_angle")
+    topic   = get_todays_blog_topic(day_number)
+
+    # Context suffix injected into every prompt
+    ctx = _build_context_suffix(research_context or {})
+
+    logger.info(
+        "[pipeline] Day #%d (%s) | product=%s | Reel1=%s | Reel2=%s | Carousel=%s | LinkedIn=%s",
+        day_number, todays_date, product, arch_1[0], arch_2[0], mech[0], angle[0],
+    )
+
+    # ── Phase 1: all independent tasks in parallel ────────────────────────────
+    phase1_tasks = {
+        "reel_1":         (reels.build,          ("reel_1", arch_1, "morning (7-9am)",       "reel_morning", avoid), 1800),
+        "reel_2":         (reels.build,          ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night",   avoid), 1800),
+        "instagram_post": (instagram_post.build, (day_number, avoid),                                                  800),
+        "carousel":       (carousel.build,       (mech, avoid),                                                       2200),
+        "linkedin_post":  (linkedin.build,       (angle, avoid),                                                      1200),
+        "blog_post":      (blog.build,           (topic,),                                                            3000),
+        "stories":        (stories.build,        (),                                                                  1500),
+        "yt_short":       (yt_short.build,       (product, day_number),                                               1500),
+    }
+
+    phase1_results: dict[str, dict] = {}
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = {
+            pool.submit(llm_call, fn(*args) + ctx, label, tokens): label
+            for label, (fn, args, tokens) in phase1_tasks.items()
+        }
+        for future in as_completed(futures):
+            label = futures[future]
+            try:
+                phase1_results[label] = future.result()
+            except Exception as e:
+                logger.error("[pipeline] %s failed: %s", label, e)
+                raise
+
+    # ── Phase 2: video prompts (depends on phase 1) ───────────────────────────
+    vp = llm_call(
+        video_prompts.build(
+            phase1_results["reel_1"],
+            phase1_results["reel_2"],
+            phase1_results["yt_short"],
+            product,
+        ),
+        label="video_prompts",
+        max_tokens=3500,
+    )
+
+    # ── Merge ─────────────────────────────────────────────────────────────────
+    output = {
+        "date":           todays_date,
+        "day_number":     day_number,
+        "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
+        "instagram_post": phase1_results["instagram_post"],
+        "carousel":       phase1_results["carousel"],
+        "linkedin_post":  phase1_results["linkedin_post"],
+        "blog_post":      phase1_results["blog_post"],
+        "stories":        phase1_results["stories"],
+        "yt_short":       phase1_results["yt_short"],
+        **vp,
+        **_image_prompts(),
+        "performance_targets": {
+            "reel_views_3s":           15000,
+            "reel_views_30s":          5000,
+            "reel_saves":              800,
+            "reel_shares":             300,
+            "carousel_swipe_rate_pct": 65,
+            "carousel_saves":          600,
+            "linkedin_impressions":    3000,
+            "linkedin_comments":       40,
+            "story_poll_votes":        500,
+            "story_dm_replies":        50,
+            "link_clicks":             200,
+            "new_followers":           300,
+        },
+    }
+
+    # Usage log is opt-in — gated so existing consumers don't break
+    if os.getenv("ENABLE_USAGE_LOG", "false").lower() == "true":
+        output["usage"] = get_usage_log()
+
+    vp_data   = output.get("video_prompts", {})
+    vp_frames = (
+        len(vp_data.get("reel_1",    {}).get("frames", []))
+        + len(vp_data.get("reel_2",  {}).get("frames", []))
+        + len(vp_data.get("yt_short",{}).get("scenes", []))
+    )
+    logger.info(
+        "[pipeline] Done — 2 reels | 1 insta post | 1 carousel | 1 linkedin | "
+        "1 blog | 1 stories | 1 yt short | %d video prompt frames",
+        vp_frames,
+    )
+    return output
+
+
+def save_content(content_data: dict, output_dir: str = "output") -> str:
+    os.makedirs(output_dir, exist_ok=True)
+    date_str = datetime.date.today().isoformat()
+    filepath = os.path.join(output_dir, f"content_{date_str}.json")
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(content_data, f, indent=2, ensure_ascii=False)
+    logger.info("[pipeline] Saved → %s", filepath)
+    return filepath

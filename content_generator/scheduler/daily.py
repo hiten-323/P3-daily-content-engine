@@ -1,0 +1,361 @@
+"""
+Autonomous daily content scheduler.
+
+Full pipeline with health checks, retry, watchdog, and weekly summary:
+
+  05:00  Health check
+  05:05  Research (trends + competitors)
+  06:00  Generate content
+  06:30  Editorial review
+  06:45  Assign business objectives
+  06:50  Store in semantic memory
+  06:55  Save output
+  07:00  Nurture dispatch (stalling leads -> WhatsApp/email)
+  07:05  Weekly summary (Mondays only)
+
+APScheduler required for daemon mode:  pip install apscheduler
+run_now() works without APScheduler for manual / CI use.
+
+Environment variables:
+  SCHEDULER_HOUR    (default 6)
+  SCHEDULER_MINUTE  (default 0)
+  SCHEDULER_TZ      (default Asia/Kolkata)
+  ENABLE_EDITORIAL_REVIEW (default true)
+  ENABLE_WEEKLY_SUMMARY   (default true)
+"""
+import logging
+import os
+import time
+import datetime
+
+logger = logging.getLogger(__name__)
+
+
+# ── Full pipeline ─────────────────────────────────────────────────────────────
+
+def run_full_pipeline(day_number: int = None) -> dict:
+    """
+    Execute the complete autonomous content pipeline end-to-end.
+
+    Steps: lock -> health -> research -> generate -> editorial -> objectives ->
+           memory -> save -> snapshot -> nurture -> founder_report -> summary
+    Every step is wrapped in watchdog + retry. One failing step never kills the others.
+    """
+    from content_generator.scheduler.watchdog import timed_step
+    from content_generator.scheduler.retry_manager import RetryManager
+    from content_generator.scheduler.health_monitor import assert_healthy
+    from content_generator.scheduler.run_lock import RunLock
+
+    # ── Run lock — skip if today already ran ──────────────────────────────────
+    lock = RunLock()
+    lock.__enter__()
+    if lock.already_ran:
+        logger.info("[scheduler] Today's run already completed — exiting")
+        return {"_skipped": True, "reason": "already_ran_today"}
+
+    rm = RetryManager(default_max_retries=2, default_base_wait=30)
+    t0 = time.time()
+
+    logger.info("[scheduler] ======= AUTONOMOUS PIPELINE START =======")
+
+    # ── 0. Health check ───────────────────────────────────────────────────────
+    with timed_step("health_check", timeout_s=30):
+        assert_healthy()
+
+    # ── 1. Research ───────────────────────────────────────────────────────────
+    research: dict = {}
+    with timed_step("research", timeout_s=120):
+        step = rm.run(
+            fn=lambda: _do_research(),
+            label="research",
+            max_retries=1,
+        )
+        if step.success:
+            research = step.value
+
+    # ── 2. Generate (with emergency fallback) ─────────────────────────────────
+    from content_generator.pipeline.generator import generate_daily_content, save_content
+
+    content: dict = {}
+    with timed_step("content_generation", timeout_s=600):
+        step = rm.run(
+            fn=lambda: generate_daily_content(day_number=day_number, research_context=research),
+            label="content_generation",
+            max_retries=2,
+            base_wait=60,
+        )
+        if step.success:
+            content = step.value
+        else:
+            # Emergency fallback — never miss a day
+            logger.error("[scheduler] All LLM providers failed — activating emergency fallback")
+            from content_generator.scheduler.fallback import emergency_content_set
+            content = emergency_content_set(day_number=day_number or 0)
+
+    dn = content.get("day_number", 0)
+
+    # ── 3. Editorial review ───────────────────────────────────────────────────
+    with timed_step("editorial_review", timeout_s=180):
+        rm.run(fn=lambda: _do_editorial(content), label="editorial_review", max_retries=1)
+
+    # ── 4. Business objectives ────────────────────────────────────────────────
+    with timed_step("objective_assignment", timeout_s=10):
+        step = rm.run(
+            fn=lambda: _do_objectives(content, dn),
+            label="objective_assignment",
+        )
+        if step.success and step.value:
+            content = step.value
+
+    # ── 5. Semantic memory ────────────────────────────────────────────────────
+    with timed_step("memory_store", timeout_s=30):
+        rm.run(fn=lambda: _do_memory(content, dn), label="memory_store", max_retries=1)
+
+    # ── 6. Save ───────────────────────────────────────────────────────────────
+    filepath = ""
+    with timed_step("save_output", timeout_s=30):
+        step = rm.run(fn=lambda: save_content(content), label="save_output")
+        if step.success:
+            filepath = step.value
+
+    # ── 7. Daily snapshot ─────────────────────────────────────────────────────
+    with timed_step("snapshot", timeout_s=30):
+        rm.run(fn=lambda: _do_snapshot(content, dn), label="snapshot", max_retries=1)
+
+    # ── 8. Nurture dispatch ───────────────────────────────────────────────────
+    nurture_result: dict = {}
+    with timed_step("nurture_dispatch", timeout_s=120):
+        step = rm.run(fn=_do_nurture, label="nurture_dispatch", max_retries=1)
+        if step.success:
+            nurture_result = step.value or {}
+
+    # ── 9. Founder WhatsApp report ────────────────────────────────────────────
+    with timed_step("founder_report", timeout_s=30):
+        rm.run(
+            fn=lambda: _do_founder_report(content, nurture_result),
+            label="founder_report",
+        )
+
+    # ── 10. Weekly summary (Mondays only) ─────────────────────────────────────
+    _maybe_weekly_summary()
+
+    elapsed = round(time.time() - t0, 1)
+    logger.info("[scheduler] ======= DONE in %.1fs -> %s =======", elapsed, filepath)
+
+    # Log retry history
+    failed = [h for h in rm.history if not h["success"]]
+    if failed:
+        logger.warning("[scheduler] Steps that needed retry: %s", [h["label"] for h in failed])
+
+    return content
+
+
+# ── Step implementations ──────────────────────────────────────────────────────
+
+def _do_research() -> dict:
+    from content_generator.agents.research import run_research
+    return run_research()
+
+
+def _do_editorial(content: dict) -> None:
+    from content_generator.agents.editorial import review_content
+    review_targets = [
+        ("reel_1",         content.get("reels", [{}])[0] if content.get("reels") else {}),
+        ("reel_2",         content.get("reels", [{}, {}])[1] if len(content.get("reels", [])) > 1 else {}),
+        ("carousel",       content.get("carousel", {})),
+        ("instagram_post", content.get("instagram_post", {})),
+    ]
+    for label, piece in review_targets:
+        if not isinstance(piece, dict) or not piece:
+            continue
+        review = review_content(piece, label=label)
+        piece["editorial_score"] = review
+        if review.get("verdict") == "REJECT":
+            logger.warning(
+                "[scheduler] %s scored %.1f (REJECT). Feedback: %s",
+                label, review["overall"], review.get("feedback", ""),
+            )
+
+
+def _do_objectives(content: dict, dn: int) -> dict:
+    from content_generator.objectives.mapper import assign_all
+    return assign_all(content, dn)
+
+
+def _do_memory(content: dict, dn: int) -> None:
+    from content_generator.memory.semantic import store_content
+    pieces = {
+        f"reel_1_day{dn}":   content.get("reels", [{}])[0] if content.get("reels") else {},
+        f"reel_2_day{dn}":   (content.get("reels", [{}, {}]) + [{}])[1],
+        f"carousel_day{dn}": content.get("carousel", {}),
+        f"linkedin_day{dn}": content.get("linkedin_post", {}),
+        f"blog_day{dn}":     content.get("blog_post", {}),
+    }
+    for cid, piece in pieces.items():
+        if piece and isinstance(piece, dict):
+            store_content(cid, piece)
+
+
+def _do_snapshot(content: dict, day_number: int) -> str:
+    from content_generator.scheduler.snapshot import save_daily_snapshot
+    return save_daily_snapshot(content=content, day_number=day_number)
+
+
+def _do_founder_report(content: dict, nurture_result: dict) -> bool:
+    from content_generator.scheduler.founder_report import send_founder_report
+    return send_founder_report(content=content, pipeline_result=nurture_result)
+
+
+def _do_nurture() -> dict:
+    """
+    Daily nurture step — find stalling leads and send follow-up messages.
+
+    Strategy:
+      1. Fetch all stalling leads (stuck beyond STAGE_MAX_DAYS for their segment/stage)
+      2. Check nurture_log — skip leads messaged in the last 3 days (avoid spam)
+      3. Dispatch WhatsApp (if phone) or email (if @) via template for their stage
+      4. Return summary of dispatched messages
+
+    Runs whether or not WhatsApp/SMTP are configured — degrades to log-only.
+    """
+    from content_generator.leads.lead_capture import get_stalling_leads
+    from content_generator.nurture.whatsapp import dispatch_nurture_batch
+    from content_generator.nurture.email_sequences import dispatch_email_batch
+
+    stalling = get_stalling_leads()
+    if not stalling:
+        logger.info("[nurture] No stalling leads — nothing to dispatch")
+        return {"dispatched": 0, "stalling": 0}
+
+    # Filter to leads not already nurtured in last 3 days
+    eligible = _filter_recently_nurtured(stalling, cooldown_days=3)
+    if not eligible:
+        logger.info(
+            "[nurture] %d stalling leads but all nurtured recently — skipping",
+            len(stalling),
+        )
+        return {"dispatched": 0, "stalling": len(stalling)}
+
+    logger.info("[nurture] Dispatching to %d stalling leads", len(eligible))
+
+    # WhatsApp for phone numbers, email for @-addresses
+    wa_results    = dispatch_nurture_batch(eligible)
+    email_results = dispatch_email_batch(eligible)
+
+    total = len([r for r in wa_results + email_results if r.get("success")])
+    logger.info("[nurture] Dispatched %d messages to %d leads", total, len(eligible))
+    return {"dispatched": total, "stalling": len(stalling), "eligible": len(eligible)}
+
+
+def _filter_recently_nurtured(leads: list[dict], cooldown_days: int = 3) -> list[dict]:
+    """Remove leads that already received a nurture message within cooldown_days."""
+    try:
+        from content_generator.analytics.metrics_store import _ensure_init, _conn
+        _ensure_init()
+        cutoff = (datetime.datetime.now() - datetime.timedelta(days=cooldown_days)).isoformat()
+        with _conn() as con:
+            rows = con.execute(
+                "SELECT DISTINCT lead_id FROM nurture_log WHERE created_at >= ?",
+                (cutoff,),
+            ).fetchall()
+        recent_ids = {r["lead_id"] for r in rows}
+        return [l for l in leads if l.get("lead_id") not in recent_ids]
+    except Exception as e:
+        logger.debug("[nurture] filter_recently_nurtured failed: %s — using all", e)
+        return leads
+
+
+def _maybe_weekly_summary() -> None:
+    if os.getenv("ENABLE_WEEKLY_SUMMARY", "true").lower() != "true":
+        return
+    if datetime.date.today().weekday() != 0:   # 0 = Monday
+        return
+    try:
+        from content_generator.dashboard.weekly_summary import generate_weekly_summary
+        generate_weekly_summary(days=7)
+    except Exception as e:
+        logger.warning("[scheduler] Weekly summary failed: %s", e)
+
+
+# ── Manual trigger ────────────────────────────────────────────────────────────
+
+def run_now(day_number: int = None) -> dict:
+    """Run the full pipeline immediately. Useful for testing and CI."""
+    return run_full_pipeline(day_number=day_number)
+
+
+# ── APScheduler daemon ────────────────────────────────────────────────────────
+
+def start_scheduler() -> None:
+    """
+    Start the APScheduler blocking daemon.
+    Runs daily at SCHEDULER_HOUR:SCHEDULER_MINUTE IST.
+    Requires:  pip install apscheduler
+    """
+    try:
+        from apscheduler.schedulers.blocking import BlockingScheduler
+        from apscheduler.triggers.cron import CronTrigger
+    except ImportError:
+        logger.error(
+            "[scheduler] APScheduler not installed.\n"
+            "  pip install apscheduler\n"
+            "  Then retry."
+        )
+        return
+
+    hour   = int(os.getenv("SCHEDULER_HOUR",   "6"))
+    minute = int(os.getenv("SCHEDULER_MINUTE", "0"))
+    tz     = os.getenv("SCHEDULER_TZ", "Asia/Kolkata")
+
+    scheduler = BlockingScheduler(timezone=tz)
+    scheduler.add_job(
+        run_full_pipeline,
+        trigger=CronTrigger(hour=hour, minute=minute, timezone=tz),
+        id="daily_content",
+        name="Purity Beans daily pipeline",
+        misfire_grace_time=600,
+        replace_existing=True,
+    )
+
+    logger.info(
+        "[scheduler] Daemon started — runs daily at %02d:%02d %s",
+        hour, minute, tz,
+    )
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("[scheduler] Daemon stopped.")
+
+
+# ── CLI entry point ───────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    import sys
+    from content_generator import configure
+    configure(load_env=True, setup_logging=True)
+
+    if "--now" in sys.argv:
+        import json
+        result = run_now()
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    elif "--report" in sys.argv:
+        from content_generator.dashboard.reports import print_report
+        print_report(days=7)
+    elif "--weekly" in sys.argv:
+        from content_generator.dashboard.weekly_summary import generate_weekly_summary
+        generate_weekly_summary()
+    elif "--health" in sys.argv:
+        from content_generator.scheduler.health_monitor import get_health_report
+        import json
+        print(json.dumps(get_health_report(), indent=2))
+    elif "--unlock" in sys.argv:
+        # Emergency: clear a stuck run lock so next invocation runs
+        from content_generator.scheduler.run_lock import RunLock
+        RunLock.force_clear()
+        print("Run lock cleared.")
+    elif "--snapshots" in sys.argv:
+        from content_generator.scheduler.snapshot import list_snapshots
+        for s in list_snapshots(limit=10):
+            print(s)
+    else:
+        start_scheduler()

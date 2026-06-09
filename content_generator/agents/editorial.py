@@ -1,0 +1,122 @@
+"""
+Editorial review agent.
+
+Before any piece goes out, an LLM editor scores it on 5 dimensions.
+Pieces scoring below EDITORIAL_MIN_SCORE (default 6.5 / 10) are flagged
+for regeneration.
+
+Scoring dimensions:
+  shareability  — Would a real person forward this?
+  saveability   — Would they screenshot / bookmark it?
+  emotion_pull  — Does it trigger a strong emotion (anger, pride, joy)?
+  hook_strength — Does the opening stop the scroll in < 2 s?
+  brand_clarity — Is Purity Beans the obvious winner / solution?
+
+Set ENABLE_EDITORIAL_REVIEW=false to skip (useful in dev / CI).
+"""
+import json
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+_MIN_SCORE = float(os.getenv("EDITORIAL_MIN_SCORE", "6.5"))
+_ENABLED   = os.getenv("ENABLE_EDITORIAL_REVIEW", "true").lower() == "true"
+
+_PROMPT_TEMPLATE = """\
+You are a senior social media editor for Purity Beans — a premium pure instant coffee \
+brand in India (Rs 18/cup, zero chicory, 100% pure coffee).
+
+Evaluate the content piece below honestly and critically. Do NOT be generous.
+
+CONTENT:
+{content_json}
+
+Score each dimension 0–10:
+1. shareability  — Would a real Indian consumer forward/share this? (10 = definitely)
+2. saveability   — Would they screenshot or save it for later? (10 = definitely)
+3. emotion_pull  — Does it trigger anger, pride, joy, or nostalgia? (10 = very strong)
+4. hook_strength — Does the opening line stop the scroll in under 2 seconds? (10 = instant stop)
+5. brand_clarity — Is Purity Beans the clear winner / solution? (10 = crystal clear)
+
+Scoring rules:
+- Generic, safe, or forgettable content scores below 6 on shareability and saveability.
+- If the hook could apply to any coffee brand, hook_strength ≤ 5.
+- Cultural specificity to India is a plus but never required.
+
+Reply ONLY with this JSON (no extra text):
+{{
+  "shareability": <float 0-10>,
+  "saveability": <float 0-10>,
+  "emotion_pull": <float 0-10>,
+  "hook_strength": <float 0-10>,
+  "brand_clarity": <float 0-10>,
+  "overall": <float 0-10>,
+  "verdict": "APPROVE" or "REJECT",
+  "feedback": "<one actionable sentence if rejecting, empty string if approving>"
+}}"""
+
+
+def review_content(content: dict, label: str = "content") -> dict:
+    """
+    Run editorial review on a content piece.
+    Returns a dict with numeric scores + verdict.
+    Always returns a valid dict even on LLM/parse failure.
+    """
+    if not _ENABLED:
+        return _pass()
+
+    try:
+        from content_generator.providers.llm_router import call as llm_call
+        snippet      = json.dumps(content, ensure_ascii=False, indent=2)[:2000]
+        prompt       = _PROMPT_TEMPLATE.format(content_json=snippet)
+        raw_result   = llm_call(prompt, label=f"editorial_{label}", max_tokens=350)
+        scores       = _validate(raw_result)
+        logger.info(
+            "[editorial] %s → overall=%.1f  verdict=%s",
+            label, scores["overall"], scores["verdict"],
+        )
+        return scores
+    except Exception as e:
+        logger.warning("[editorial] Review failed for '%s': %s", label, e)
+        return _pass()
+
+
+def should_regenerate(review: dict) -> bool:
+    """Return True if the piece should be regenerated based on review scores."""
+    return (
+        review.get("verdict") == "REJECT"
+        or review.get("overall", 10.0) < _MIN_SCORE
+    )
+
+
+# ── Internal helpers ──────────────────────────────────────────────────────────
+
+def _validate(result: dict) -> dict:
+    dims = ["shareability", "saveability", "emotion_pull", "hook_strength", "brand_clarity"]
+
+    for d in dims:
+        try:
+            result[d] = round(max(0.0, min(10.0, float(result.get(d, 7.0)))), 1)
+        except (TypeError, ValueError):
+            result[d] = 7.0
+
+    if not isinstance(result.get("overall"), (int, float)):
+        result["overall"] = round(sum(result[d] for d in dims) / len(dims), 1)
+    else:
+        result["overall"] = round(float(result["overall"]), 1)
+
+    if result.get("verdict") not in ("APPROVE", "REJECT"):
+        result["verdict"] = "APPROVE" if result["overall"] >= _MIN_SCORE else "REJECT"
+
+    result.setdefault("feedback", "")
+    return result
+
+
+def _pass() -> dict:
+    """Default pass — used when review is disabled or fails."""
+    return {
+        "shareability": 7.0, "saveability": 7.0, "emotion_pull": 7.0,
+        "hook_strength": 7.0, "brand_clarity": 7.0, "overall": 7.0,
+        "verdict": "APPROVE", "feedback": "",
+    }

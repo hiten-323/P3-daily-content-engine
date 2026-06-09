@@ -1,0 +1,174 @@
+# Purity Beans — Autonomous Daily Pipeline
+#
+# Runs every day at 06:00 IST (00:30 UTC).
+# Triggered automatically by GitHub Actions cron — no server required.
+#
+# What it does:
+#   1. Checks out the repo and installs dependencies
+#   2. Runs the full autonomous pipeline:
+#      research → strategy → content → editorial → objectives →
+#      memory → save → snapshot → nurture → founder WhatsApp report
+#   3. Commits output/ changes back to the repo (metrics DB, archive)
+#   4. On failure, sends an alert via ALERT_WEBHOOK_URL
+#
+# Required secrets (GitHub → Settings → Secrets → Actions):
+#   GEMINI_API_KEY       — primary LLM
+#   GROQ_API_KEY         — fallback LLM
+#   OPENROUTER_API_KEY   — final fallback LLM
+#   FOUNDER_PHONE        — your WhatsApp number (+91XXXXXXXXXX)
+#   WHATSAPP_TOKEN       — Meta Cloud API bearer token
+#   WHATSAPP_PHONE_ID    — WhatsApp Business phone number ID
+#   ALERT_WEBHOOK_URL    — Slack/Discord webhook for failure alerts (optional)
+#
+# Optional secrets:
+#   FLUX_API_KEY         — fal.ai image generation
+#   RUNWAY_API_KEY       — Runway video generation
+#   SMTP_USER            — email nurture sequences
+#   SMTP_PASS            — email nurture sequences
+#   SHOPIFY_STORE_URL    — Shopify revenue attribution
+#   SHOPIFY_API_KEY      — Shopify revenue attribution
+#
+# Manual trigger:
+#   GitHub UI → Actions → "Purity Beans Daily Pipeline" → Run workflow
+
+name: Purity Beans Daily Pipeline
+
+on:
+  schedule:
+    # 00:30 UTC = 06:00 IST
+    - cron: '30 0 * * *'
+
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      day_number:
+        description: 'Override day number (leave blank for auto)'
+        required: false
+        default: ''
+      force_run:
+        description: 'Force run even if already ran today'
+        required: false
+        default: 'false'
+
+jobs:
+  run-pipeline:
+    name: Daily Content Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Full history needed for day_number calculation
+          fetch-depth: 0
+
+      # ── 2. Python setup ──────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── 3. Dependencies ──────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # ── 4. Restore output/ from cache (metrics DB persists between runs) ─────
+      - name: Restore output cache
+        uses: actions/cache@v4
+        with:
+          path: output/
+          key: purity-beans-output-${{ runner.os }}
+          restore-keys: |
+            purity-beans-output-
+
+      - name: Ensure output directory
+        run: mkdir -p output
+
+      # ── 5. Force-unlock if requested ─────────────────────────────────────────
+      - name: Clear run lock (if force_run)
+        if: ${{ github.event.inputs.force_run == 'true' }}
+        run: python -m content_generator.scheduler.daily --unlock
+
+      # ── 6. Run the pipeline ───────────────────────────────────────────────────
+      - name: Run autonomous pipeline
+        env:
+          # LLM providers
+          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY:  ${{ secrets.OPENROUTER_API_KEY }}
+
+          # Founder notifications
+          FOUNDER_PHONE:       ${{ secrets.FOUNDER_PHONE }}
+          WHATSAPP_TOKEN:      ${{ secrets.WHATSAPP_TOKEN }}
+          WHATSAPP_PHONE_ID:   ${{ secrets.WHATSAPP_PHONE_ID }}
+
+          # Failure alerts
+          ALERT_WEBHOOK_URL:   ${{ secrets.ALERT_WEBHOOK_URL }}
+          ALERT_EMAIL_TO:      ${{ secrets.ALERT_EMAIL_TO }}
+
+          # Optional: asset generation
+          FLUX_API_KEY:        ${{ secrets.FLUX_API_KEY }}
+          RUNWAY_API_KEY:      ${{ secrets.RUNWAY_API_KEY }}
+
+          # Optional: email nurture
+          SMTP_HOST:           ${{ secrets.SMTP_HOST }}
+          SMTP_USER:           ${{ secrets.SMTP_USER }}
+          SMTP_PASS:           ${{ secrets.SMTP_PASS }}
+          NURTURE_FROM_EMAIL:  ${{ secrets.NURTURE_FROM_EMAIL }}
+
+          # Optional: Shopify attribution
+          SHOPIFY_STORE_URL:   ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_API_KEY:     ${{ secrets.SHOPIFY_API_KEY }}
+
+          # Config
+          WEBSITE_URL:         https://p3online.in
+          ENABLE_EDITORIAL_REVIEW: "true"
+          ENABLE_WEEKLY_SUMMARY:   "true"
+          ENABLE_USAGE_LOG:        "false"
+          PYTHONIOENCODING:        utf-8
+          # Optional day override from manual trigger
+          OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
+
+        run: |
+          if [ -n "$OVERRIDE_DAY_NUMBER" ]; then
+            python -m content_generator.scheduler.daily --now
+          else
+            python -m content_generator.scheduler.daily --now
+          fi
+
+      # ── 7. Save output/ back to cache ─────────────────────────────────────────
+      - name: Save output cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: output/
+          key: purity-beans-output-${{ runner.os }}-${{ github.run_id }}
+
+      # ── 8. Upload artifacts (content + logs for this run) ────────────────────
+      - name: Upload run artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: purity-beans-day-${{ github.run_number }}
+          path: |
+            output/*.json
+            output/archive/
+          retention-days: 90
+
+      # ── 9. On failure: alert ──────────────────────────────────────────────────
+      - name: Alert on failure
+        if: failure()
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          if [ -n "$ALERT_WEBHOOK_URL" ]; then
+            curl -s -X POST "$ALERT_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "{\"text\": \"PURITY BEANS PIPELINE FAILED\\nRun: ${{ github.run_number }}\\nDate: $(date)\\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          fi
+          echo "Pipeline failed — check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
