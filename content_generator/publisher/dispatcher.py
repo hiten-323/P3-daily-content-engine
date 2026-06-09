@@ -1,0 +1,170 @@
+"""
+Publishing dispatcher — posts to all configured platforms after content generation.
+
+Called by scheduler/daily.py as the final step of the autonomous pipeline.
+
+Platform publish order:
+  1. LinkedIn   — text + image post
+  2. Instagram  — carousel or single image
+  3. Facebook   — text + image (uses same Meta token as Instagram)
+  4. YouTube    — Short (video or slideshow)
+
+Each platform is independent — one failure does not stop the others.
+Results are saved to output/publish_log.json and included in the founder report.
+
+Platforms auto-skip if their required secrets are not set.
+No secrets needed to test locally — all platforms return {"success": False, "error": "not_configured"}.
+
+Usage:
+    from content_generator.publisher.dispatcher import publish_all
+
+    results = publish_all(content, day_number=42)
+    # Returns:
+    # {
+    #   "linkedin":  {"success": True,  "url": "https://linkedin.com/..."},
+    #   "instagram": {"success": True,  "permalink": "https://instagram.com/..."},
+    #   "facebook":  {"success": False, "error": "not_configured"},
+    #   "youtube":   {"success": False, "error": "not_configured"},
+    #   "summary":   "Published: LinkedIn, Instagram | Skipped: Facebook, YouTube",
+    # }
+"""
+from __future__ import annotations
+import json
+import logging
+import os
+import datetime
+
+logger = logging.getLogger(__name__)
+
+_PUBLISH_LOG = os.path.join("output", "publish_log.json")
+
+
+def publish_all(content: dict, day_number: int = 0) -> dict:
+    """
+    Post today's content to all configured platforms.
+
+    Args:
+        content:    Daily content dict from the generation pipeline
+        day_number: Day number (for logging)
+
+    Returns:
+        Dict with per-platform results + summary string
+    """
+    results: dict = {}
+
+    # ── LinkedIn ──────────────────────────────────────────────────────────────
+    try:
+        from content_generator.publisher.linkedin import post_content as li_post
+        logger.info("[publisher] Posting to LinkedIn...")
+        results["linkedin"] = li_post(content, day=day_number)
+    except Exception as e:
+        logger.error("[publisher] LinkedIn exception: %s", e)
+        results["linkedin"] = {"success": False, "error": str(e)}
+
+    # ── Instagram ─────────────────────────────────────────────────────────────
+    try:
+        from content_generator.publisher.instagram import post_content as ig_post
+        logger.info("[publisher] Posting to Instagram...")
+        results["instagram"] = ig_post(content, day=day_number)
+    except Exception as e:
+        logger.error("[publisher] Instagram exception: %s", e)
+        results["instagram"] = {"success": False, "error": str(e)}
+
+    # ── Facebook ──────────────────────────────────────────────────────────────
+    try:
+        from content_generator.publisher.facebook import post_content as fb_post
+        logger.info("[publisher] Posting to Facebook...")
+        results["facebook"] = fb_post(content, day=day_number)
+    except Exception as e:
+        logger.error("[publisher] Facebook exception: %s", e)
+        results["facebook"] = {"success": False, "error": str(e)}
+
+    # ── YouTube ───────────────────────────────────────────────────────────────
+    try:
+        from content_generator.publisher.youtube import post_content as yt_post
+        logger.info("[publisher] Posting to YouTube...")
+        results["youtube"] = yt_post(content, day=day_number)
+    except Exception as e:
+        logger.error("[publisher] YouTube exception: %s", e)
+        results["youtube"] = {"success": False, "error": str(e)}
+
+    # ── Summary ───────────────────────────────────────────────────────────────
+    published = [p for p, r in results.items() if r.get("success")]
+    skipped   = [p for p, r in results.items() if r.get("error") == "not_configured"]
+    failed    = [
+        p for p, r in results.items()
+        if not r.get("success") and r.get("error") != "not_configured"
+    ]
+
+    parts = []
+    if published:
+        parts.append(f"Published: {', '.join(p.title() for p in published)}")
+    if skipped:
+        parts.append(f"Skipped (not configured): {', '.join(p.title() for p in skipped)}")
+    if failed:
+        parts.append(f"Failed: {', '.join(p.title() for p in failed)}")
+
+    results["summary"] = " | ".join(parts) or "Nothing published"
+    results["published_platforms"] = published
+    results["timestamp"] = datetime.datetime.now().isoformat(timespec="seconds")
+
+    logger.info("[publisher] Day %d — %s", day_number, results["summary"])
+
+    # Save to publish log
+    _append_publish_log(day_number, results)
+
+    return results
+
+
+def get_publish_log(limit: int = 30) -> list[dict]:
+    """Return recent publish results (newest first)."""
+    if not os.path.exists(_PUBLISH_LOG):
+        return []
+    try:
+        with open(_PUBLISH_LOG, encoding="utf-8") as f:
+            entries = json.load(f)
+        return list(reversed(entries[-limit:]))
+    except Exception:
+        return []
+
+
+def _append_publish_log(day_number: int, results: dict) -> None:
+    """Append today's publish results to the rolling log."""
+    os.makedirs("output", exist_ok=True)
+    try:
+        entries = []
+        if os.path.exists(_PUBLISH_LOG):
+            with open(_PUBLISH_LOG, encoding="utf-8") as f:
+                entries = json.load(f)
+    except Exception:
+        entries = []
+
+    entries.append({
+        "date":        datetime.date.today().isoformat(),
+        "day_number":  day_number,
+        "results":     results,
+    })
+
+    # Keep last 90 days
+    entries = entries[-90:]
+
+    try:
+        with open(_PUBLISH_LOG, "w", encoding="utf-8") as f:
+            json.dump(entries, f, indent=2, default=str)
+    except Exception as e:
+        logger.debug("[publisher] Log write failed: %s", e)
+
+
+def publisher_status() -> dict:
+    """
+    Return configuration status for all publishers.
+    Used by health_monitor and dashboard.
+    """
+    from content_generator.publisher import linkedin, instagram, facebook, youtube
+
+    return {
+        "linkedin":  {"configured": linkedin.is_configured()},
+        "instagram": {"configured": instagram.is_configured()},
+        "facebook":  {"configured": facebook.is_configured()},
+        "youtube":   {"configured": youtube.is_configured()},
+    }

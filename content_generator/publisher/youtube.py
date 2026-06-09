@@ -1,0 +1,342 @@
+"""
+YouTube Shorts auto-publisher — uploads short-form video via YouTube Data API v3.
+
+Prerequisites:
+  1. Google Cloud Project with YouTube Data API v3 enabled
+  2. OAuth 2.0 credentials (Desktop app or Service Account with domain-wide delegation)
+  3. Channel connected to a YouTube account
+
+Required secrets:
+    YOUTUBE_CLIENT_ID       — OAuth 2.0 client ID
+    YOUTUBE_CLIENT_SECRET   — OAuth 2.0 client secret
+    YOUTUBE_REFRESH_TOKEN   — Offline refresh token (never expires unless revoked)
+                              Generate once using the setup script below.
+
+How to get YOUTUBE_REFRESH_TOKEN (one-time):
+  1. Go to console.cloud.google.com → APIs → YouTube Data API v3 → Enable
+  2. Create credentials → OAuth 2.0 Client ID → Desktop app
+  3. Run: python -m content_generator.publisher.youtube --setup
+     (opens browser, you approve, script prints refresh token — copy to GitHub secrets)
+
+What gets posted:
+    - YouTube Shorts (vertical 9:16 video under 60s)
+    - Video source: looks for generated .mp4 in output/creative/
+    - If no video file found: creates a still-image Short (image + audio narration hook)
+    - Title: from reel hook text
+    - Description: from reel script
+    - Tags: coffee, instant coffee, purity beans, etc.
+
+Note on video generation:
+    For actual video, you need RUNWAY_API_KEY set. Without it, the engine
+    generates a "slideshow short" from carousel images using Pillow + moviepy.
+    Install: pip install moviepy  (adds ~50MB to container)
+"""
+from __future__ import annotations
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+
+_SCOPES       = ["https://www.googleapis.com/auth/youtube.upload"]
+_TOKEN_URL    = "https://oauth2.googleapis.com/token"
+_UPLOAD_URL   = "https://www.googleapis.com/upload/youtube/v3/videos"
+_SHORTS_MAX_S = 59   # YouTube Shorts must be <= 60s
+
+
+def is_configured() -> bool:
+    return (
+        bool(os.getenv("YOUTUBE_CLIENT_ID"))
+        and bool(os.getenv("YOUTUBE_CLIENT_SECRET"))
+        and bool(os.getenv("YOUTUBE_REFRESH_TOKEN"))
+    )
+
+
+def post_content(content: dict, day: int = 0) -> dict:
+    """
+    Upload today's YouTube Short.
+
+    Looks for a rendered video first. If none found, creates a slideshow
+    Short from carousel images (requires moviepy).
+
+    Returns:
+        {"success": bool, "video_id": str, "url": str, "error": str|None}
+    """
+    if not is_configured():
+        logger.info("[youtube] Not configured — YOUTUBE_CLIENT_ID/SECRET/REFRESH_TOKEN missing")
+        return {"success": False, "video_id": "", "url": "", "error": "not_configured"}
+
+    # Get fresh access token
+    access_token = _refresh_access_token()
+    if not access_token:
+        return {"success": False, "video_id": "", "url": "", "error": "token_refresh_failed"}
+
+    # Find video file
+    video_path = _find_video(content)
+    if not video_path:
+        video_path = _create_slideshow_short(content, day)
+
+    if not video_path:
+        logger.warning("[youtube] No video available — skipping YouTube Short")
+        return {"success": False, "video_id": "", "url": "", "error": "no_video"}
+
+    # Build metadata
+    title       = _extract_title(content)
+    description = _extract_description(content)
+    tags        = _build_tags(content)
+
+    result = _upload_video(access_token, video_path, title, description, tags)
+
+    if result["success"]:
+        logger.info("[youtube] Day %d uploaded | id=%s | url=%s", day, result["video_id"], result["url"])
+    else:
+        logger.error("[youtube] Day %d failed: %s", day, result["error"])
+
+    return result
+
+
+# ── Token management ──────────────────────────────────────────────────────────
+
+def _refresh_access_token() -> str | None:
+    """Exchange refresh token for a fresh access token."""
+    try:
+        import requests
+        resp = requests.post(
+            _TOKEN_URL,
+            data={
+                "grant_type":    "refresh_token",
+                "client_id":     os.getenv("YOUTUBE_CLIENT_ID", ""),
+                "client_secret": os.getenv("YOUTUBE_CLIENT_SECRET", ""),
+                "refresh_token": os.getenv("YOUTUBE_REFRESH_TOKEN", ""),
+            },
+            timeout=15,
+        )
+        data = resp.json()
+        if "access_token" in data:
+            return data["access_token"]
+        logger.warning("[youtube] Token refresh failed: %s", data.get("error_description", data))
+        return None
+    except Exception as e:
+        logger.error("[youtube] Token refresh error: %s", e)
+        return None
+
+
+# ── Video source ──────────────────────────────────────────────────────────────
+
+def _find_video(content: dict) -> str | None:
+    """Look for a rendered .mp4 Short in output/creative/."""
+    import glob as _glob
+    creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
+    today        = _today()
+
+    patterns = [
+        os.path.join(creative_dir, f"reel_*_{today}.mp4"),
+        os.path.join(creative_dir, f"short_*_{today}.mp4"),
+        os.path.join(creative_dir, f"*_{today}.mp4"),
+    ]
+    for pat in patterns:
+        files = sorted(_glob.glob(pat), reverse=True)
+        if files:
+            return files[0]
+    return None
+
+
+def _create_slideshow_short(content: dict, day: int) -> str | None:
+    """
+    Create a ~30s YouTube Short by animating carousel images.
+    Requires: pip install moviepy
+    """
+    try:
+        from moviepy.editor import ImageClip, concatenate_videoclips, TextClip, CompositeVideoClip
+    except ImportError:
+        logger.debug("[youtube] moviepy not installed — cannot create slideshow Short")
+        return None
+
+    import glob as _glob
+    creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
+    today        = _today()
+
+    images = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*_{today}.jpg")))
+    if not images:
+        images = sorted(_glob.glob(os.path.join(creative_dir, f"*_{today}.jpg")))
+    if not images:
+        return None
+
+    try:
+        duration_per_image = min(5, _SHORTS_MAX_S // max(len(images), 1))
+        clips = []
+        for img_path in images[:8]:
+            clip = (
+                ImageClip(img_path)
+                .set_duration(duration_per_image)
+                .resize(height=1920)   # 9:16 Shorts format
+                .crop(x_center=lambda t: ImageClip(img_path).w / 2, width=1080)
+            )
+            clips.append(clip)
+
+        final = concatenate_videoclips(clips, method="compose")
+        out_path = os.path.join(creative_dir, f"short_slideshow_day{day}_{today}.mp4")
+        final.write_videofile(out_path, fps=24, codec="libx264", audio=False, logger=None)
+        logger.info("[youtube] Slideshow Short created: %s", out_path)
+        return out_path
+
+    except Exception as e:
+        logger.warning("[youtube] Slideshow creation failed: %s", e)
+        return None
+
+
+# ── Upload ────────────────────────────────────────────────────────────────────
+
+def _upload_video(
+    access_token: str, video_path: str,
+    title: str, description: str, tags: list[str],
+) -> dict:
+    """Upload video to YouTube with Shorts metadata."""
+    try:
+        import requests
+
+        metadata = {
+            "snippet": {
+                "title":       title[:100],
+                "description": description[:5000],
+                "tags":        tags[:500],
+                "categoryId":  "22",   # People & Blogs (works for coffee content)
+            },
+            "status": {
+                "privacyStatus":           "public",
+                "selfDeclaredMadeForKids": False,
+            },
+        }
+
+        file_size = os.path.getsize(video_path)
+        headers   = {
+            "Authorization":   f"Bearer {access_token}",
+            "Content-Type":    "application/json; charset=UTF-8",
+            "X-Upload-Content-Type":   "video/mp4",
+            "X-Upload-Content-Length": str(file_size),
+        }
+
+        # Step 1: Initialize resumable upload
+        init_resp = requests.post(
+            f"{_UPLOAD_URL}?uploadType=resumable&part=snippet,status",
+            headers=headers,
+            json=metadata,
+            timeout=20,
+        )
+        upload_url = init_resp.headers.get("Location", "")
+        if not upload_url:
+            return {
+                "success": False, "video_id": "", "url": "",
+                "error": f"No upload URL: {init_resp.status_code} {init_resp.text[:200]}"
+            }
+
+        # Step 2: Upload video bytes
+        with open(video_path, "rb") as f:
+            upload_resp = requests.put(
+                upload_url,
+                headers={
+                    "Content-Type":   "video/mp4",
+                    "Content-Length": str(file_size),
+                },
+                data=f,
+                timeout=300,   # large file upload timeout
+            )
+
+        data     = upload_resp.json()
+        video_id = data.get("id", "")
+        if video_id:
+            url = f"https://www.youtube.com/shorts/{video_id}"
+            return {"success": True, "video_id": video_id, "url": url, "error": None}
+        else:
+            err = str(data.get("error", {}).get("message", data))[:300]
+            return {"success": False, "video_id": "", "url": "", "error": err}
+
+    except Exception as e:
+        logger.error("[youtube] Upload error: %s", e)
+        return {"success": False, "video_id": "", "url": "", "error": str(e)}
+
+
+# ── Metadata builders ─────────────────────────────────────────────────────────
+
+def _extract_title(content: dict) -> str:
+    reels = content.get("reels") or []
+    if reels:
+        hook = reels[0].get("hook", "")
+        if hook:
+            return hook[:100]
+    return "Purity Beans — 100% Pure Instant Coffee | No Chicory #Shorts"
+
+
+def _extract_description(content: dict) -> str:
+    reels = content.get("reels") or []
+    if reels:
+        reel  = reels[0]
+        parts = [
+            reel.get("hook", ""),
+            reel.get("script", "") or reel.get("body", ""),
+            reel.get("cta", ""),
+            "",
+            "Purity Beans — India's purest instant coffee. Rs 18/cup. Zero chicory.",
+            "Shop: https://p3online.in",
+        ]
+        return "\n".join(p for p in parts if p)[:5000]
+    return "Purity Beans — 100% pure instant coffee. Zero chicory. Shop at p3online.in"
+
+
+def _build_tags(content: dict) -> list[str]:
+    base = [
+        "purity beans", "pure coffee", "instant coffee", "no chicory",
+        "coffee india", "premium coffee", "coffee shorts", "coffee reels",
+        "indiancoffee", "coffeelover",
+    ]
+    # Add trend keyword if present
+    trend = content.get("strategy", {}).get("top_trend", "")
+    if trend:
+        base.append(trend.lower()[:30])
+    return base
+
+
+def _today() -> str:
+    import datetime
+    return datetime.date.today().isoformat()
+
+
+# ── CLI setup helper ──────────────────────────────────────────────────────────
+
+def _run_oauth_setup() -> None:
+    """
+    Interactive OAuth setup — run once to get your YOUTUBE_REFRESH_TOKEN.
+    Usage: python -m content_generator.publisher.youtube --setup
+    """
+    import json
+    try:
+        from google_auth_oauthlib.flow import InstalledAppFlow
+    except ImportError:
+        print("Run: pip install google-auth-oauthlib")
+        return
+
+    client_id     = input("Enter YOUTUBE_CLIENT_ID: ").strip()
+    client_secret = input("Enter YOUTUBE_CLIENT_SECRET: ").strip()
+
+    client_config = {
+        "installed": {
+            "client_id":                  client_id,
+            "client_secret":              client_secret,
+            "auth_uri":                   "https://accounts.google.com/o/oauth2/auth",
+            "token_uri":                  "https://oauth2.googleapis.com/token",
+            "redirect_uris":              ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"],
+        }
+    }
+
+    flow        = InstalledAppFlow.from_client_config(client_config, _SCOPES)
+    credentials = flow.run_local_server(port=0)
+
+    print("\n=== Copy these to GitHub Secrets ===")
+    print(f"YOUTUBE_CLIENT_ID:      {client_id}")
+    print(f"YOUTUBE_CLIENT_SECRET:  {client_secret}")
+    print(f"YOUTUBE_REFRESH_TOKEN:  {credentials.refresh_token}")
+
+
+if __name__ == "__main__":
+    import sys
+    if "--setup" in sys.argv:
+        _run_oauth_setup()

@@ -131,6 +131,28 @@ def _build_report(content: dict, pipeline_result: dict) -> str:
     if pipeline_lines:
         lines += ["", "Pipeline:"] + pipeline_lines
 
+    # ── Publishing results ────────────────────────────────────────────────────
+    pub = pipeline_result.get("publish", {})
+    if pub:
+        published = pub.get("published_platforms", [])
+        if published:
+            lines += ["", f"Published: {', '.join(p.title() for p in published)}"]
+            # Include post URLs
+            url_map = {
+                "linkedin":  pub.get("linkedin", {}).get("url", ""),
+                "instagram": pub.get("instagram", {}).get("permalink", ""),
+                "facebook":  pub.get("facebook", {}).get("url", ""),
+                "youtube":   pub.get("youtube", {}).get("url", ""),
+            }
+            for platform, url in url_map.items():
+                if url:
+                    lines.append(f"  {platform.title()}: {url}")
+        else:
+            not_conf = [p for p, r in pub.items()
+                        if isinstance(r, dict) and r.get("error") == "not_configured"]
+            if not_conf:
+                lines += ["", f"Social: Not configured ({', '.join(p.title() for p in not_conf)})"]
+
     lines += [
         "",
         f"Health: {health_str}",

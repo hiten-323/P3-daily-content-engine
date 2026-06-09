@@ -20,10 +20,28 @@
 #   WHATSAPP_PHONE_ID    — WhatsApp Business phone number ID
 #   ALERT_WEBHOOK_URL    — Slack/Discord webhook for failure alerts (optional)
 #
-# Optional secrets:
+# Optional secrets (social publishing):
 #   HF_TOKEN             — Hugging Face token for free FLUX.1-schnell image generation
 #                          Get free token at: huggingface.co → Settings → Access Tokens
 #   FLUX_API_KEY         — fal.ai image generation (paid, higher quality)
+#
+#   LinkedIn:
+#   LI_API_ACCESS        — LinkedIn OAuth access token (already added)
+#   LI_AUTHOR_URN        — urn:li:person:XXXXX or urn:li:organization:XXXXX
+#
+#   Instagram:
+#   INSTAGRAM_ACCOUNT_ID    — Instagram Business Account ID
+#   INSTAGRAM_ACCESS_TOKEN  — Long-lived Page Access Token
+#   IMGBB_API_KEY           — Free image hosting for Instagram (api.imgbb.com)
+#
+#   Facebook:
+#   FACEBOOK_PAGE_ID           — Facebook Page ID
+#   FACEBOOK_PAGE_ACCESS_TOKEN — Page Access Token (can reuse INSTAGRAM_ACCESS_TOKEN)
+#
+#   YouTube Shorts:
+#   YOUTUBE_CLIENT_ID      — Google OAuth client ID
+#   YOUTUBE_CLIENT_SECRET  — Google OAuth client secret
+#   YOUTUBE_REFRESH_TOKEN  — Offline refresh token (run: python -m content_generator.publisher.youtube --setup)
 #   RUNWAY_API_KEY       — Runway video generation
 #   SMTP_USER            — email nurture sequences
 #   SMTP_PASS            — email nurture sequences
@@ -137,6 +155,23 @@ jobs:
           # Optional: Shopify attribution
           SHOPIFY_STORE_URL:   ${{ secrets.SHOPIFY_STORE_URL }}
           SHOPIFY_API_KEY:     ${{ secrets.SHOPIFY_API_KEY }}
+
+          # Social publishing — LinkedIn
+          LI_AUTHOR_URN:       ${{ secrets.LI_AUTHOR_URN }}
+
+          # Social publishing — Instagram
+          INSTAGRAM_ACCOUNT_ID:    ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN:  ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          IMGBB_API_KEY:           ${{ secrets.IMGBB_API_KEY }}
+
+          # Social publishing — Facebook
+          FACEBOOK_PAGE_ID:           ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+
+          # Social publishing — YouTube Shorts
+          YOUTUBE_CLIENT_ID:      ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET:  ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN:  ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
 
           # Config
           WEBSITE_URL:         https://p3online.in

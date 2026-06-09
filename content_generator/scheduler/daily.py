@@ -129,14 +129,25 @@ def run_full_pipeline(day_number: int = None) -> dict:
         if step.success:
             nurture_result = step.value or {}
 
-    # ── 9. Founder WhatsApp report ────────────────────────────────────────────
+    # ── 9. Publish to all platforms ───────────────────────────────────────────
+    publish_result: dict = {}
+    with timed_step("publish", timeout_s=300):
+        step = rm.run(
+            fn=lambda: _do_publish(content, dn),
+            label="publish",
+            max_retries=1,
+        )
+        if step.success:
+            publish_result = step.value or {}
+
+    # ── 10. Founder WhatsApp report ───────────────────────────────────────────
     with timed_step("founder_report", timeout_s=30):
         rm.run(
-            fn=lambda: _do_founder_report(content, nurture_result),
+            fn=lambda: _do_founder_report(content, nurture_result, publish_result),
             label="founder_report",
         )
 
-    # ── 10. Weekly summary (Mondays only) ─────────────────────────────────────
+    # ── 11. Weekly summary (Mondays only) ─────────────────────────────────────
     _maybe_weekly_summary()
 
     elapsed = round(time.time() - t0, 1)
@@ -201,9 +212,16 @@ def _do_snapshot(content: dict, day_number: int) -> str:
     return save_daily_snapshot(content=content, day_number=day_number)
 
 
-def _do_founder_report(content: dict, nurture_result: dict) -> bool:
+def _do_publish(content: dict, day_number: int) -> dict:
+    """Post generated content to all configured social platforms."""
+    from content_generator.publisher.dispatcher import publish_all
+    return publish_all(content, day_number=day_number)
+
+
+def _do_founder_report(content: dict, nurture_result: dict, publish_result: dict = None) -> bool:
     from content_generator.scheduler.founder_report import send_founder_report
-    return send_founder_report(content=content, pipeline_result=nurture_result)
+    pipeline = {**(nurture_result or {}), "publish": publish_result or {}}
+    return send_founder_report(content=content, pipeline_result=pipeline)
 
 
 def _do_nurture() -> dict:
