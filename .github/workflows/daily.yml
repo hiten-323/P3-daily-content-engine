@@ -102,12 +102,18 @@ jobs:
           # LLM providers
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
-          OPENROUTER_API_KEY:  ${{ secrets.OPENROUTER_API_KEY }}
+          # Secret is named OPENROUTER_API_TOKEN in this repo
+          OPENROUTER_API_KEY:  ${{ secrets.OPENROUTER_API_TOKEN }}
 
-          # Founder notifications
+          # Founder notifications + WhatsApp nurture
           FOUNDER_PHONE:       ${{ secrets.FOUNDER_PHONE }}
+          # AiSensy WhatsApp API (aisensy.com) — used instead of Meta direct API
+          AISENSY_API_KEY:     ${{ secrets.AISENSY_API_KEY }}
+          # Meta direct API fallback (leave blank if using AiSensy)
           WHATSAPP_TOKEN:      ${{ secrets.WHATSAPP_TOKEN }}
           WHATSAPP_PHONE_ID:   ${{ secrets.WHATSAPP_PHONE_ID }}
+          # LinkedIn API (optional — for LinkedIn post scheduling)
+          LI_API_ACCESS:       ${{ secrets.LI_API_ACCESS }}
 
           # Failure alerts
           ALERT_WEBHOOK_URL:   ${{ secrets.ALERT_WEBHOOK_URL }}
