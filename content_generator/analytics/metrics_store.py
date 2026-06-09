@@ -141,6 +141,19 @@ def _ensure_init() -> None:
                 message_ref TEXT DEFAULT '',
                 created_at  TEXT DEFAULT (datetime('now'))
             );
+            CREATE TABLE IF NOT EXISTS publish_log (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                date       TEXT NOT NULL,
+                day        INTEGER DEFAULT 0,
+                platform   TEXT NOT NULL,
+                success    INTEGER DEFAULT 0,
+                post_id    TEXT DEFAULT '',
+                url        TEXT DEFAULT '',
+                error      TEXT DEFAULT '',
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+            CREATE INDEX IF NOT EXISTS idx_publish_date     ON publish_log(date);
+            CREATE INDEX IF NOT EXISTS idx_publish_platform ON publish_log(platform);
             CREATE INDEX IF NOT EXISTS idx_metrics_date    ON content_metrics(date);
             CREATE INDEX IF NOT EXISTS idx_metrics_hook    ON content_metrics(hook_archetype);
             CREATE INDEX IF NOT EXISTS idx_revenue_content ON revenue_attribution(content_id);
@@ -616,3 +629,58 @@ def record_nurture_sent(
             INSERT INTO nurture_log (lead_id, channel, template, status, message_ref)
             VALUES (?,?,?,?,?)
         """, (lead_id, channel, template, status, message_ref))
+
+
+def record_publish_event(
+    platform: str,
+    day: int      = 0,
+    success: bool = False,
+    post_id: str  = "",
+    url: str      = "",
+    error: str    = None,
+) -> None:
+    """Log a publish attempt to any social platform."""
+    _ensure_init()
+    today = datetime.date.today().isoformat()
+    with _conn() as con:
+        con.execute("""
+            INSERT INTO publish_log (date, day, platform, success, post_id, url, error)
+            VALUES (?,?,?,?,?,?,?)
+        """, (today, day, platform, int(success), post_id or "", url or "", error or ""))
+
+
+def get_publish_stats(days: int = 30) -> dict:
+    """
+    Return publishing success rates per platform for the last N days.
+
+    Returns:
+        {
+            "linkedin":  {"total": 30, "success": 28, "rate": 0.93, "last_url": "..."},
+            "instagram": {"total": 30, "success": 25, "rate": 0.83, "last_url": "..."},
+            ...
+        }
+    """
+    _ensure_init()
+    since = (datetime.date.today() - datetime.timedelta(days=days)).isoformat()
+    with _conn() as con:
+        rows = con.execute("""
+            SELECT platform,
+                   COUNT(*)                        AS total,
+                   SUM(success)                    AS successes,
+                   MAX(CASE WHEN success=1 THEN url ELSE '' END) AS last_url
+            FROM   publish_log
+            WHERE  date >= ?
+            GROUP BY platform
+        """, (since,)).fetchall()
+
+    result = {}
+    for row in rows:
+        total   = row["total"] or 1
+        success = row["successes"] or 0
+        result[row["platform"]] = {
+            "total":    total,
+            "success":  success,
+            "rate":     round(success / total, 2),
+            "last_url": row["last_url"] or "",
+        }
+    return result

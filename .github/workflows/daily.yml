@@ -125,23 +125,37 @@ jobs:
 
           # Founder notifications + WhatsApp nurture
           FOUNDER_PHONE:       ${{ secrets.FOUNDER_PHONE }}
-          # AiSensy WhatsApp API (aisensy.com) — used instead of Meta direct API
           AISENSY_API_KEY:     ${{ secrets.AISENSY_API_KEY }}
-          # Meta direct API fallback (leave blank if using AiSensy)
           WHATSAPP_TOKEN:      ${{ secrets.WHATSAPP_TOKEN }}
           WHATSAPP_PHONE_ID:   ${{ secrets.WHATSAPP_PHONE_ID }}
-          # LinkedIn API (optional — for LinkedIn post scheduling)
-          LI_API_ACCESS:       ${{ secrets.LI_API_ACCESS }}
 
-          # Failure alerts
+          # ── SOCIAL PUBLISHING ─────────────────────────────────────────────────
+          # LinkedIn (✅ secrets already added — will post on next run)
+          LI_API_ACCESS:       ${{ secrets.LI_API_ACCESS }}
+          LI_AUTHOR_URN:       ${{ secrets.LI_AUTHOR_URN }}
+
+          # Instagram Business (add INSTAGRAM_ACCOUNT_ID + INSTAGRAM_ACCESS_TOKEN)
+          INSTAGRAM_ACCOUNT_ID:      ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN:    ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          # Required for Instagram image hosting (free: api.imgbb.com)
+          IMGBB_API_KEY:             ${{ secrets.IMGBB_API_KEY }}
+          # Optional: Cloudinary image hosting (free 25GB/month)
+          CLOUDINARY_URL:            ${{ secrets.CLOUDINARY_URL }}
+
+          # Facebook Page (same token as Instagram if same Meta App)
+          FACEBOOK_PAGE_ID:          ${{ secrets.FACEBOOK_PAGE_ID }}
+          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
+
+          # YouTube Shorts (✅ secrets already added — will post on next run)
+          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+
+          # ── FAILURE ALERTS ────────────────────────────────────────────────────
           ALERT_WEBHOOK_URL:   ${{ secrets.ALERT_WEBHOOK_URL }}
           ALERT_EMAIL_TO:      ${{ secrets.ALERT_EMAIL_TO }}
 
-          # Image generation — provider cascade (free → free → paid):
-          #   1. Hugging Face (free): add HF_TOKEN secret → real FLUX.1-schnell images
-          #   2. Pollinations (anonymous free): works in some regions, no key needed
-          #   3. fal.ai (paid fallback): add FLUX_API_KEY secret if you want it
-          #   4. Pillow placeholder: always works, no key needed, branded dark card
+          # ── IMAGE GENERATION ──────────────────────────────────────────────────
           HF_TOKEN:            ${{ secrets.HF_TOKEN }}
           FAL_KEY:             ${{ secrets.FLUX_API_KEY }}
           RUNWAY_API_KEY:      ${{ secrets.RUNWAY_API_KEY }}

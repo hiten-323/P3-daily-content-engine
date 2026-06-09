@@ -287,11 +287,10 @@ def _log_nurture(
         from content_generator.analytics.metrics_store import record_nurture_sent
         record_nurture_sent(
             lead_id=lead_id,
-            segment=segment,
-            stage=stage,
             channel=channel,
-            success=result.get("success", False),
-            message_id=result.get("message_id", ""),
+            template=f"{segment}/{stage}",
+            status="sent" if result.get("success") else "failed",
+            message_ref=result.get("message_id", ""),
         )
     except Exception as e:
         logger.debug("[whatsapp] Nurture log failed: %s", e)
