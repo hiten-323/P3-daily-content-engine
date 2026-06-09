@@ -21,7 +21,9 @@
 #   ALERT_WEBHOOK_URL    — Slack/Discord webhook for failure alerts (optional)
 #
 # Optional secrets:
-#   FLUX_API_KEY         — fal.ai image generation
+#   HF_TOKEN             — Hugging Face token for free FLUX.1-schnell image generation
+#                          Get free token at: huggingface.co → Settings → Access Tokens
+#   FLUX_API_KEY         — fal.ai image generation (paid, higher quality)
 #   RUNWAY_API_KEY       — Runway video generation
 #   SMTP_USER            — email nurture sequences
 #   SMTP_PASS            — email nurture sequences
@@ -111,11 +113,13 @@ jobs:
           ALERT_WEBHOOK_URL:   ${{ secrets.ALERT_WEBHOOK_URL }}
           ALERT_EMAIL_TO:      ${{ secrets.ALERT_EMAIL_TO }}
 
-          # Optional: asset generation
-          # fal.ai requires FAL_KEY — FLUX_API_KEY is the GitHub secret name,
-          # FAL_KEY is what the fal-client library reads.
+          # Image generation — provider cascade (free → free → paid):
+          #   1. Hugging Face (free): add HF_TOKEN secret → real FLUX.1-schnell images
+          #   2. Pollinations (anonymous free): works in some regions, no key needed
+          #   3. fal.ai (paid fallback): add FLUX_API_KEY secret if you want it
+          #   4. Pillow placeholder: always works, no key needed, branded dark card
+          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
           FAL_KEY:             ${{ secrets.FLUX_API_KEY }}
-          FLUX_API_KEY:        ${{ secrets.FLUX_API_KEY }}
           RUNWAY_API_KEY:      ${{ secrets.RUNWAY_API_KEY }}
 
           # Optional: email nurture
