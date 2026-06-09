@@ -3,7 +3,12 @@ Flux image generator — uses fal.ai Flux API for AI image generation.
 
 Setup:
     pip install fal-client
-    export FLUX_API_KEY="your_key_here"   # get from fal.ai
+    export FAL_KEY="key_xxxxxxxxxxxxxxxxxx"   # from fal.ai dashboard → API Keys
+
+    fal.ai uses FAL_KEY as the canonical env var name.
+    GitHub Actions: store as secret FLUX_API_KEY, map to FAL_KEY in the workflow:
+        env:
+          FAL_KEY: ${{ secrets.FLUX_API_KEY }}
 
 Model options (set FLUX_MODEL env var):
     flux/dev           — highest quality, slower  (default)
@@ -24,14 +29,18 @@ import os
 
 logger = logging.getLogger(__name__)
 
-_MODEL    = os.getenv("FLUX_MODEL", "fal-ai/flux/dev")
-_API_KEY  = os.getenv("FLUX_API_KEY")
-_OUT_DIR  = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
+_MODEL   = os.getenv("FLUX_MODEL", "fal-ai/flux/dev")
+# fal.ai canonical env var is FAL_KEY.
+# Accept FLUX_API_KEY as an alias (GitHub Actions secret name) and promote it.
+_FAL_KEY = os.getenv("FAL_KEY") or os.getenv("FLUX_API_KEY")
+if _FAL_KEY:
+    os.environ.setdefault("FAL_KEY", _FAL_KEY)
+_OUT_DIR = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
 
 
 def is_configured() -> bool:
     """Return True if Flux API is available and configured."""
-    if not _API_KEY:
+    if not _FAL_KEY:
         return False
     try:
         import fal_client  # noqa: F401
@@ -62,8 +71,8 @@ def generate_image(
     from content_generator.creative.brand_guardrails import enforce_brand_prompt
     safe_prompt = enforce_brand_prompt(prompt)
 
-    if not _API_KEY:
-        logger.info("[flux] FLUX_API_KEY not set — returning None (prompt: %s...)", safe_prompt[:60])
+    if not _FAL_KEY:
+        logger.info("[flux] FAL_KEY not set — returning None (prompt: %s...)", safe_prompt[:60])
         return None
 
     try:
@@ -73,7 +82,6 @@ def generate_image(
         return None
 
     try:
-        os.environ.setdefault("FAL_KEY", _API_KEY)
         logger.info("[flux] Generating %dx%d image: '%s...'", width, height, safe_prompt[:50])
 
         arguments = {
