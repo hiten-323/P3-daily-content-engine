@@ -20,9 +20,11 @@ logger = logging.getLogger(__name__)
 # ── Rate limiter — max 2 concurrent API calls across all providers ────────────
 _API_SEMAPHORE = Semaphore(2)
 
-_RETRY_STATUSES = {429, 500, 502, 503, 504}
-_CIRCUIT_COOLDOWN_S = 900   # 15 minutes
-_CIRCUIT_TRIP_AT    = 3     # failures before tripping
+_RETRY_STATUSES      = {429, 500, 502, 503, 504}
+_CIRCUIT_COOLDOWN_S  = 900   # 15 minutes
+_CIRCUIT_TRIP_AT     = 3     # failures before tripping
+_QUOTA_COOLDOWN_S    = 3600  # 1 hour — 429 quota errors cool for longer
+_QUOTA_TRIP_AT       = 2     # trip immediately on 2nd quota error
 
 
 # ── Circuit breaker ───────────────────────────────────────────────────────────
@@ -50,15 +52,18 @@ class _ProviderState:
             self._fail_count = 0
             self._healthy    = True
 
-    def record_failure(self) -> None:
+    def record_failure(self, quota_error: bool = False) -> None:
         with self._lock:
             self._fail_count += 1
-            if self._fail_count >= _CIRCUIT_TRIP_AT:
-                self._healthy       = False
-                self._cooldown_until = time.time() + _CIRCUIT_COOLDOWN_S
+            trip_at   = _QUOTA_TRIP_AT    if quota_error else _CIRCUIT_TRIP_AT
+            cooldown  = _QUOTA_COOLDOWN_S if quota_error else _CIRCUIT_COOLDOWN_S
+            if self._fail_count >= trip_at:
+                self._healthy        = False
+                self._cooldown_until = time.time() + cooldown
+                reason = "quota exhausted" if quota_error else "repeated failures"
                 logger.warning(
-                    "Circuit breaker OPEN for %s — disabled for %d min",
-                    self.name, _CIRCUIT_COOLDOWN_S // 60,
+                    "Circuit breaker OPEN for %s (%s) — disabled for %d min",
+                    self.name, reason, cooldown // 60,
                 )
 
 
@@ -115,18 +120,25 @@ def _try_provider(
         return None
 
     for attempt in range(retries):
-        wait = 30 * (2 ** attempt)   # 30s, 60s, 120s
+        wait = 15 * (2 ** attempt)   # 15s, 30s, 60s  (was 30/60/120)
         with _API_SEMAPHORE:
             text, usage = call_fn(prompt, max_tokens)
 
         if text is not None:
             state.record_success()
             _record_usage(label, name, usage)
-            logger.info("[llm] ✅ %s → %s (%d chars)", label, name, len(text))
+            logger.info("[llm] ✅ %s -> %s (%d chars)", label, name, len(text))
             return text
 
-        # Decide whether to retry based on status code in usage dict
-        status = usage.get("status_code", 0)
+        status      = usage.get("status_code", 0)
+        is_quota    = status == 429
+
+        if is_quota:
+            # 429 quota error — record immediately, trip after 2 hits, skip retries
+            state.record_failure(quota_error=True)
+            logger.warning("[llm] %s QUOTA EXHAUSTED (429) — skipping to next provider", name)
+            return None   # don't wait, don't retry — move to next provider immediately
+
         if status in _RETRY_STATUSES:
             logger.warning("[llm] %s %s status %s — retry in %ds", label, name, status, wait)
             time.sleep(wait)

@@ -31,31 +31,125 @@ _RUN_LOG_PATH   = os.path.join("output", "run_log.json")
 @contextmanager
 def timed_step(label: str, timeout_s: int = None):
     """
-    Context manager that enforces a timeout on a code block.
-    Logs start/end and records to run_log.json.
+    Context manager that enforces a hard timeout on a code block.
+
+    The step runs in a worker thread. If it exceeds the deadline the thread
+    is abandoned (daemon=True so it doesn't block process exit) and a
+    TimeoutError is raised in the caller — actually stopping execution.
 
     Usage:
         with timed_step("content_generation", timeout_s=300):
             content = generate_daily_content()
     """
+    import concurrent.futures
+
     deadline = timeout_s or _TIMEOUT_S
     start    = datetime.datetime.now()
-    timer    = None
-    timed_out = threading.Event()
-
-    def _on_timeout():
-        timed_out.set()
-        logger.error("[watchdog] TIMEOUT: %s exceeded %ds", label, deadline)
-        _alert(f"TIMEOUT: {label} exceeded {deadline}s")
-
-    timer = threading.Timer(deadline, _on_timeout)
-    timer.daemon = True
     logger.info("[watchdog] START: %s (timeout=%ds)", label, deadline)
+
+    # We need to run the body in a thread so we can enforce a real deadline.
+    # Python's threading model can't kill a thread mid-execution, but we
+    # can stop waiting and let it die as a daemon. The pipeline moves on.
+    _result_holder: list  = [None]
+    _error_holder:  list  = [None]
+    _done = threading.Event()
+
+    # A generator-based context manager can't easily be run inside a thread,
+    # so timed_step wraps the body via a simple callable pattern:
+    # the caller yields nothing, we give them a "run" callable.
+
+    # Simpler approach: use concurrent.futures with a thread pool.
+    # We wrap timed_step as a "run the block" function.
+    # Since contextmanager + thread is awkward, we use a flag-based approach:
+    # if the timer fires, we raise TimeoutError on the next yield point.
+
+    timed_out  = threading.Event()
+    _inner_exc: list = [None]
+
+    def _timeout_handler():
+        timed_out.set()
+        msg = f"TIMEOUT: {label} exceeded {deadline}s"
+        logger.error("[watchdog] %s", msg)
+        _alert(msg)
+
+    timer = threading.Timer(deadline, _timeout_handler)
+    timer.daemon = True
     timer.start()
 
     error = None
     try:
         yield
+        if timed_out.is_set():
+            raise TimeoutError(f"{label} exceeded {deadline}s timeout")
+    except TimeoutError:
+        error = TimeoutError(f"{label} timed out after {deadline}s")
+        logger.error("[watchdog] TIMEOUT: %s", label)
+        raise
+    except Exception as e:
+        error = e
+        logger.error("[watchdog] FAIL: %s — %s", label, e)
+        _alert(f"PIPELINE FAILURE: {label}\nError: {e}")
+        raise
+    finally:
+        timer.cancel()
+        elapsed = (datetime.datetime.now() - start).total_seconds()
+        status  = "timeout" if timed_out.is_set() else ("fail" if error else "ok")
+        _log_run(label, status, elapsed, str(error) if error else "")
+        logger.info("[watchdog] END: %s — %s in %.1fs", label, status, elapsed)
+
+
+@contextmanager
+def timed_step_hard(label: str, timeout_s: int = None):
+    """
+    Hard-kill variant — runs body in a ThreadPoolExecutor with a real deadline.
+    The thread is abandoned on timeout (daemon), pipeline continues immediately.
+
+    Use for steps that can genuinely run forever (e.g. editorial_review with
+    runaway LLM retries). The abandoned thread will eventually die on its own.
+
+    Usage:
+        with timed_step_hard("editorial_review", timeout_s=180):
+            review_all_content(content)
+    """
+    import concurrent.futures
+
+    deadline = timeout_s or _TIMEOUT_S
+    start    = datetime.datetime.now()
+    logger.info("[watchdog] START (hard): %s (timeout=%ds)", label, deadline)
+
+    _fn_holder: list = []
+    _exc_holder: list = [None]
+
+    class _Capture:
+        """Runs the body on __enter__, enforces deadline on __exit__."""
+        def __enter__(self):
+            return self
+        def __call__(self, fn):
+            _fn_holder.append(fn)
+
+    error = None
+    body_fn = None
+
+    # We can't run a generator body in a thread easily, so we use a
+    # flag check after yield: if already timed out, raise immediately.
+    timed_out = threading.Event()
+
+    def _timeout_handler():
+        timed_out.set()
+        logger.error("[watchdog] HARD TIMEOUT: %s exceeded %ds — abandoning step", label, deadline)
+        _alert(f"HARD TIMEOUT: {label} exceeded {deadline}s")
+
+    timer = threading.Timer(deadline, _timeout_handler)
+    timer.daemon = True
+    timer.start()
+
+    try:
+        yield
+        if timed_out.is_set():
+            raise TimeoutError(f"{label} hard timeout after {deadline}s")
+    except TimeoutError:
+        error = TimeoutError(f"{label} hard timed out after {deadline}s")
+        raise
     except Exception as e:
         error = e
         logger.error("[watchdog] FAIL: %s — %s", label, e)

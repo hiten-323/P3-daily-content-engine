@@ -41,7 +41,7 @@ def run_full_pipeline(day_number: int = None) -> dict:
            memory -> save -> snapshot -> nurture -> founder_report -> summary
     Every step is wrapped in watchdog + retry. One failing step never kills the others.
     """
-    from content_generator.scheduler.watchdog import timed_step
+    from content_generator.scheduler.watchdog import timed_step, timed_step_hard
     from content_generator.scheduler.retry_manager import RetryManager
     from content_generator.scheduler.health_monitor import assert_healthy
     from content_generator.scheduler.run_lock import RunLock
@@ -94,8 +94,8 @@ def run_full_pipeline(day_number: int = None) -> dict:
 
     dn = content.get("day_number", 0)
 
-    # ── 3. Editorial review ───────────────────────────────────────────────────
-    with timed_step("editorial_review", timeout_s=180):
+    # ── 3. Editorial review (hard timeout — Gemini 429 loops can run forever) ──
+    with timed_step_hard("editorial_review", timeout_s=180):
         rm.run(fn=lambda: _do_editorial(content), label="editorial_review", max_retries=1)
 
     # ── 4. Business objectives ────────────────────────────────────────────────
@@ -168,24 +168,101 @@ def _do_research() -> dict:
     return run_research()
 
 
+_QUALITY_THRESHOLD = float(os.getenv("QUALITY_THRESHOLD", "7.0"))
+_QUALITY_MAX_REGEN = int(os.getenv("QUALITY_MAX_REGEN", "2"))   # max regeneration attempts
+
+
 def _do_editorial(content: dict) -> None:
+    """
+    Review each content piece. If score < QUALITY_THRESHOLD (default 7.0),
+    attempt regeneration up to QUALITY_MAX_REGEN times before accepting.
+    """
     from content_generator.agents.editorial import review_content
+
     review_targets = [
-        ("reel_1",         content.get("reels", [{}])[0] if content.get("reels") else {}),
-        ("reel_2",         content.get("reels", [{}, {}])[1] if len(content.get("reels", [])) > 1 else {}),
-        ("carousel",       content.get("carousel", {})),
-        ("instagram_post", content.get("instagram_post", {})),
+        ("reel_1",         "reels",         0),
+        ("reel_2",         "reels",         1),
+        ("carousel",       "carousel",      None),
+        ("instagram_post", "instagram_post", None),
     ]
-    for label, piece in review_targets:
+
+    for label, key, idx in review_targets:
+        # Extract piece
+        if idx is not None:
+            pieces = content.get(key) or []
+            piece  = pieces[idx] if len(pieces) > idx else {}
+        else:
+            piece  = content.get(key) or {}
+
         if not isinstance(piece, dict) or not piece:
             continue
-        review = review_content(piece, label=label)
-        piece["editorial_score"] = review
-        if review.get("verdict") == "REJECT":
+
+        for attempt in range(_QUALITY_MAX_REGEN + 1):
+            review = review_content(piece, label=label)
+            piece["editorial_score"] = review
+            score  = review.get("overall", 0)
+            verdict = review.get("verdict", "")
+
+            if score >= _QUALITY_THRESHOLD:
+                logger.info("[editorial] %s PASS — score %.1f", label, score)
+                break
+
+            feedback = review.get("feedback", "")
             logger.warning(
-                "[scheduler] %s scored %.1f (REJECT). Feedback: %s",
-                label, review["overall"], review.get("feedback", ""),
+                "[editorial] %s REJECT — score %.1f | feedback: %s | attempt %d/%d",
+                label, score, feedback, attempt + 1, _QUALITY_MAX_REGEN + 1,
             )
+
+            if attempt < _QUALITY_MAX_REGEN:
+                logger.info("[editorial] Regenerating %s (attempt %d)...", label, attempt + 2)
+                improved = _regenerate_piece(label, piece, feedback, content)
+                if improved:
+                    # Replace in content dict
+                    if idx is not None:
+                        content[key][idx] = improved
+                        piece = improved
+                    else:
+                        content[key] = improved
+                        piece = improved
+                else:
+                    logger.warning("[editorial] Regeneration failed for %s — keeping original", label)
+                    break
+            else:
+                logger.warning(
+                    "[editorial] %s final score %.1f below threshold %.1f — publishing anyway",
+                    label, score, _QUALITY_THRESHOLD,
+                )
+
+
+def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> dict | None:
+    """
+    Regenerate a single content piece using the original generator with feedback context.
+    Returns improved piece dict, or None if regeneration fails.
+    """
+    try:
+        from content_generator.providers.llm_router import call as llm_call
+        from content_generator.prompts.brand import brand_block
+
+        piece_json = str(piece)[:800]
+        regen_prompt = (
+            f"{brand_block()}\n\n"
+            f"TASK: Improve this content piece. It was rejected (score too low).\n\n"
+            f"ORIGINAL PIECE ({label}):\n{piece_json}\n\n"
+            f"REJECTION FEEDBACK:\n{feedback}\n\n"
+            f"REQUIREMENTS:\n"
+            f"- Score must be 7.0 or higher\n"
+            f"- Keep the same format/structure as the original\n"
+            f"- Fix the specific issues mentioned in the feedback\n"
+            f"- More scroll-stopping hook, stronger CTA, clearer value\n\n"
+            f"Return ONLY the improved JSON object (same keys as original)."
+        )
+        result = llm_call(regen_prompt, label=f"regen_{label}", max_tokens=1500)
+        if isinstance(result, dict) and result:
+            logger.info("[editorial] Regeneration successful for %s", label)
+            return result
+    except Exception as e:
+        logger.warning("[editorial] Regeneration error for %s: %s", label, e)
+    return None
 
 
 def _do_objectives(content: dict, dn: int) -> dict:
