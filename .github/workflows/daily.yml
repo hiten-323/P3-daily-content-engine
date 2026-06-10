@@ -70,6 +70,10 @@ on:
         required: false
         default: 'false'
 
+# Opt into Node.js 24 now (Node 20 deprecated June 2026, removed Sept 2026)
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   run-pipeline:
     name: Daily Content Pipeline
