@@ -170,23 +170,6 @@ jobs:
           SHOPIFY_STORE_URL:   ${{ secrets.SHOPIFY_STORE_URL }}
           SHOPIFY_API_KEY:     ${{ secrets.SHOPIFY_API_KEY }}
 
-          # Social publishing — LinkedIn
-          LI_AUTHOR_URN:       ${{ secrets.LI_AUTHOR_URN }}
-
-          # Social publishing — Instagram
-          INSTAGRAM_ACCOUNT_ID:    ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          INSTAGRAM_ACCESS_TOKEN:  ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-          IMGBB_API_KEY:           ${{ secrets.IMGBB_API_KEY }}
-
-          # Social publishing — Facebook
-          FACEBOOK_PAGE_ID:           ${{ secrets.FACEBOOK_PAGE_ID }}
-          FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-
-          # Social publishing — YouTube Shorts
-          YOUTUBE_CLIENT_ID:      ${{ secrets.YOUTUBE_CLIENT_ID }}
-          YOUTUBE_CLIENT_SECRET:  ${{ secrets.YOUTUBE_CLIENT_SECRET }}
-          YOUTUBE_REFRESH_TOKEN:  ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-
           # Config
           WEBSITE_URL:         https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"
