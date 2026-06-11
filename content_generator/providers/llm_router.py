@@ -1,7 +1,7 @@
 """
 LLM router — circuit breaker, rate limiter, retry, cost tracking.
 
-Call order: Gemini → Groq → OpenRouter
+Call order: Gemini → DeepSeek → Cerebras → Groq → OpenRouter
 Each provider has an independent circuit breaker: after 3 consecutive failures
 it is disabled for 15 minutes before being retried.
 A threading.Semaphore(2) limits concurrent outbound API calls to prevent
@@ -12,7 +12,7 @@ import logging
 from threading import Semaphore, Lock
 from dataclasses import dataclass, field
 
-from content_generator.providers import gemini, groq, openrouter
+from content_generator.providers import gemini, groq, openrouter, deepseek, cerebras
 from content_generator.parsers.json_parser import extract
 
 logger = logging.getLogger(__name__)
@@ -69,6 +69,8 @@ class _ProviderState:
 
 _STATES = {
     "gemini":      _ProviderState("gemini"),
+    "deepseek":    _ProviderState("deepseek"),
+    "cerebras":    _ProviderState("cerebras"),
     "groq":        _ProviderState("groq"),
     "openrouter":  _ProviderState("openrouter"),
 }
@@ -97,6 +99,8 @@ def _record_usage(label: str, provider: str, usage: dict) -> None:
 
 _PROVIDERS = [
     ("gemini",     gemini.call),
+    ("deepseek",   deepseek.call),
+    ("cerebras",   cerebras.call),
     ("groq",       groq.call),
     ("openrouter", openrouter.call),
 ]
@@ -159,7 +163,7 @@ def call(prompt: str, label: str, max_tokens: int = 3000) -> dict:
     logger.info("[pipeline] Generating %s ...", label)
 
     for name, fn in _PROVIDERS:
-        retries = 3 if name == "gemini" else 2 if name == "groq" else 4
+        retries = 3 if name == "gemini" else 2 if name in ("groq", "deepseek", "cerebras") else 4
         raw = _try_provider(name, fn, prompt, max_tokens, label, retries)
         if raw:
             data = extract(raw)
