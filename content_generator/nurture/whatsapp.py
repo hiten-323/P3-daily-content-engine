@@ -130,11 +130,19 @@ def _aisensy_send(
 
     api_key = os.getenv("AISENSY_API_KEY", "")
 
+    # AiSensy requires digits-only (no + prefix): 919876543210
+    phone = phone.lstrip("+")
+
+    # Campaign name: caller can pass one, else use env var, else fall back to default.
+    # Set AISENSY_CAMPAIGN_NAME in GitHub Secrets to match whatever you create in AiSensy.
+    _default_campaign = os.getenv("AISENSY_CAMPAIGN_NAME", "purity_beans_distributor_en")
+    campaign = template_name or _default_campaign
+
     if template_name:
         # Template message via AiSensy
         payload = {
             "apiKey":          api_key,
-            "campaignName":    template_name,
+            "campaignName":    campaign,
             "destination":     phone,
             "userName":        "Purity Beans",
             "templateParams":  list(params.values()) if params else [],
@@ -144,14 +152,14 @@ def _aisensy_send(
     else:
         # Session/text message via AiSensy
         payload = {
-            "apiKey":      api_key,
-            "campaignName": "purity_beans_nurture",
-            "destination":  phone,
-            "userName":    "Purity Beans",
+            "apiKey":        api_key,
+            "campaignName":  campaign,
+            "destination":   phone,
+            "userName":      "Purity Beans",
             "templateParams": [text],
-            "source":      "purity-beans-engine",
-            "media":       {},
-            "buttons":     [],
+            "source":        "purity-beans-engine",
+            "media":         {},
+            "buttons":       [],
             "carouselCards": [],
         }
 

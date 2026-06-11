@@ -57,10 +57,21 @@ POSITIONING = {
 # ── Hashtag sets by content type ──────────────────────────────────────────────
 
 HASHTAG_SETS = {
+    # Generic reel fallback
     "reels": (
         "#PurityBeans #PureCoffee #InstantCoffee #NoCicory #CoffeeLover "
         "#IndianCoffee #CoffeeIndia #PremiumCoffee #CoffeeReels "
         "#CoffeeOfTheDay #MorningCoffee"
+    ),
+    # Morning reel (7-9am slot) — used by generator.py → reels.build()
+    "reel_morning": (
+        "#PurityBeans #PureCoffee #MorningCoffee #CoffeeLover #InstantCoffee "
+        "#NoCicory #IndianCoffee #CoffeeIndia #MorningRoutine #CoffeeTime"
+    ),
+    # Night reel (8-10pm slot) — used by generator.py → reels.build()
+    "reel_night": (
+        "#PurityBeans #PureCoffee #EveningCoffee #CoffeeLover #InstantCoffee "
+        "#NoCicory #IndianCoffee #NightCoffee #CoffeeReels #CoffeeLovers"
     ),
     "viral_reel": (
         "#PurityBeans #NoCicory #CoffeeTruth #InstantCoffee #CoffeeLover "

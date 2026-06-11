@@ -131,7 +131,8 @@ jobs:
 
           # Founder notifications + WhatsApp nurture
           FOUNDER_PHONE:       ${{ secrets.FOUNDER_PHONE }}
-          AISENSY_API_KEY:     ${{ secrets.AISENSY_API_KEY }}
+          AISENSY_API_KEY:          ${{ secrets.AISENSY_API_KEY }}
+          AISENSY_CAMPAIGN_NAME:    ${{ secrets.AISENSY_CAMPAIGN_NAME }}
           WHATSAPP_TOKEN:      ${{ secrets.WHATSAPP_TOKEN }}
           WHATSAPP_PHONE_ID:   ${{ secrets.WHATSAPP_PHONE_ID }}
 

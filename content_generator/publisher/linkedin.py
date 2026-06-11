@@ -31,7 +31,7 @@ import os
 logger = logging.getLogger(__name__)
 
 _API_BASE    = "https://api.linkedin.com/rest"
-_API_VERSION = os.getenv("LI_API_VERSION", "202501")   # updated from 202406 (426 error)
+_API_VERSION = os.getenv("LI_API_VERSION", "202504")   # 202501 expired; 202504 active as of mid-2026
 
 
 def is_configured() -> bool:
