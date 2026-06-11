@@ -184,6 +184,9 @@ jobs:
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY:   "true"
           ENABLE_USAGE_LOG:        "false"
+          # Set to "true" to also generate blog, stories, yt_short, reel_2
+          # Keep "false" to stay within free-tier TPM limits
+          ENABLE_EXTENDED_CONTENT: "false"
           PYTHONIOENCODING:        utf-8
           # Optional day override from manual trigger
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
