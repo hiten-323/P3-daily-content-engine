@@ -122,6 +122,11 @@ def run_full_pipeline(day_number: int = None) -> dict:
     with timed_step("snapshot", timeout_s=30):
         rm.run(fn=lambda: _do_snapshot(content, dn), label="snapshot", max_retries=1)
 
+    # ── 7b. Image generation (carousel slides + reel thumbnail) ───────────────
+    # Must run BEFORE publish so Instagram/LinkedIn can find the image files.
+    with timed_step("image_generation", timeout_s=300):
+        rm.run(fn=lambda: _do_generate_images(content, dn), label="image_generation", max_retries=1)
+
     # ── 8. Nurture dispatch ───────────────────────────────────────────────────
     nurture_result: dict = {}
     with timed_step("nurture_dispatch", timeout_s=120):
@@ -287,6 +292,52 @@ def _do_memory(content: dict, dn: int) -> None:
 def _do_snapshot(content: dict, day_number: int) -> str:
     from content_generator.scheduler.snapshot import save_daily_snapshot
     return save_daily_snapshot(content=content, day_number=day_number)
+
+
+def _do_generate_images(content: dict, day_number: int) -> dict:
+    """
+    Generate actual image files from AI prompts in the content dict.
+    Saves carousel slides and reel thumbnail to output/creative/.
+    These files are then found by instagram.py and linkedin.py publishers.
+    """
+    from content_generator.creative.flux_generator import (
+        generate_carousel_images,
+        generate_reel_thumbnail,
+    )
+
+    results = {"carousel": [], "reel": None}
+
+    # Carousel slides
+    carousel = content.get("carousel") or {}
+    slides   = carousel.get("slides") or []
+    if slides:
+        paths = generate_carousel_images(slides, day_number)
+        results["carousel"] = paths
+        logger.info("[images] Generated %d carousel slides", len(paths))
+    else:
+        # Fallback: use ai_image_prompts if slides have no image_prompt
+        prompts = content.get("ai_image_prompts") or {}
+        carousel_prompt = (
+            prompts.get("carousel_cover")
+            or prompts.get("carousel")
+            or "Purity Beans premium instant coffee jar, dark moody editorial"
+        )
+        from content_generator.creative.flux_generator import generate_image
+        path = generate_image(carousel_prompt, width=1080, height=1080,
+                              label=f"carousel_slide_1_day{day_number}", seed=day_number)
+        if path:
+            results["carousel"] = [path]
+            logger.info("[images] Generated carousel cover from ai_image_prompts")
+
+    # Reel thumbnail (reel_1)
+    reel = content.get("reels", [{}])[0] if content.get("reels") else {}
+    if reel:
+        path = generate_reel_thumbnail(reel, day_number, label="reel_1")
+        results["reel"] = path
+        if path:
+            logger.info("[images] Generated reel thumbnail: %s", path)
+
+    return results
 
 
 def _do_publish(content: dict, day_number: int) -> dict:
