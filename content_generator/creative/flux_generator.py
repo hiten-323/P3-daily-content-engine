@@ -161,7 +161,7 @@ def _huggingface(
     """
     import json
 
-    url  = f"https://api-inference.huggingface.co/models/{_HF_MODEL}"
+    url  = f"https://router.huggingface.co/hf-inference/models/{_HF_MODEL}"
     body = json.dumps({
         "inputs": prompt,
         "parameters": {
@@ -237,6 +237,11 @@ def _pollinations(
 
         image_bytes = resp.read()
         if len(image_bytes) < 1000:
+            return None
+
+        # Pollinations returns JSON on error/limit exceeded even with HTTP 200
+        if image_bytes[:1] == b"{":
+            logger.debug("[image] Pollinations returned JSON (rate limited): %s", image_bytes[:200])
             return None
 
         logger.info("[image] Pollinations OK (%d KB)", len(image_bytes) // 1024)
