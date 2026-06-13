@@ -109,16 +109,31 @@ def _find_carousel_images(content: dict) -> list[str]:
     import glob as _glob
 
     creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
-    today        = _today()
 
-    # Prefer carousel slides in order
-    slides = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*.jpg")))
-    if slides:
-        return slides
+    patterns = [
+        "carousel_slide_*.jpg",
+        "carousel_slide_*.png",
+        "slide_*.jpg",
+        "slide_*.png",
+        "carousel_*.jpg",
+        "carousel_*.png",
+        "*.jpg",
+        "*.png",
+    ]
 
-    # Any image from today
-    all_imgs = sorted(_glob.glob(os.path.join(creative_dir, f"*.jpg")))
-    return all_imgs
+    images = []
+    for pattern in patterns:
+        images.extend(sorted(_glob.glob(os.path.join(creative_dir, pattern))))
+
+    # Remove duplicates but preserve order
+    images = list(dict.fromkeys(images))
+
+    if not images:
+        logger.info("[instagram] Images discovered: %s", images)
+    else:
+        logger.info("[instagram] Found %d images in %s", len(images), creative_dir)
+
+    return images
 
 
 def _post_single_image(image_path: str, caption: str) -> dict:

@@ -146,7 +146,7 @@ def _create_slideshow_short(content: dict, day: int) -> str | None:
     Requires: pip install moviepy
     """
     try:
-        from moviepy.editor import ImageClip, concatenate_videoclips, TextClip, CompositeVideoClip
+        from moviepy import ImageClip, concatenate_videoclips
     except ImportError:
         logger.debug("[youtube] moviepy not installed — cannot create slideshow Short")
         return None
@@ -155,9 +155,9 @@ def _create_slideshow_short(content: dict, day: int) -> str | None:
     creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
     today        = _today()
 
-    images = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*_{today}.jpg")))
+    images = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*.jpg")))
     if not images:
-        images = sorted(_glob.glob(os.path.join(creative_dir, f"*_{today}.jpg")))
+        images = sorted(_glob.glob(os.path.join(creative_dir, f"*.jpg")))
     if not images:
         return None
 
@@ -165,12 +165,16 @@ def _create_slideshow_short(content: dict, day: int) -> str | None:
         duration_per_image = min(5, _SHORTS_MAX_S // max(len(images), 1))
         clips = []
         for img_path in images[:8]:
+            # Moviepy 2.0+ uses with_duration, resized
             clip = (
                 ImageClip(img_path)
-                .set_duration(duration_per_image)
-                .resize(height=1920)   # 9:16 Shorts format
-                .crop(x_center=lambda t: ImageClip(img_path).w / 2, width=1080)
+                .with_duration(duration_per_image)
             )
+
+            # Use resize if possible, but keeping it simple ensures reliability
+            if hasattr(clip, "resized"):
+                clip = clip.resized(height=1920)
+
             clips.append(clip)
 
         final = concatenate_videoclips(clips, method="compose")
