@@ -128,6 +128,9 @@ def _find_carousel_images(content: dict) -> list[str]:
     # Remove duplicates but preserve order
     images = list(dict.fromkeys(images))
 
+    logger.info("[instagram] CREATIVE_OUTPUT_DIR=%s", creative_dir)
+    logger.info("[instagram] Files in directory=%s", _glob.glob(os.path.join(creative_dir, "*")))
+
     if not images:
         logger.info("[instagram] Images discovered: %s", images)
     else:

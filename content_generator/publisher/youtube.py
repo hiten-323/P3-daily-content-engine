@@ -155,9 +155,15 @@ def _create_slideshow_short(content: dict, day: int) -> str | None:
     creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
     today        = _today()
 
-    images = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*.jpg")))
+    images = (
+        sorted(_glob.glob(os.path.join(creative_dir, "carousel_slide_*.jpg")))
+        + sorted(_glob.glob(os.path.join(creative_dir, "carousel_slide_*.png")))
+    )
     if not images:
-        images = sorted(_glob.glob(os.path.join(creative_dir, f"*.jpg")))
+        images = (
+            sorted(_glob.glob(os.path.join(creative_dir, "*.jpg")))
+            + sorted(_glob.glob(os.path.join(creative_dir, "*.png")))
+        )
     if not images:
         return None
 
