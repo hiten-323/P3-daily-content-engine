@@ -9,7 +9,7 @@ _URL = "https://api.cerebras.ai/v1/chat/completions"
 
 MODELS: list[str] = os.getenv(
     "CEREBRAS_MODELS",
-    "llama3.1-8b,llama3.1-70b",
+    "llama-3.3-70b,llama3.1-8b",
 ).split(",")
 
 

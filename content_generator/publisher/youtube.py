@@ -32,6 +32,7 @@ Note on video generation:
     Install: pip install moviepy  (adds ~50MB to container)
 """
 from __future__ import annotations
+import datetime
 import logging
 import os
 
@@ -177,6 +178,7 @@ def _create_slideshow_short(content: dict, day: int) -> str | None:
             clips.append(clip)
 
         final = concatenate_videoclips(clips, method="compose")
+        today = datetime.date.today().isoformat()
         out_path = os.path.join(creative_dir, f"short_slideshow_day{day}_{today}.mp4")
         final.write_videofile(out_path, fps=24, codec="libx264", audio=False, logger=None)
         logger.info("[youtube] Slideshow Short created: %s", out_path)

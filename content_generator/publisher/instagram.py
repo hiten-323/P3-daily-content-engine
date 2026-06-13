@@ -207,12 +207,15 @@ def _post_carousel(image_paths: list[str], caption: str) -> dict:
                 },
                 timeout=30,
             )
-            cid = resp.json().get("id", "")
+            resp_json = resp.json()
+            logger.info("[instagram] carousel item upload response: %s", resp_json)
+            cid = resp_json.get("id", "")
             if cid:
                 children.append(cid)
         except Exception as e:
             logger.debug("[instagram] Carousel item failed: %s", e)
 
+    logger.info("[instagram] child_ids=%s", children)
     if len(children) < 2:
         logger.info("[instagram] Not enough carousel items (%d) — falling back to single", len(children))
         if children:
