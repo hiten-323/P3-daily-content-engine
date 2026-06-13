@@ -112,12 +112,12 @@ def _find_carousel_images(content: dict) -> list[str]:
     today        = _today()
 
     # Prefer carousel slides in order
-    slides = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*_{today}.jpg")))
+    slides = sorted(_glob.glob(os.path.join(creative_dir, f"carousel_slide_*.jpg")))
     if slides:
         return slides
 
     # Any image from today
-    all_imgs = sorted(_glob.glob(os.path.join(creative_dir, f"*_{today}.jpg")))
+    all_imgs = sorted(_glob.glob(os.path.join(creative_dir, f"*.jpg")))
     return all_imgs
 
 

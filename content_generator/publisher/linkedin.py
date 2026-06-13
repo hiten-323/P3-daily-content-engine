@@ -31,7 +31,7 @@ import os
 logger = logging.getLogger(__name__)
 
 _API_BASE    = "https://api.linkedin.com/rest"
-_API_VERSION = os.getenv("LI_API_VERSION", "202506")   # Use latest monthly version; override via LI_API_VERSION secret
+_API_VERSION = os.getenv("LI_API_VERSION", "202603")   # Use latest monthly version; override via LI_API_VERSION secret
 
 
 def is_configured() -> bool:

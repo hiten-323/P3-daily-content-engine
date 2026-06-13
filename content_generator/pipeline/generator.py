@@ -182,13 +182,13 @@ def generate_daily_content(
         "reel_1":         (reels.build,          ("reel_1", arch_1, "morning (7-9am)",       "reel_morning", avoid), 1800),
         "carousel":       (carousel.build,       (mech, avoid),                                                       2200),
         "linkedin_post":  (linkedin.build,       (angle, avoid),                                                      1200),
-        "instagram_post": (instagram_post.build, (day_number, avoid),                                                  800),
     }
 
     # Extended content — skipped by default to reduce TPM load
     if _extended:
         phase1_tasks.update({
             "reel_2":   (reels.build,    ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night", avoid), 1800),
+            "instagram_post": (instagram_post.build, (day_number, avoid),                                                  800),
             "blog_post": (blog.build,    (topic,),                                                           3000),
             "stories":   (stories.build, (),                                                                 1500),
             "yt_short":  (yt_short.build,(product, day_number),                                              1500),
@@ -210,7 +210,7 @@ def generate_daily_content(
                 raise
 
     # Fill optional keys with empty dicts so downstream code doesn't KeyError
-    for optional in ("reel_2", "blog_post", "stories", "yt_short"):
+    for optional in ("reel_2", "instagram_post", "blog_post", "stories", "yt_short"):
         phase1_results.setdefault(optional, {})
 
     # ── Phase 2: video prompts (depends on phase 1) ───────────────────────────
