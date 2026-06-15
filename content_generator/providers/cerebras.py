@@ -9,7 +9,7 @@ _URL = "https://api.cerebras.ai/v1/chat/completions"
 
 MODELS: list[str] = os.getenv(
     "CEREBRAS_MODELS",
-    "llama3.3-70b,llama3.1-8b",
+    "gpt-oss-120b,zai-glm-4.7",
 ).split(",")
 
 
@@ -51,6 +51,6 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             }
 
         logger.warning("Cerebras %s %s: %s", model, resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code}
+        continue
 
     return None, {}
