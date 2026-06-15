@@ -125,7 +125,10 @@ def generate_carousel_images(slides: list[dict], day: int) -> list[str]:
     """Generate one image per carousel slide."""
     paths = []
     for i, slide in enumerate(slides):
-        prompt = slide.get("image_prompt") or slide.get("visual") or ""
+        if isinstance(slide, str):
+            prompt = slide
+        else:
+            prompt = slide.get("image_prompt") or slide.get("visual") or ""
         if not prompt:
             continue
         path = generate_image(

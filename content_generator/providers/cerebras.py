@@ -42,9 +42,14 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             continue
 
         if resp.status_code == 200:
-            body  = resp.json()
-            text  = body["choices"][0]["message"]["content"]
-            u     = body.get("usage", {})
+            body = resp.json()
+            msg  = body["choices"][0]["message"]
+            # reasoning models put output in reasoning_content when content is empty
+            text = msg.get("content") or msg.get("reasoning_content") or ""
+            if not text:
+                logger.warning("Cerebras %s returned empty content", model)
+                continue
+            u = body.get("usage", {})
             return text, {
                 "prompt_tokens":     u.get("prompt_tokens"),
                 "completion_tokens": u.get("completion_tokens"),
