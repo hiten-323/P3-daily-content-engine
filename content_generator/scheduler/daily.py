@@ -146,7 +146,7 @@ def run_full_pipeline(day_number: int = None) -> dict:
             publish_result = step.value or {}
 
     # ── 10. Founder WhatsApp report ───────────────────────────────────────────
-    with timed_step("founder_report", timeout_s=30):
+    with timed_step("founder_report", timeout_s=60):
         rm.run(
             fn=lambda: _do_founder_report(content, nurture_result, publish_result),
             label="founder_report",
