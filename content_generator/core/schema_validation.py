@@ -1,0 +1,168 @@
+"""
+Schema validation using Pydantic. Defines expected structure for content assets.
+"""
+from pydantic import BaseModel, Field, model_validator
+from typing import List, Optional
+
+class EditorialScore(BaseModel):
+    shareability: float
+    saveability: float
+    emotion_pull: float
+    hook_strength: float
+    brand_clarity: float
+    overall: float
+    verdict: str
+    feedback: Optional[str] = ""
+
+class ReelFrame(BaseModel):
+    on_screen: str = Field(..., min_length=1)
+    spoken: str = Field(..., min_length=1)
+
+class ReelSchema(BaseModel):
+    id: Optional[str] = None
+    hook_archetype: Optional[str] = None
+    hook_text: str = Field(..., min_length=1)
+    hook_spoken: Optional[str] = None
+    frames: List[ReelFrame] = Field(..., min_length=5)
+    primary_cta: str = Field(..., min_length=1)
+    loop_note: Optional[str] = None
+    alt_hook: Optional[str] = None
+    caption: str = Field(..., min_length=50)
+    visual_direction: Optional[str] = None
+    music_vibe: Optional[str] = None
+    whatsapp_forward: Optional[str] = None
+    editorial_score: Optional[EditorialScore] = None
+    objective: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+class CarouselSlide(BaseModel):
+    slide: int
+    heading: str = Field(..., min_length=1)
+    body: str = Field(..., min_length=1)
+    visual: str = Field(..., min_length=1)
+
+class CarouselSchema(BaseModel):
+    id: Optional[str] = None
+    save_mechanic: Optional[str] = None
+    title: str = Field(..., min_length=1)
+    slides: List[CarouselSlide] = Field(..., min_length=6, max_length=8)
+    caption: str = Field(..., min_length=50)
+    editorial_score: Optional[EditorialScore] = None
+    objective: Optional[str] = None
+    primary_cta: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validate_final_slide(self) -> 'CarouselSchema':
+        if not self.slides:
+            return self
+        final_slide = self.slides[-1]
+        text = (final_slide.heading + " " + final_slide.body).lower()
+        if "p3online.in" not in text:
+            raise ValueError("Final carousel slide missing website")
+        if "purity beans" not in text:
+            raise ValueError("Final carousel slide missing product mention")
+        return self
+
+class InstagramSchema(BaseModel):
+    caption: str = Field(..., min_length=50)
+    image_prompt: Optional[str] = None
+    image_alt: Optional[str] = None
+    post_type: Optional[str] = None
+    hook_line: Optional[str] = None
+    editorial_score: Optional[EditorialScore] = None
+    objective: Optional[str] = None
+    primary_cta: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+class LinkedinSchema(BaseModel):
+    hook: str = Field(..., min_length=20)
+    body: str = Field(..., min_length=300)
+    cta: str = Field(..., min_length=20)
+    angle: Optional[str] = None
+    brand_bridge: Optional[str] = None
+    closing_question: Optional[str] = None
+    hashtags: Optional[str] = None
+    image_prompt: Optional[str] = None
+    objective: Optional[str] = None
+    primary_cta: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+class BlogSchema(BaseModel):
+    title: str = Field(..., min_length=1)
+    meta_description: str = Field(..., min_length=1)
+    introduction: str = Field(..., min_length=1)
+    body: str = Field(..., min_length=1000)
+    conclusion: str = Field(..., min_length=1)
+    objective: Optional[str] = None
+    primary_cta: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validate_length(self) -> 'BlogSchema':
+        intro = self.introduction or ""
+        body = self.body or ""
+        conclusion = self.conclusion or ""
+        total_words = len((intro + " " + body + " " + conclusion).split())
+        if total_words < 800:
+            raise ValueError("Blog must contain at least 800 words")
+        return self
+
+class YoutubeShortScene(BaseModel):
+    scene: int
+    type: str = Field(..., min_length=1)
+    duration_s: float
+    on_screen: str = Field(..., min_length=1)
+    spoken: str = Field(..., min_length=1)
+    visual_direction: str = Field(..., min_length=1)
+
+class YoutubeShortSchema(BaseModel):
+    # Format 1 (simplified schema requested by user)
+    hook: Optional[str] = Field(None, min_length=20)
+    script: Optional[str] = Field(None, min_length=100)
+    cta: Optional[str] = Field(None, min_length=20)
+    
+    # Format 2 (existing prompt and video_prompts structure)
+    product: Optional[str] = Field(None, min_length=1)
+    tagline: Optional[str] = Field(None, min_length=1)
+    emotion_arc: Optional[str] = Field(None, min_length=1)
+    scenes: Optional[List[YoutubeShortScene]] = Field(None, min_length=5)
+    audio_direction: Optional[str] = Field(None, min_length=1)
+    edit_pacing: Optional[str] = Field(None, min_length=1)
+    
+    objective: Optional[str] = None
+    primary_cta: Optional[str] = None
+    success_metric: Optional[str] = None
+    target: Optional[int] = None
+
+    @model_validator(mode="after")
+    def validate_youtube_short(self) -> 'YoutubeShortSchema':
+        has_format1 = (
+            self.hook is not None 
+            and self.script is not None 
+            and self.cta is not None
+        )
+        has_format2 = (
+            self.product is not None 
+            and self.tagline is not None 
+            and self.scenes is not None
+            and len(self.scenes) >= 5
+        )
+        
+        if not (has_format1 or has_format2):
+            raise ValueError(
+                "YouTube Short must contain either (hook, script, cta) or (product, tagline, scenes with >= 5 scenes)"
+            )
+        return self
+
+def validate_or_fail(schema, payload):
+    """
+    Validate the dictionary payload against the specified Pydantic schema model.
+    Raises ValidationError if validation fails.
+    """
+    return schema.model_validate(payload)

@@ -173,8 +173,12 @@ def _do_research() -> dict:
     return run_research()
 
 
-_QUALITY_THRESHOLD = float(os.getenv("QUALITY_THRESHOLD", "7.0"))
 _QUALITY_MAX_REGEN = int(os.getenv("QUALITY_MAX_REGEN", "2"))   # max regeneration attempts
+
+
+def _validate_piece_copy(label: str, piece: dict) -> tuple[bool, list[str]]:
+    from content_generator.core.brand_validator import validate_asset
+    return validate_asset(label, piece)
 
 
 def _do_editorial(content: dict) -> None:
@@ -183,13 +187,18 @@ def _do_editorial(content: dict) -> None:
     attempt regeneration up to QUALITY_MAX_REGEN times before accepting.
     """
     from content_generator.agents.editorial import review_content
+    from content_generator.core.editorial_engine import normalize_editorial_result, get_current_pass_score
 
     review_targets = [
         ("reel_1",         "reels",         0),
         ("reel_2",         "reels",         1),
         ("carousel",       "carousel",      None),
         ("instagram_post", "instagram_post", None),
+        ("linkedin_post",  "linkedin_post",  None),
+        ("blog_post",      "blog_post",      None),
     ]
+
+    threshold = get_current_pass_score()
 
     for label, key, idx in review_targets:
         # Extract piece
@@ -203,20 +212,35 @@ def _do_editorial(content: dict) -> None:
             continue
 
         for attempt in range(_QUALITY_MAX_REGEN + 1):
-            review = review_content(piece, label=label)
-            piece["editorial_score"] = review
-            score  = review.get("overall", 0)
-            verdict = review.get("verdict", "")
+            is_copy_ok, copy_issues = _validate_piece_copy(label, piece)
+            
+            if is_copy_ok:
+                review = review_content(piece, label=label)
+                review = normalize_editorial_result(review)
+                piece["editorial_score"] = review
+                score  = review.get("overall", 0)
+                verdict = review.get("verdict", "")
 
-            if score >= _QUALITY_THRESHOLD:
-                logger.info("[editorial] %s PASS — score %.1f", label, score)
-                break
+                if verdict == "PASS":
+                    logger.info("[editorial] %s PASS — score %.1f (threshold %.1f)", label, score, threshold)
+                    break
 
-            feedback = review.get("feedback", "")
-            logger.warning(
-                "[editorial] %s REJECT — score %.1f | feedback: %s | attempt %d/%d",
-                label, score, feedback, attempt + 1, _QUALITY_MAX_REGEN + 1,
-            )
+                feedback = review.get("feedback", "")
+                logger.warning(
+                    "[editorial] %s REJECT — score %.1f | feedback: %s | attempt %d/%d",
+                    label, score, feedback, attempt + 1, _QUALITY_MAX_REGEN + 1,
+                )
+            else:
+                feedback = f"Brand copy validation failed: {copy_issues}"
+                piece["editorial_score"] = {
+                    "overall": 0.0,
+                    "verdict": "REJECT",
+                    "feedback": feedback
+                }
+                logger.warning(
+                    "[editorial] %s REJECT (Brand validation failed) | issues: %s | attempt %d/%d",
+                    label, copy_issues, attempt + 1, _QUALITY_MAX_REGEN + 1,
+                )
 
             if attempt < _QUALITY_MAX_REGEN:
                 logger.info("[editorial] Regenerating %s (attempt %d)...", label, attempt + 2)
@@ -234,8 +258,8 @@ def _do_editorial(content: dict) -> None:
                     break
             else:
                 logger.warning(
-                    "[editorial] %s final score %.1f below threshold %.1f — publishing anyway",
-                    label, score, _QUALITY_THRESHOLD,
+                    "[editorial] %s final score below threshold %.1f — keeping as is (will be filtered before publishing)",
+                    label, threshold,
                 )
 
 
@@ -247,7 +271,9 @@ def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> 
     try:
         from content_generator.providers.llm_router import call as llm_call
         from content_generator.prompts.brand import brand_block
+        from content_generator.core.editorial_engine import get_current_pass_score
 
+        threshold = get_current_pass_score()
         piece_json = str(piece)[:800]
         regen_prompt = (
             f"{brand_block()}\n\n"
@@ -255,7 +281,7 @@ def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> 
             f"ORIGINAL PIECE ({label}):\n{piece_json}\n\n"
             f"REJECTION FEEDBACK:\n{feedback}\n\n"
             f"REQUIREMENTS:\n"
-            f"- Score must be 7.0 or higher\n"
+            f"- Score must be {threshold} or higher\n"
             f"- Keep the same format/structure as the original\n"
             f"- Fix the specific issues mentioned in the feedback\n"
             f"- More scroll-stopping hook, stronger CTA, clearer value\n\n"
@@ -341,9 +367,35 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
 
 
 def _do_publish(content: dict, day_number: int) -> dict:
-    """Post generated content to all configured social platforms."""
+    """Post today's content, filtering out any invalid/failed assets."""
+    from content_generator.core.editorial_engine import pre_publish_check, get_valid_assets
+    
+    # 1. Run pre-publish check (raises exception and aborts if < 4 valid assets)
+    pre_publish_check(content)
+    
+    # 2. Filter out invalid assets so publishers skip them
+    valid_assets = get_valid_assets(content)
+    filtered_content = content.copy()
+    
+    if "reel_1" not in valid_assets:
+        if filtered_content.get("reels"):
+            filtered_content["reels"][0] = {}
+    if "reel_2" not in valid_assets:
+        if filtered_content.get("reels") and len(filtered_content["reels"]) > 1:
+            filtered_content["reels"][1] = {}
+    if "carousel" not in valid_assets:
+        filtered_content["carousel"] = {}
+    if "instagram_post" not in valid_assets:
+        filtered_content["instagram_post"] = {}
+    if "linkedin_post" not in valid_assets:
+        filtered_content["linkedin_post"] = {}
+    if "blog_post" not in valid_assets:
+        filtered_content["blog_post"] = {}
+    if "yt_short" not in valid_assets:
+        filtered_content["yt_short"] = {}
+
     from content_generator.publisher.dispatcher import publish_all
-    return publish_all(content, day_number=day_number)
+    return publish_all(filtered_content, day_number=day_number)
 
 
 def _do_founder_report(content: dict, nurture_result: dict, publish_result: dict = None) -> bool:

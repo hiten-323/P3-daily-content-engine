@@ -97,23 +97,36 @@ def generate_image(
     Returns:
         Local file path (never None if Pillow is installed).
     """
+    REFERENCE_JAR = "brand_assets/puritybeans_reference.png"
+    if not os.path.exists(REFERENCE_JAR):
+        logger.warning("[image] REFERENCE JAR MISSING: %s. Disabling image generation.", REFERENCE_JAR)
+        return None
+
     from content_generator.creative.brand_guardrails import enforce_brand_prompt
     safe_prompt = enforce_brand_prompt(prompt)
 
+    # Inject exact Purity Beans reference jar instructions into AI prompt
+    ai_prompt = f"""IMPORTANT:
+Use exact Purity Beans jar matching supplied reference image.
+No generic coffee jars.
+No fictional labels.
+
+{safe_prompt}"""
+
     # 1. Hugging Face (free with token)
     if _HF_TOKEN:
-        path = _huggingface(safe_prompt, width, height, label, seed)
+        path = _huggingface(ai_prompt, width, height, label, seed)
         if path:
             return path
 
     # 2. Pollinations (free anonymous — works in some environments)
-    path = _pollinations(safe_prompt, width, height, label, seed)
+    path = _pollinations(ai_prompt, width, height, label, seed)
     if path:
         return path
 
     # 3. fal.ai (paid fallback)
     if _FAL_KEY:
-        path = _fal_flux(safe_prompt, width, height, label, seed)
+        path = _fal_flux(ai_prompt, width, height, label, seed)
         if path:
             return path
 
@@ -274,6 +287,8 @@ def _fal_flux(
             "image_size": {"width": width, "height": height},
             "num_images": 1,
             "output_format": "jpeg",
+            "reference_image": "brand_assets/puritybeans_reference.png",
+            "strength": 0.9,
         }
         if seed is not None:
             args["seed"] = seed

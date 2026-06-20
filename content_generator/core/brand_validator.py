@@ -1,0 +1,204 @@
+"""
+Brand copy validator — validates text assets against language requirements,
+required brand facts, prohibited claims, and website references.
+"""
+import logging
+from content_generator.core.brand_guard import (
+    BRAND, FORBIDDEN_TERMS, BRAND_FACTS, WEBSITE_PATTERNS, BRAND_FACT_ALIASES,
+    STRICT_LANGUAGE_MODE, MIN_COPY_LENGTH
+)
+
+logger = logging.getLogger(__name__)
+
+def validate_language(text: str) -> bool:
+    """
+    Validate that the text is in English.
+    For short text (under 50 characters), skip detection to avoid false positives.
+    """
+    cleaned = text.strip()
+    if len(cleaned) < 50:
+        return True
+    try:
+        from langdetect import detect
+        return detect(cleaned) == "en"
+    except Exception as e:
+        logger.error("Language detection failed: %s", e)
+        if STRICT_LANGUAGE_MODE:
+            return False
+        return True
+
+def validate_brand_facts(text: str) -> bool:
+    """
+    Check if the text contains at least one of the required brand facts
+    or their configured aliases.
+    """
+    text_lower = text.lower()
+    
+    # Check core claims from BRAND_FACTS
+    for fact in BRAND_FACTS["core_claims"]:
+        if fact.lower() in text_lower:
+            return True
+            
+    # Check aliases from BRAND_FACT_ALIASES
+    for fact_name, aliases in BRAND_FACT_ALIASES.items():
+        for alias in aliases:
+            if alias.lower() in text_lower:
+                return True
+                
+    return False
+
+def validate_brand_mention(text: str) -> bool:
+    """Check if 'purity beans' is in text."""
+    return "purity beans" in text.lower()
+
+def validate_no_prohibited_claims(text: str) -> bool:
+    """
+    Verify that no forbidden medical/unsupported claims are made.
+    Returns True if clean, False if forbidden term found.
+    """
+    text_lower = text.lower()
+    for term in FORBIDDEN_TERMS:
+        if term.lower() in text_lower:
+            logger.warning("Prohibited claim detected: '%s'", term)
+            return False
+    return True
+
+def validate_website(text: str) -> bool:
+    """
+    Validate that the Purity Beans website is referenced using approved patterns.
+    """
+    text_lower = text.lower()
+    return any(pattern.lower() in text_lower for pattern in WEBSITE_PATTERNS)
+
+def validate_asset_copy(
+    text: str,
+    check_brand_facts: bool = True,
+    check_website: bool = False,
+    check_brand_mention: bool = True,
+    check_length: bool = True
+) -> tuple[bool, list[str]]:
+    """
+    Perform all brand validations in order:
+    1. Empty check
+    2. Language check
+    3. Brand mention check
+    4. Brand facts check
+    5. Prohibited claims check
+    6. Website check
+    7. Minimum length check
+    """
+    issues = []
+    
+    # 1. Empty check
+    if not text or not text.strip():
+        return False, ["Empty content"]
+        
+    # 2. Language check
+    if not validate_language(text):
+        issues.append("Language is not English")
+        
+    # 3. Brand mention check
+    if check_brand_mention and not validate_brand_mention(text):
+        issues.append("Missing brand mention")
+        
+    # 4. Brand facts check
+    if check_brand_facts and not validate_brand_facts(text):
+        issues.append("Missing required brand facts")
+        
+    # 5. Prohibited claims check
+    if not validate_no_prohibited_claims(text):
+        issues.append("Contains prohibited medical or weight loss claims")
+        
+    # 6. Website check
+    if check_website and not validate_website(text):
+        issues.append("Missing website reference")
+        
+    # 7. Minimum length check
+    if check_length and len(text.strip()) < MIN_COPY_LENGTH:
+        issues.append(f"Content too short (< {MIN_COPY_LENGTH} chars)")
+        
+    return len(issues) == 0, issues
+
+def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
+    """
+    Validate a complete content asset dictionary based on its type.
+    """
+    if not isinstance(piece, dict) or not piece:
+        return False, ["Empty content dictionary"]
+
+    # Normalize labels
+    clean_label = label.lower().strip()
+
+    if clean_label in ("reel_1", "reel_2"):
+        caption = piece.get("caption", "")
+        # Validate Reel caption (requires brand facts, website, mention, length)
+        is_ok, issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        if not is_ok:
+            return False, [f"Reel caption error: {issues}"]
+            
+        # Validate Reel overlays (on_screen text inside frames) - naturally short, no facts/website/length/mention
+        frames = piece.get("frames") or []
+        for i, frame in enumerate(frames):
+            if isinstance(frame, dict):
+                on_screen = frame.get("on_screen", "")
+                is_frame_ok, frame_issues = validate_asset_copy(
+                    on_screen, 
+                    check_brand_facts=False, 
+                    check_website=False, 
+                    check_brand_mention=False, 
+                    check_length=False
+                )
+                if not is_frame_ok:
+                    return False, [f"Reel frame {i+1} overlay error: {frame_issues}"]
+        return True, []
+
+    elif clean_label == "carousel":
+        caption = piece.get("caption", "")
+        # Validate Carousel caption (requires brand facts, website, mention, length)
+        is_ok, issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        if not is_ok:
+            return False, [f"Carousel caption error: {issues}"]
+            
+        # Validate Carousel slides (heading/body) - naturally short
+        slides = piece.get("slides") or []
+        for i, slide in enumerate(slides):
+            if isinstance(slide, dict):
+                slide_text = f"{slide.get('heading', '')} {slide.get('body', '')}"
+                is_slide_ok, slide_issues = validate_asset_copy(
+                    slide_text,
+                    check_brand_facts=False,
+                    check_website=False,
+                    check_brand_mention=False,
+                    check_length=False
+                )
+                if not is_slide_ok:
+                    return False, [f"Carousel slide {i+1} error: {slide_issues}"]
+        return True, []
+
+    elif clean_label == "instagram_post":
+        caption = piece.get("caption", "")
+        return validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+
+    elif clean_label == "linkedin_post":
+        combined_text = f"{piece.get('hook', '')} {piece.get('body', '')} {piece.get('cta', '')}"
+        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+
+    elif clean_label == "blog_post":
+        combined_text = f"{piece.get('title', '')} {piece.get('introduction', '')} {piece.get('body', '')} {piece.get('conclusion', '')}"
+        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+
+    elif clean_label == "yt_short":
+        # Support both Format 1 (hook/script/cta) and Format 2 (scenes)
+        if "scenes" in piece and piece["scenes"]:
+            scenes = piece.get("scenes") or []
+            combined_text = " ".join([f"{s.get('on_screen', '')} {s.get('spoken', '')}" for s in scenes if isinstance(s, dict)])
+            combined_text = f"{piece.get('product', '')} {piece.get('tagline', '')} {combined_text}"
+        else:
+            combined_text = f"{piece.get('hook', '')} {piece.get('script', '')} {piece.get('cta', '')}"
+            
+        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+
+    else:
+        # Fallback validation for any other type
+        combined_text = " ".join([str(v) for v in piece.values() if isinstance(v, str)])
+        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)

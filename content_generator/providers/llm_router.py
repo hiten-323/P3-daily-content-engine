@@ -98,10 +98,10 @@ def _record_usage(label: str, provider: str, usage: dict) -> None:
 # ── Provider call table ───────────────────────────────────────────────────────
 
 _PROVIDERS = [
-    ("gemini",     gemini.call),
-    ("deepseek",   deepseek.call),
-    ("cerebras",   cerebras.call),
     ("groq",       groq.call),
+    ("gemini",     gemini.call),
+    ("cerebras",   cerebras.call),
+    ("deepseek",   deepseek.call),
     ("openrouter", openrouter.call),
 ]
 
@@ -158,13 +158,18 @@ def _try_provider(
 def call(prompt: str, label: str, max_tokens: int = 3000) -> dict:
     """
     Route a prompt through providers in order, parse the response, return a dict.
+    Injects the centralized brand system prompt instructions before routing.
     Raises RuntimeError if all providers fail.
     """
     logger.info("[pipeline] Generating %s ...", label)
 
+    from content_generator.core.brand_guard import build_system_prompt
+    system_rules = build_system_prompt()
+    full_prompt = f"SYSTEM RULES:\n{system_rules}\n\nUSER REQUEST:\n{prompt}"
+
     for name, fn in _PROVIDERS:
         retries = 3 if name == "gemini" else 2 if name in ("groq", "deepseek", "cerebras") else 4
-        raw = _try_provider(name, fn, prompt, max_tokens, label, retries)
+        raw = _try_provider(name, fn, full_prompt, max_tokens, label, retries)
         if raw:
             data = extract(raw)
             logger.info("[pipeline] ✅ %s done", label)
