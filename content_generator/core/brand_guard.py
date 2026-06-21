@@ -59,6 +59,20 @@ def get_product_references(text: str) -> list[str]:
     # No specific product detected — use all available
     return [p for p in REFERENCE_IMAGES if os.path.exists(p)]
 
+BRAND_ASSET_DIRS = {
+    "jars":           "brand_assets/jars/",
+    "logos":          "brand_assets/logos/",
+    "lifestyle":      "brand_assets/lifestyle/",
+    "certifications": "brand_assets/certifications/",
+    "packaging":      "brand_assets/packaging/",
+}
+
+# Key assets injected into every image prompt when available
+BRAND_OVERLAY_ASSETS = {
+    "logo":  "brand_assets/logos/puritybeans_logo.png",
+    "fssai": "brand_assets/certifications/fssai_badge.png",
+}
+
 BRAND_FACTS = {
     "brand_name": "Purity Beans",
     "website": "https://p3online.in",
@@ -94,6 +108,44 @@ REQUIRED_DAILY_ASSETS = [
     "blog_post",
     "yt_short"
 ]
+
+PRODUCT_CATALOG = {
+    "bold": {
+        "name":     "Purity Beans Bold",
+        "tagline":  "100% Agglomerated Coffee — Full Strength",
+        "skus":     ["bold_50g", "bold_100g"],
+        "best_for": ["strong coffee drinkers", "filter coffee lovers", "home brewers"],
+    },
+    "ultra_blend": {
+        "name":     "Purity Beans Ultra Blend",
+        "tagline":  "Agglomerated Coffee — Balanced Everyday Brew",
+        "skus":     ["ultra_blend_50g", "ultra_blend_100g"],
+        "best_for": ["corporate offices", "everyday drinkers", "first-time buyers"],
+    },
+    "purica": {
+        "name":     "Purity Beans Purica",
+        "tagline":  "Gourmet Instant Coffee Granules",
+        "skus":     ["purica_50g", "purica_100g"],
+        "best_for": ["hotels", "hospitality", "premium gifting", "cafes"],
+    },
+    "purista": {
+        "name":     "Purity Beans Purista",
+        "tagline":  "Premium Instant Coffee",
+        "skus":     ["purista_50g", "purista_100g"],
+        "best_for": ["premium buyers", "corporate gifting", "connoisseurs"],
+    },
+}
+
+SEGMENT_TO_PRODUCT = {
+    "corporate offices":   "ultra_blend",
+    "hotels":              "purica",
+    "hospitality":         "purica",
+    "strong coffee":       "bold",
+    "premium buyers":      "purista",
+    "corporate gifting":   "purista",
+    "everyday drinkers":   "ultra_blend",
+    "first-time buyers":   "ultra_blend",
+}
 
 CONTENT_PILLARS = [
     "sales",
