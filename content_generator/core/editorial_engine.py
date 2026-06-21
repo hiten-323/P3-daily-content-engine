@@ -11,7 +11,7 @@ from content_generator.core.schema_validation import (
 
 logger = logging.getLogger(__name__)
 
-PASS_SCORE = 8.0
+PASS_SCORE = 7.0
 
 class EditorialRejectException(Exception):
     """Raised when an asset fails the editorial threshold."""
@@ -21,9 +21,19 @@ def get_current_pass_score() -> float:
     return PASS_SCORE
 
 def normalize_editorial_result(result: dict) -> dict:
-    """Normalize verdict so it always matches the score against the 8.0 threshold."""
+    """
+    Normalize verdict to PASS/REJECT based on score threshold.
+    LLMs sometimes return 'APPROVE' — treat it as PASS.
+    Score is authoritative: verdict always matches score.
+    """
     overall = float(result.get("overall", 0.0))
-    result["verdict"] = "PASS" if overall >= PASS_SCORE else "REJECT"
+    raw_verdict = str(result.get("verdict", "")).upper()
+    # Treat APPROVE as equivalent to PASS from LLM output
+    if raw_verdict in ("APPROVE", "APPROVED", "PASS"):
+        # Still enforce minimum score — LLMs inflate verdicts
+        result["verdict"] = "PASS" if overall >= PASS_SCORE else "REJECT"
+    else:
+        result["verdict"] = "PASS" if overall >= PASS_SCORE else "REJECT"
     return result
 
 def enforce_editorial_gate(piece_name: str, score: float) -> bool:

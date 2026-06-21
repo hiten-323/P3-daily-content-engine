@@ -116,13 +116,13 @@ Reference images (product-matched):
 
 {safe_prompt}"""
 
-    # 1. Hugging Face (free with token)
-    if _HF_TOKEN:
+    # 1. Hugging Face (free with token — skip entirely if no token to avoid 402)
+    if _HF_TOKEN and _HF_TOKEN.startswith("hf_"):
         path = _huggingface(ai_prompt, width, height, label, seed)
         if path:
             return path
 
-    # 2. Pollinations (free anonymous — works in some environments)
+    # 2. Pollinations (free anonymous — works in most environments)
     path = _pollinations(ai_prompt, width, height, label, seed)
     if path:
         return path
