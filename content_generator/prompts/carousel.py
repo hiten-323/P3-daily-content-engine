@@ -1,34 +1,53 @@
-"""7-slide Instagram Carousel prompt."""
+"""Instagram Carousel prompt — full publish-ready asset."""
 from content_generator.prompts.brand import brand_block
 from content_generator.rotation import WEBSITE_URL
 
+HASHTAG_25 = (
+    "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime "
+    "#PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity "
+    "#IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands "
+    "#CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife "
+    "#PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience"
+)
+
 
 def build(mech: tuple, avoid: str) -> str:
-    from config.brand_config import HASHTAG_SETS
-    hs = HASHTAG_SETS["carousel"]
-
     return f"""{brand_block()}
 
-Generate ONE 7-slide Instagram Carousel for Purity Beans. Return a single JSON object.
+Generate ONE complete publish-ready Instagram Carousel for Purity Beans. Return a single JSON object.
 
 {avoid}
 
 SAVE MECHANIC: [{mech[0]}] — {mech[1]}
 Every slide must make the viewer think: I need to save this for later.
-HASHTAGS (8-12 max): {hs}
+PURPOSE: Maximize saves and shares through comparison, myth-busting, coffee tips, education, or buying guide.
+
+ABSOLUTE RULES:
+- NEVER invent statistics or percentages
+- NEVER make medical claims
+- Minimum 6 slides, maximum 8 slides
+- Final slide MUST include CTA + {WEBSITE_URL} + mention of Purity Beans
+- caption MUST be 200-300 words
+- comment_trigger, save_trigger, share_trigger, hashtags are MANDATORY
 
 {{
   "id": "carousel_1",
   "save_mechanic": "{mech[0]}",
-  "title": "7 WORDS MAX — curiosity + utility combined",
+  "title": "7 WORDS MAX — curiosity + utility that forces the save",
   "slides": [
-    {{"slide": 1, "heading": "COVER HOOK — 6 WORDS MAX", "body": "Stat or promise that forces the swipe. Max 12 words.", "visual": "Dark marble, product hero, single gold beam"}},
-    {{"slide": 2, "heading": "Point 1", "body": "One precise Indian market fact. Max 20 words.", "visual": "Dark bg, white text, one visual accent"}},
-    {{"slide": 3, "heading": "Point 2", "body": "More specific than slide 2. Makes them nod. Max 20 words.", "visual": "Ingredient or product detail"}},
-    {{"slide": 4, "heading": "THE REVELATION", "body": "The I-did-not-know-this moment. Industry data or hidden ingredient truth. Max 25 words.", "visual": "Before/after or label close-up"}},
-    {{"slide": 5, "heading": "Make It Personal", "body": "Specific Indian scenario — student 1am / office 2pm / parent pre-commute. Max 25 words.", "visual": "Indian person + coffee, natural light"}},
-    {{"slide": 6, "heading": "The Solution", "body": "Purity Beans. Zero chicory. Rs18/cup. Earned, not pitched. Max 20 words.", "visual": "Product hero — full jar, cinematic, gold accent"}},
-    {{"slide": 7, "heading": "Share This", "body": "Tag the friend who [specific relatable behaviour]. {WEBSITE_URL}", "visual": "Brand CTA — dark bg, logo, minimal gold"}}
+    {{"slide": 1, "heading": "COVER HOOK — 6 WORDS MAX", "body": "Pattern interrupt. Promise that forces the swipe. What they will learn.", "visual": "Dark marble, Purity Beans jar hero, single gold beam"}},
+    {{"slide": 2, "heading": "The Problem", "body": "What most people do not know about their daily coffee. Specific, relatable, not statistical.", "visual": "Dark bg, white text, one visual accent"}},
+    {{"slide": 3, "heading": "Myth Busted", "body": "The assumption everyone holds that is actually wrong. Contrarian and surprising.", "visual": "Ingredient or product detail close-up"}},
+    {{"slide": 4, "heading": "The Revelation", "body": "The I-did-not-know-this moment. Specific truth about coffee purity vs adulterants.", "visual": "Before/after or label close-up"}},
+    {{"slide": 5, "heading": "Why It Matters", "body": "Specific Indian scenario — what this means for a real coffee lover in India.", "visual": "Indian person + coffee, natural light"}},
+    {{"slide": 6, "heading": "Purity Beans Difference", "body": "No preservatives. No artificial aroma. 100% coffee. Zero chicory. Available freeze-dried and agglomerated. Shop {WEBSITE_URL}", "visual": "Product hero — full Purity Beans jar, cinematic, gold accent"}},
+    {{"slide": 7, "heading": "Share This", "body": "Tag the friend who deserves real coffee. Visit {WEBSITE_URL}", "visual": "Brand CTA — dark bg, Purity Beans logo, minimal gold"}}
   ],
-  "caption": "Paste-ready. Hook (12 words) + what they'll learn + save/tag CTA + {WEBSITE_URL} + hashtags. Under 150 words."
+  "caption": "HOOK LINE that stops the scroll.\\n\\nWhat you will learn in this carousel (preview the value). Tell the story of why this matters to a real coffee lover. Mention Purity Beans naturally. Include: No preservatives. No artificial aroma. 100% coffee. Freeze-dried and agglomerated variants.\\n\\nThis is a 200-300 word paste-ready caption with emotional storytelling and brand facts.\\n\\nShop now: {WEBSITE_URL}",
+  "cta": "Direct action with {WEBSITE_URL}",
+  "comment_trigger": "Comment SAVE if you are switching to real coffee this week.",
+  "save_trigger": "Save this carousel — it will change how you buy coffee forever.",
+  "share_trigger": "Share with someone who deserves to know what is really in their coffee.",
+  "seo_keywords": ["premium instant coffee", "gourmet instant coffee", "freeze dried coffee", "agglomerated coffee", "coffee without preservatives", "pure instant coffee india", "best instant coffee brand india"],
+  "hashtags": "{HASHTAG_25}"
 }}"""

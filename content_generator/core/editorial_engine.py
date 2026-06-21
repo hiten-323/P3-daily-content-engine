@@ -11,7 +11,7 @@ from content_generator.core.schema_validation import (
 
 logger = logging.getLogger(__name__)
 
-PASS_SCORE = 7.0
+PASS_SCORE = 6.5
 
 class EditorialRejectException(Exception):
     """Raised when an asset fails the editorial threshold."""

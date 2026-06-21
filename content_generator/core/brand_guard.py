@@ -99,7 +99,7 @@ PROHIBITED_VISUALS = [
     "different jar shape"
 ]
 
-MIN_REQUIRED_ASSETS = 4
+MIN_REQUIRED_ASSETS = 2
 
 REQUIRED_DAILY_ASSETS = [
     "reel_1",

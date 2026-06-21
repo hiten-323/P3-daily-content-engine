@@ -1,29 +1,45 @@
-"""Static single-image Instagram feed post prompt."""
+"""Instagram single-image post prompt — full publish-ready asset."""
 from content_generator.prompts.brand import brand_block
 from content_generator.rotation import COMMERCIAL_EMOTIONS, WEBSITE_URL
 
+HASHTAG_25 = (
+    "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime "
+    "#PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity "
+    "#IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands "
+    "#CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife "
+    "#PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience"
+)
+
 
 def build(day: int, avoid: str) -> str:
-    from config.brand_config import HASHTAG_SETS
-    hs      = HASHTAG_SETS.get("carousel", "")
     emotion = COMMERCIAL_EMOTIONS[day % len(COMMERCIAL_EMOTIONS)]
 
     return f"""{brand_block()}
 
-Generate ONE static Instagram feed post (single image) for Purity Beans. Return a single JSON object.
+Generate ONE complete publish-ready Instagram feed post (single image) for Purity Beans. Return a single JSON object.
 
 {avoid}
 
 EMOTION TO EVOKE: {emotion[0]} — {emotion[1]}
-HASHTAGS (8-12 max): {hs}
 
-This is a single image post — not a reel, not a carousel.
-The caption must stand alone and drive engagement without video or swipes.
+ABSOLUTE RULES:
+- NEVER invent statistics or percentages
+- NEVER make medical claims
+- Caption MUST be 150-250 words
+- 'Purity Beans' MUST appear in caption
+- '{WEBSITE_URL}' MUST appear in caption and CTA
+- comment_trigger, save_trigger, share_trigger, hashtags are MANDATORY
 
 {{
-  "caption": "Paste-ready. Line 1: scroll-stopping statement (max 12 words, no emoji). Line 2-3: the insight or story (Indian voice, specific detail). Line 4: CTA — comment, share, or {WEBSITE_URL}. Line 5: hashtags. Total under 120 words.",
-  "image_prompt": "Detailed AI image generation prompt — subject, lighting, composition, colour grade, mood. Usable in Midjourney or Firefly. 1080x1080 square. No text in image.",
-  "image_alt": "Instagram alt text for accessibility and SEO — under 100 chars",
-  "post_type": "one of: product-truth / founder-moment / customer-story / cultural-hook",
-  "hook_line": "The first line of the caption repeated here — must stop the More button from cutting off the key message"
+  "caption": "HOOK LINE that stops the scroll (max 12 words, no emoji).\\n\\nShort story or insight coffee lovers relate to. Introduce Purity Beans naturally. Explain why real coffee drinkers should care. Mention: No preservatives. No artificial aroma. 100% coffee. Freeze-dried and agglomerated variants available.\\n\\nShop now: {WEBSITE_URL}\\n\\nThis caption must be 150-250 words. Paste-ready. Emotional storytelling with brand facts woven in naturally.",
+  "cta": "Direct action with {WEBSITE_URL}",
+  "comment_trigger": "Comment COFFEE if you are a real coffee lover who refuses to drink chicory.",
+  "save_trigger": "Save this post before your next grocery run.",
+  "share_trigger": "Share with someone who starts every morning with coffee.",
+  "image_prompt": "Detailed AI image prompt — Purity Beans jar, dark marble surface, warm amber studio light, premium editorial FMCG photography, 1080x1080. No text in image. No generic jars.",
+  "image_alt": "Purity Beans premium instant coffee jar — no preservatives, no artificial aroma, 100% coffee",
+  "post_type": "one of: product-truth / founder-moment / customer-story / cultural-hook / myth-busting",
+  "hook_line": "The first line of the caption repeated here — must stop scroll before the More button cuts it",
+  "seo_keywords": ["premium instant coffee", "gourmet instant coffee", "freeze dried coffee", "coffee without preservatives", "pure instant coffee india", "best instant coffee brand india"],
+  "hashtags": "{HASHTAG_25}"
 }}"""

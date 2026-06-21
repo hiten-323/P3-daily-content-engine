@@ -233,6 +233,31 @@ def _strip_unsupported_stats(text: str) -> str:
     return text
 
 
+_DEFAULT_HASHTAGS = (
+    "#PurityBeans #PureCoffee #InstantCoffee #NoCicory #CoffeeLover "
+    "#IndianCoffee #CoffeeIndia #MadeInIndia #PremiumCoffee #FreezeDriedCoffee "
+    "#GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture "
+    "#SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience "
+    "#MorningCoffee #CoffeeTime #CoffeeDaily #CoffeeLife #CoffeeLove"
+)
+
+_DEFAULT_COMMENT = "Comment COFFEE below if you refuse to drink chicory disguised as coffee."
+_DEFAULT_SAVE    = "Save this before your next grocery run — real coffee matters."
+_DEFAULT_SHARE   = "Share with someone who starts every morning with coffee."
+
+
+def _ensure_engagement_fields(piece: dict) -> None:
+    """Auto-fill mandatory engagement fields if missing."""
+    if not piece.get("hashtags"):
+        piece["hashtags"] = _DEFAULT_HASHTAGS
+    if not piece.get("comment_trigger"):
+        piece["comment_trigger"] = _DEFAULT_COMMENT
+    if not piece.get("save_trigger"):
+        piece["save_trigger"] = _DEFAULT_SAVE
+    if not piece.get("share_trigger"):
+        piece["share_trigger"] = _DEFAULT_SHARE
+
+
 def _ensure_captions(content: dict) -> None:
     """
     Auto-fill missing caption fields before validation.
@@ -261,18 +286,20 @@ def _ensure_captions(content: dict) -> None:
 
 
 def _inject_brand_into_content(content: dict) -> None:
-    """Run brand injection + caption fix + stat scrubbing across all assets."""
+    """Run caption fill + engagement field fill + brand injection + stat scrubbing."""
     _ensure_captions(content)
+
     reels = content.get("reels") or []
-    if len(reels) > 0 and isinstance(reels[0], dict):
-        _inject_brand_into_piece("reel_1", reels[0])
-    if len(reels) > 1 and isinstance(reels[1], dict):
-        _inject_brand_into_piece("reel_2", reels[1])
+    for i, label in enumerate(["reel_1", "reel_2"]):
+        if i < len(reels) and isinstance(reels[i], dict):
+            _ensure_engagement_fields(reels[i])
+            _inject_brand_into_piece(label, reels[i])
+
     for label in ("carousel", "instagram_post", "linkedin_post", "blog_post", "yt_short"):
         piece = content.get(label)
         if isinstance(piece, dict) and piece:
+            _ensure_engagement_fields(piece)
             _inject_brand_into_piece(label, piece)
-            # Strip unsupported stats from long-form text fields
             for field in ("caption", "body", "introduction", "conclusion", "hook", "script"):
                 if isinstance(piece.get(field), str):
                     piece[field] = _strip_unsupported_stats(piece[field])

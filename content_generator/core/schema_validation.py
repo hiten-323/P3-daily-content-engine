@@ -24,10 +24,16 @@ class ReelSchema(BaseModel):
     hook_text: str = Field(..., min_length=1)
     hook_spoken: Optional[str] = None
     frames: List[ReelFrame] = Field(..., min_length=5)
-    primary_cta: str = Field(..., min_length=1)
+    primary_cta: Optional[str] = None
+    cta: Optional[str] = None
     loop_note: Optional[str] = None
     alt_hook: Optional[str] = None
     caption: str = Field(..., min_length=50)
+    comment_trigger: str = Field(..., min_length=10)
+    save_trigger: str = Field(..., min_length=10)
+    share_trigger: str = Field(..., min_length=10)
+    hashtags: str = Field(..., min_length=10)
+    seo_keywords: Optional[List[str]] = None
     visual_direction: Optional[str] = None
     music_vibe: Optional[str] = None
     whatsapp_forward: Optional[str] = None
@@ -48,6 +54,12 @@ class CarouselSchema(BaseModel):
     title: str = Field(..., min_length=1)
     slides: List[CarouselSlide] = Field(..., min_length=6, max_length=8)
     caption: str = Field(..., min_length=50)
+    cta: Optional[str] = None
+    comment_trigger: str = Field(..., min_length=10)
+    save_trigger: str = Field(..., min_length=10)
+    share_trigger: str = Field(..., min_length=10)
+    hashtags: str = Field(..., min_length=10)
+    seo_keywords: Optional[List[str]] = None
     editorial_score: Optional[EditorialScore] = None
     objective: Optional[str] = None
     primary_cta: Optional[str] = None
@@ -68,6 +80,12 @@ class CarouselSchema(BaseModel):
 
 class InstagramSchema(BaseModel):
     caption: str = Field(..., min_length=50)
+    cta: Optional[str] = None
+    comment_trigger: str = Field(..., min_length=10)
+    save_trigger: str = Field(..., min_length=10)
+    share_trigger: str = Field(..., min_length=10)
+    hashtags: str = Field(..., min_length=10)
+    seo_keywords: Optional[List[str]] = None
     image_prompt: Optional[str] = None
     image_alt: Optional[str] = None
     post_type: Optional[str] = None
@@ -82,10 +100,10 @@ class LinkedinSchema(BaseModel):
     hook: str = Field(..., min_length=20)
     body: str = Field(..., min_length=300)
     cta: str = Field(..., min_length=20)
+    hashtags: str = Field(..., min_length=10)
     angle: Optional[str] = None
     brand_bridge: Optional[str] = None
     closing_question: Optional[str] = None
-    hashtags: Optional[str] = None
     image_prompt: Optional[str] = None
     objective: Optional[str] = None
     primary_cta: Optional[str] = None
@@ -122,19 +140,22 @@ class YoutubeShortScene(BaseModel):
     visual_direction: str = Field(..., min_length=1)
 
 class YoutubeShortSchema(BaseModel):
-    # Format 1 (simplified schema requested by user)
-    hook: Optional[str] = Field(None, min_length=20)
-    script: Optional[str] = Field(None, min_length=100)
-    cta: Optional[str] = Field(None, min_length=20)
-    
-    # Format 2 (existing prompt and video_prompts structure)
+    # Format 1 (simplified)
+    hook: Optional[str] = Field(None, min_length=10)
+    script: Optional[str] = Field(None, min_length=50)
+    cta: Optional[str] = Field(None, min_length=10)
+
+    # Format 2 (scene-based)
     product: Optional[str] = Field(None, min_length=1)
     tagline: Optional[str] = Field(None, min_length=1)
     emotion_arc: Optional[str] = Field(None, min_length=1)
     scenes: Optional[List[YoutubeShortScene]] = Field(None, min_length=5)
     audio_direction: Optional[str] = Field(None, min_length=1)
     edit_pacing: Optional[str] = Field(None, min_length=1)
-    
+
+    title: Optional[str] = None
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
     objective: Optional[str] = None
     primary_cta: Optional[str] = None
     success_metric: Optional[str] = None
@@ -143,26 +164,22 @@ class YoutubeShortSchema(BaseModel):
     @model_validator(mode="after")
     def validate_youtube_short(self) -> 'YoutubeShortSchema':
         has_format1 = (
-            self.hook is not None 
-            and self.script is not None 
+            self.hook is not None
+            and self.script is not None
             and self.cta is not None
         )
         has_format2 = (
-            self.product is not None 
-            and self.tagline is not None 
+            self.product is not None
+            and self.tagline is not None
             and self.scenes is not None
             and len(self.scenes) >= 5
         )
-        
         if not (has_format1 or has_format2):
             raise ValueError(
-                "YouTube Short must contain either (hook, script, cta) or (product, tagline, scenes with >= 5 scenes)"
+                "YouTube Short must contain either (hook, script, cta) or (product, tagline, scenes >= 5)"
             )
         return self
 
 def validate_or_fail(schema, payload):
-    """
-    Validate the dictionary payload against the specified Pydantic schema model.
-    Raises ValidationError if validation fails.
-    """
+    """Validate payload against Pydantic schema. Raises ValidationError on failure."""
     return schema.model_validate(payload)
