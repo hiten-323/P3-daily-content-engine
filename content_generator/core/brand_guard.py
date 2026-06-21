@@ -33,6 +33,32 @@ REFERENCE_IMAGES = [
     for angle   in ANGLES
 ]
 
+# Keywords that map content text → product slug
+PRODUCT_KEYWORDS: dict[str, list[str]] = {
+    "ultra_blend": ["ultra blend", "ultrablend", "ultra-blend"],
+    "bold":        ["bold"],
+    "purista":     ["purista"],
+    "purica":      ["purica"],
+}
+
+def get_product_references(text: str) -> list[str]:
+    """
+    Return only the jar reference images for the product mentioned in text.
+    Falls back to all available references if no product is detected.
+    """
+    import os
+    text_lower = text.lower()
+    for product, keywords in PRODUCT_KEYWORDS.items():
+        if any(kw in text_lower for kw in keywords):
+            refs = [
+                f"brand_assets/puritybeans_{product}_{size}_{angle}.png"
+                for size  in SIZES
+                for angle in ANGLES
+            ]
+            return [p for p in refs if os.path.exists(p)]
+    # No specific product detected — use all available
+    return [p for p in REFERENCE_IMAGES if os.path.exists(p)]
+
 BRAND_FACTS = {
     "brand_name": "Purity Beans",
     "website": "https://p3online.in",

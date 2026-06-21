@@ -97,10 +97,10 @@ def generate_image(
     Returns:
         Local file path (never None if Pillow is installed).
     """
-    from content_generator.core.brand_guard import REFERENCE_IMAGES
-    available_refs = [p for p in REFERENCE_IMAGES if os.path.exists(p)]
+    from content_generator.core.brand_guard import get_product_references, REFERENCE_IMAGES
+    available_refs = get_product_references(prompt)
     if not available_refs:
-        logger.warning("[image] REFERENCE JAR MISSING — no files found in %s. Skipping image generation.", REFERENCE_IMAGES)
+        logger.warning("[image] REFERENCE JAR MISSING — no matching files found. Skipping image generation.")
         return None
 
     from content_generator.creative.brand_guardrails import enforce_brand_prompt
@@ -111,7 +111,7 @@ def generate_image(
 Use the exact Purity Beans jar shown in the supplied reference images.
 No generic coffee jars. No fictional labels. No alternate packaging.
 
-Reference images available:
+Reference images (product-matched):
 {ref_list}
 
 {safe_prompt}"""
@@ -285,14 +285,14 @@ def _fal_flux(
 
     try:
         logger.info("[image] fal.ai %dx%d | '%s...'", width, height, prompt[:50])
-        from content_generator.core.brand_guard import REFERENCE_IMAGES
-        refs = [p for p in REFERENCE_IMAGES if os.path.exists(p)]
+        from content_generator.core.brand_guard import get_product_references
+        refs = get_product_references(prompt)
         args = {
             "prompt": prompt,
             "image_size": {"width": width, "height": height},
             "num_images": 1,
             "output_format": "jpeg",
-            "reference_images": refs or ["brand_assets/puritybeans_front.png"],
+            "reference_images": refs,
             "strength": 0.9,
         }
         if seed is not None:
