@@ -22,17 +22,15 @@ BRAND: BrandProfile = BrandProfile(
     jar_reference_path="brand_assets/puritybeans_front.png"
 )
 
+PRODUCTS = ["ultra_blend", "bold", "purista", "purica"]
+SIZES    = ["50g", "100g"]
+ANGLES   = ["front", "side", "lifestyle", "variant"]
+
 REFERENCE_IMAGES = [
-    # 50g variants
-    "brand_assets/puritybeans_50g_front.png",
-    "brand_assets/puritybeans_50g_side.png",
-    "brand_assets/puritybeans_50g_lifestyle.png",
-    "brand_assets/puritybeans_50g_variant.png",
-    # 100g variants
-    "brand_assets/puritybeans_100g_front.png",
-    "brand_assets/puritybeans_100g_side.png",
-    "brand_assets/puritybeans_100g_lifestyle.png",
-    "brand_assets/puritybeans_100g_variant.png",
+    f"brand_assets/puritybeans_{product}_{size}_{angle}.png"
+    for product in PRODUCTS
+    for size    in SIZES
+    for angle   in ANGLES
 ]
 
 BRAND_FACTS = {
