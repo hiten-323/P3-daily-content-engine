@@ -106,6 +106,19 @@ _PROVIDERS = [
 ]
 
 
+def any_provider_available() -> bool:
+    """Return True if at least one provider has an API key configured."""
+    from content_generator.providers import groq, cerebras, openrouter, gemini, deepseek
+    checks = [
+        groq.get_key(),
+        cerebras.get_key(),
+        openrouter.get_key(),
+        gemini.get_key(),
+        deepseek.get_key(),
+    ]
+    return any(k for k in checks if k)
+
+
 def _try_provider(
     name: str,
     call_fn,
