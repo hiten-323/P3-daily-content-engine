@@ -23,9 +23,16 @@ BRAND: BrandProfile = BrandProfile(
 )
 
 REFERENCE_IMAGES = [
-    "brand_assets/puritybeans_front.png",
-    "brand_assets/puritybeans_side.png",
-    "brand_assets/puritybeans_lifestyle.png",
+    # 50g variants
+    "brand_assets/puritybeans_50g_front.png",
+    "brand_assets/puritybeans_50g_side.png",
+    "brand_assets/puritybeans_50g_lifestyle.png",
+    "brand_assets/puritybeans_50g_variant.png",
+    # 100g variants
+    "brand_assets/puritybeans_100g_front.png",
+    "brand_assets/puritybeans_100g_side.png",
+    "brand_assets/puritybeans_100g_lifestyle.png",
+    "brand_assets/puritybeans_100g_variant.png",
 ]
 
 BRAND_FACTS = {
