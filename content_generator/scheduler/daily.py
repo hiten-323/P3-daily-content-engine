@@ -182,28 +182,34 @@ def _validate_piece_copy(label: str, piece: dict) -> tuple[bool, list[str]]:
     return validate_asset(label, piece)
 
 
-_BRAND_FOOTER = "\n\nPurity Beans — India's preservative-free instant coffee. Shop at p3online.in"
-
 def _inject_brand_into_piece(label: str, piece: dict) -> dict:
-    """Append brand mention + website to text fields so validator always passes."""
+    """
+    Ensure brand name and website appear in every text field.
+    Appends a natural CTA line only when missing — never duplicates.
+    """
     TEXT_FIELDS = {
         "reel_1":         ["caption"],
         "reel_2":         ["caption"],
         "carousel":       ["caption"],
         "instagram_post": ["caption"],
-        "linkedin_post":  ["hook", "body", "cta"],
-        "blog_post":      ["introduction", "conclusion"],
-        "yt_short":       ["hook", "script", "cta"],
+        "linkedin_post":  ["cta"],
+        "blog_post":      ["conclusion"],
+        "yt_short":       ["cta"],
     }
     fields = TEXT_FIELDS.get(label, [])
     for field in fields:
         val = piece.get(field)
-        if isinstance(val, str) and val.strip():
-            low = val.lower()
-            needs_brand   = "purity beans" not in low
-            needs_website = "p3online.in" not in low
-            if needs_brand or needs_website:
-                piece[field] = val.rstrip() + _BRAND_FOOTER
+        if not isinstance(val, str) or not val.strip():
+            continue
+        low = val.lower()
+        needs_brand   = "purity beans" not in low
+        needs_website = "p3online.in" not in low
+        if needs_brand and needs_website:
+            piece[field] = val.rstrip() + " Try Purity Beans — zero chicory, 100% pure coffee. Order at p3online.in"
+        elif needs_brand:
+            piece[field] = val.rstrip() + " — Purity Beans"
+        elif needs_website:
+            piece[field] = val.rstrip() + " Order at p3online.in"
     return piece
 
 

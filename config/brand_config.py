@@ -12,6 +12,7 @@ Import from anywhere in the engine:
 
 BRAND = {
     "name":        "Purity Beans",
+    "company":     "Pure Pantry Provisions",
     "tagline":     "100% Pure. Zero Chicory.",
     "category":    "Premium Instant Coffee",
     "origin":      "India",

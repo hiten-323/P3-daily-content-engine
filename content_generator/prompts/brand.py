@@ -17,12 +17,19 @@ def _get_brand_config():
 def brand_block() -> str:
     BRAND, POSITIONING, _ = _get_brand_config()
     return (
-        f"BRAND: {BRAND['name']} — premium pure instant coffee, India.\n"
+        f"BRAND: {BRAND['name']} (by {BRAND.get('company', 'Pure Pantry Provisions')}) — premium pure instant coffee, India.\n"
         f"USP: {POSITIONING['usp']}\n"
         f"Price: Rs{POSITIONING['price_per_cup']}/cup vs Rs{POSITIONING['cafe_price']} at cafes "
         f"(10x cheaper, 100x purer)\n"
         f"Website: {WEBSITE_URL} | Tagline: \"{BRAND['tagline']}\"\n"
         f"Tone: Premium but human. Honest, not corporate. Indian in DNA.\n"
+        f"\n"
+        f"MANDATORY BRAND RULES — these are non-negotiable:\n"
+        f"1. The brand name 'Purity Beans' MUST appear at least once in every caption, hook, body, and CTA.\n"
+        f"2. The website '{WEBSITE_URL}' MUST appear in every caption and CTA.\n"
+        f"3. At least one of these must appear: 'zero chicory' / '100% coffee' / 'pure coffee' / 'no chicory'.\n"
+        f"4. Never use generic phrases. Every line must be specific to Purity Beans.\n"
+        f"\n"
         f"BANNED PHRASES: \"transform your mornings\" / \"elevate your experience\" / "
         f"\"perfect cup\" / \"fuel your day\" / \"game changer\" / \"level up\" / "
         f"\"discover the difference\" / \"premium quality\"\n"
