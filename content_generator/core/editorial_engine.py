@@ -1,8 +1,7 @@
 """
-Editorial Engine — handles score thresholds with gradual rollout,
-normalizes editorial review results, and performs validation audits.
+Editorial Engine — enforces 8.0 score threshold, normalizes editorial results,
+and performs schema + brand validation audits before publish.
 """
-import datetime
 import logging
 from content_generator.core.brand_guard import BRAND, REQUIRED_DAILY_ASSETS, MIN_REQUIRED_ASSETS
 from content_generator.core.brand_validator import validate_asset
@@ -12,31 +11,19 @@ from content_generator.core.schema_validation import (
 
 logger = logging.getLogger(__name__)
 
-STRICT_MODE_DATE = datetime.date(2026, 7, 1)
+PASS_SCORE = 8.0
 
 class EditorialRejectException(Exception):
-    """Raised when an asset fails the final editorial threshold review."""
+    """Raised when an asset fails the editorial threshold."""
     pass
 
 def get_current_pass_score() -> float:
-    """
-    Get the overall editorial score threshold.
-    Gradually shifts from 7.5 to 8.0 on STRICT_MODE_DATE.
-    """
-    today = datetime.date.today()
-    if today >= STRICT_MODE_DATE:
-        return 8.0
-    return 7.5
+    return PASS_SCORE
 
 def normalize_editorial_result(result: dict) -> dict:
-    """
-    Normalize overall score and verdict.
-    Ensures verdict matches the staged rollout threshold.
-    """
+    """Normalize verdict so it always matches the score against the 8.0 threshold."""
     overall = float(result.get("overall", 0.0))
-    threshold = get_current_pass_score()
-    
-    result["verdict"] = "PASS" if overall >= threshold else "REJECT"
+    result["verdict"] = "PASS" if overall >= PASS_SCORE else "REJECT"
     return result
 
 def enforce_editorial_gate(piece_name: str, score: float) -> bool:
