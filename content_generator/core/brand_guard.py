@@ -19,8 +19,14 @@ BRAND: BrandProfile = BrandProfile(
     website="https://p3online.in",
     language="English",
     minimum_editorial_score=EDITORIAL_THRESHOLD,
-    jar_reference_path="brand_assets/puritybeans_reference.png"
+    jar_reference_path="brand_assets/puritybeans_front.png"
 )
+
+REFERENCE_IMAGES = [
+    "brand_assets/puritybeans_front.png",
+    "brand_assets/puritybeans_side.png",
+    "brand_assets/puritybeans_lifestyle.png",
+]
 
 BRAND_FACTS = {
     "brand_name": "Purity Beans",

@@ -97,19 +97,22 @@ def generate_image(
     Returns:
         Local file path (never None if Pillow is installed).
     """
-    REFERENCE_JAR = "brand_assets/puritybeans_reference.png"
-    if not os.path.exists(REFERENCE_JAR):
-        logger.warning("[image] REFERENCE JAR MISSING: %s. Disabling image generation.", REFERENCE_JAR)
+    from content_generator.core.brand_guard import REFERENCE_IMAGES
+    available_refs = [p for p in REFERENCE_IMAGES if os.path.exists(p)]
+    if not available_refs:
+        logger.warning("[image] REFERENCE JAR MISSING — no files found in %s. Skipping image generation.", REFERENCE_IMAGES)
         return None
 
     from content_generator.creative.brand_guardrails import enforce_brand_prompt
     safe_prompt = enforce_brand_prompt(prompt)
 
-    # Inject exact Purity Beans reference jar instructions into AI prompt
+    ref_list = "\n".join(f"- {p}" for p in available_refs)
     ai_prompt = f"""IMPORTANT:
-Use exact Purity Beans jar matching supplied reference image.
-No generic coffee jars.
-No fictional labels.
+Use the exact Purity Beans jar shown in the supplied reference images.
+No generic coffee jars. No fictional labels. No alternate packaging.
+
+Reference images available:
+{ref_list}
 
 {safe_prompt}"""
 
@@ -282,12 +285,14 @@ def _fal_flux(
 
     try:
         logger.info("[image] fal.ai %dx%d | '%s...'", width, height, prompt[:50])
+        from content_generator.core.brand_guard import REFERENCE_IMAGES
+        refs = [p for p in REFERENCE_IMAGES if os.path.exists(p)]
         args = {
             "prompt": prompt,
             "image_size": {"width": width, "height": height},
             "num_images": 1,
             "output_format": "jpeg",
-            "reference_image": "brand_assets/puritybeans_reference.png",
+            "reference_images": refs or ["brand_assets/puritybeans_front.png"],
             "strength": 0.9,
         }
         if seed is not None:
