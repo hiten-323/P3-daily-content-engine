@@ -7,6 +7,7 @@ from dataclasses import dataclass
 @dataclass
 class BrandProfile:
     brand_name: str
+    company_name: str
     website: str
     language: str
     minimum_editorial_score: float
@@ -16,6 +17,7 @@ EDITORIAL_THRESHOLD = 8.0
 
 BRAND: BrandProfile = BrandProfile(
     brand_name="Purity Beans",
+    company_name="Pure Pantry Provisions",
     website="https://p3online.in",
     language="English",
     minimum_editorial_score=EDITORIAL_THRESHOLD,
@@ -229,6 +231,7 @@ while protecting the Purity Beans brand.
 ## BRAND PROFILE
 
 Brand Name: Purity Beans
+Company: Pure Pantry Provisions
 Website: https://p3online.in
 Positioning: India's Cleanest Instant Coffee
 Core Promise: 100% Coffee, Zero Chicory, No Fillers, No Hidden Ingredients
