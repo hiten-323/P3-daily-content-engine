@@ -1,6 +1,6 @@
 """Instagram Carousel prompt — full publish-ready asset."""
 from content_generator.prompts.brand import brand_block
-from content_generator.rotation import WEBSITE_URL
+from content_generator.rotation import WEBSITE_URL, get_todays_viral_idea
 
 HASHTAG_25 = (
     "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime "
@@ -11,7 +11,9 @@ HASHTAG_25 = (
 )
 
 
-def build(mech: tuple, avoid: str) -> str:
+def build(mech: tuple, avoid: str, day: int = 0) -> str:
+    viral_idea = get_todays_viral_idea(day)
+
     return f"""{brand_block()}
 
 Generate ONE complete publish-ready Instagram Carousel for Purity Beans. Return a single JSON object.
@@ -19,6 +21,7 @@ Generate ONE complete publish-ready Instagram Carousel for Purity Beans. Return 
 {avoid}
 
 SAVE MECHANIC: [{mech[0]}] — {mech[1]}
+TODAY'S VIRAL CONTENT ANGLE: {viral_idea}
 Every slide must make the viewer think: I need to save this for later.
 PURPOSE: Maximize saves and shares through comparison, myth-busting, coffee tips, education, or buying guide.
 

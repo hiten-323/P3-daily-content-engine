@@ -92,11 +92,64 @@ COMMERCIAL_EMOTIONS = [
 PRODUCTS = [
     "Ultra Blend",
     "Bold",
-    "Purista Gourmet",
-    "Purica Gourmet",
-    "Prima Premium",
+    "Purista",
+    "Purica",
 ]
 
+# ── 30 Viral content ideas rotating bank ─────────────────────────────────────
+
+VIRAL_CONTENT_IDEAS = [
+    "What is actually inside your instant coffee jar? (Ingredient label truth)",
+    "I switched to pure coffee for 30 days. Here is what changed.",
+    "Why most Indians are unknowingly drinking chicory every morning",
+    "The Rs 18 vs Rs 180 coffee experiment — same caffeine, same quality?",
+    "Real coffee vs adulterated coffee: a side-by-side taste test story",
+    "Why freeze-dried coffee is different from regular instant coffee",
+    "Agglomerated vs freeze-dried: which one should you buy?",
+    "The ingredient your coffee brand never mentions on the label",
+    "How to read a coffee label like an expert in 60 seconds",
+    "Why premium instant coffee is not an oxymoron",
+    "The Indian coffee adulterant problem that nobody is talking about",
+    "3 signs your coffee has fillers (and how to check)",
+    "What happens when you remove chicory from your morning coffee",
+    "The real reason cafe coffee tastes different from home coffee",
+    "How Purity Beans is built different: no preservatives, no artificial aroma",
+    "Coffee gifting guide for people who actually care about quality",
+    "Morning routine with pure coffee: a real Indian working professional story",
+    "Why the best coffee in India costs Rs 18, not Rs 180",
+    "Cold brew with instant coffee: does it actually work?",
+    "The 80-year history of chicory in Indian coffee (and why it is still here)",
+    "Corporate gifting: why premium coffee beats generic gifts every time",
+    "What freeze-dried means and why it matters for your morning cup",
+    "The coffee brand that prints what it does NOT add on the label",
+    "Student life + real coffee: why Purity Beans makes sense at Rs 18",
+    "Hotel and hospitality buyers: why gourmet instant coffee is the upgrade guests notice",
+    "The difference between coffee you drink and coffee you experience",
+    "Why Indian consumers are finally reading ingredient labels on coffee",
+    "Distributor opportunity: the only pure instant coffee brand in your city",
+    "How to make barista-quality coffee at home without any equipment",
+    "The Purity Beans blind taste test: what real coffee lovers say",
+]
+
+# ── Scroll-stopping hooks bank ────────────────────────────────────────────────
+
+VIRAL_HOOKS = [
+    "You have been drinking chicory your entire life.",
+    "What is actually inside your coffee jar?",
+    "Real coffee lovers will understand this.",
+    "Expensive cafe coffee is not the solution.",
+    "That first sip that just does not taste right.",
+    "Most instant coffee is not coffee at all.",
+    "Your coffee brand is lying to you.",
+    "I stopped buying branded coffee. Here is why.",
+    "Rs 18 per cup. No chicory. No preservatives. No compromise.",
+    "The ingredient on every label that nobody reads.",
+    "If you care about what you drink, read this.",
+    "Coffee without the filler finally exists in India.",
+    "Everyone in your office is drinking adulterated coffee.",
+    "The real reason your coffee does not taste like coffee.",
+    "Indian brand. Nothing hidden. Everything on the label.",
+]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -106,6 +159,12 @@ def get_day_number() -> int:
 
 def get_todays_blog_topic(day: int) -> str:
     return BLOG_TOPIC_CLUSTERS[day % len(BLOG_TOPIC_CLUSTERS)]
+
+def get_todays_viral_idea(day: int) -> str:
+    return VIRAL_CONTENT_IDEAS[day % len(VIRAL_CONTENT_IDEAS)]
+
+def get_todays_hook(day: int) -> str:
+    return VIRAL_HOOKS[day % len(VIRAL_HOOKS)]
 
 
 def pick(bank: list, day: int, offset: int = 0):

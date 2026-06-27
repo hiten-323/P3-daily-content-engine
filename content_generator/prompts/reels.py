@@ -1,6 +1,6 @@
 """Reel prompt builder — full publish-ready Instagram Reel asset."""
 from content_generator.prompts.brand import brand_block
-from content_generator.rotation import WEBSITE_URL
+from content_generator.rotation import WEBSITE_URL, get_todays_viral_idea, get_todays_hook
 
 HASHTAG_25 = (
     "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime "
@@ -12,7 +12,10 @@ HASHTAG_25 = (
 
 
 def build(reel_id: str, arch: tuple, time_slot: str,
-          hashtag_key: str, avoid: str) -> str:
+          hashtag_key: str, avoid: str, day: int = 0) -> str:
+    viral_idea = get_todays_viral_idea(day)
+    suggested_hook = get_todays_hook(day)
+
     return f"""{brand_block()}
 
 Generate ONE complete publish-ready Instagram Reel for Purity Beans. Return a single JSON object.
@@ -21,6 +24,8 @@ Generate ONE complete publish-ready Instagram Reel for Purity Beans. Return a si
 
 REEL ID: {reel_id} | TIME SLOT: {time_slot}
 HOOK ARCHETYPE: [{arch[0]}] — {arch[1]}
+TODAY'S VIRAL CONTENT ANGLE: {viral_idea}
+SUGGESTED OPENING HOOK: "{suggested_hook}" (adapt or improve — do not copy verbatim)
 
 ABSOLUTE RULES:
 - NEVER invent statistics or percentages
