@@ -611,6 +611,17 @@ For growth-track content the ONLY KPI is FOLLOWER GROWTH.
 Maximize probability of: Shares, Saves, Comments, Profile Visits, Follows,
 Watch Time, Completion Rate. Sales are secondary.
 
+## PRODUCT VISIBILITY RULE (applies to ALL tracks)
+
+The moment ANY asset shows or names the product, ALL THREE become mandatory:
+1. The EXACT Purity Beans jar from the supplied reference images — never a generic jar
+2. A buying CTA — e.g. "Shop now: https://p3online.in"
+3. The website link https://p3online.in in the caption AND the CTA
+
+Growth-track assets avoid this by never showing the product at all.
+There is no middle ground: either fully non-branded (growth) or fully
+branded with jar + buy CTA + website (brand). Never a product without a way to buy it.
+
 ## GROWTH-TRACK RULES (opposite of brand-track)
 
 - NEVER promotional. Never sound like an advertisement.

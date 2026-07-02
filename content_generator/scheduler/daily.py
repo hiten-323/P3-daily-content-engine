@@ -188,13 +188,13 @@ def _inject_brand_into_piece(label: str, piece: dict) -> dict:
     Appends a natural CTA line only when missing — never duplicates.
     """
     TEXT_FIELDS = {
-        "reel_1":         ["caption"],
-        "reel_2":         ["caption"],
-        "carousel":       ["caption"],
-        "instagram_post": ["caption"],
+        "reel_1":         ["caption", "cta"],
+        "reel_2":         ["caption", "cta"],
+        "carousel":       ["caption", "cta"],
+        "instagram_post": ["caption", "cta"],
         "linkedin_post":  ["cta"],
         "blog_post":      ["conclusion"],
-        "yt_short":       ["cta"],
+        "yt_short":       ["cta", "description"],
     }
     fields = TEXT_FIELDS.get(label, [])
     for field in fields:
@@ -205,11 +205,15 @@ def _inject_brand_into_piece(label: str, piece: dict) -> dict:
         needs_brand   = "purity beans" not in low
         needs_website = "p3online.in" not in low
         if needs_brand and needs_website:
-            piece[field] = val.rstrip() + " Try Purity Beans — zero chicory, 100% pure coffee. Order at p3online.in"
+            piece[field] = val.rstrip() + " Try Purity Beans — zero chicory, 100% pure coffee. Shop now: https://p3online.in"
         elif needs_brand:
             piece[field] = val.rstrip() + " — Purity Beans"
         elif needs_website:
-            piece[field] = val.rstrip() + " Order at p3online.in"
+            piece[field] = val.rstrip() + " Shop now: https://p3online.in"
+
+    # CTA field is mandatory on brand-track assets — create it if the LLM skipped it
+    if label in ("reel_1", "reel_2", "carousel", "instagram_post") and not str(piece.get("cta", "")).strip():
+        piece["cta"] = "Real coffee. Zero chicory. Shop Purity Beans now: https://p3online.in"
     return piece
 
 
