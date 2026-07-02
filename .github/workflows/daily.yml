@@ -217,17 +217,21 @@ jobs:
             output/archive/
           retention-days: 90
 
-      # ── 9. Keep repo active (prevents GitHub pausing scheduled workflows) ──────
+      # ── 9. Persist learning data + keep repo active ────────────────────────────
       # GitHub pauses cron workflows after 60 days of repo inactivity.
-      # This commit bumps a timestamp file daily so the repo stays active.
-      - name: Keep repo active
+      # This commit bumps a timestamp daily AND persists the learning-engine
+      # state (performance log, published posts, follower snapshots) so the
+      # continuous learning loop survives across CI runs.
+      - name: Persist learning data and keep repo active
         if: success()
         run: |
           git config user.name  "Purity Beans Engine"
           git config user.email "engine@puritybeans.auto"
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
-          git diff --staged --quiet || git commit -m "chore: daily run ${{ github.run_number }} [skip ci]"
+          git add -f output/learning/ 2>/dev/null || true
+          git pull --rebase --autostash || true
+          git diff --staged --quiet || git commit -m "chore: daily run ${{ github.run_number }} + learning data [skip ci]"
           git push || true   # non-fatal if push fails
 
       # ── 10. On failure: alert ─────────────────────────────────────────────────

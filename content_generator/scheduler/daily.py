@@ -62,6 +62,15 @@ def run_full_pipeline(day_number: int = None) -> dict:
     with timed_step("health_check", timeout_s=30):
         assert_healthy()
 
+    # ── 0.5 Insights — auto-record yesterday's post performance ──────────────
+    # Runs BEFORE generation so today's prompts learn from yesterday's results.
+    with timed_step("insights_fetch", timeout_s=60):
+        rm.run(
+            fn=lambda: _do_fetch_insights(),
+            label="insights_fetch",
+            max_retries=0,
+        )
+
     # ── 1. Research ───────────────────────────────────────────────────────────
     research: dict = {}
     with timed_step("research", timeout_s=120):
@@ -567,6 +576,12 @@ def _best_assets_by_score(content: dict, count: int) -> list[str]:
     return [label for _, label in scored[:count]]
 
 
+def _do_fetch_insights() -> dict:
+    """Fetch yesterday's Instagram metrics and feed the learning engine. Non-blocking."""
+    from content_generator.analytics.insights_fetcher import fetch_pending_insights
+    return fetch_pending_insights()
+
+
 def _do_publish(content: dict, day_number: int) -> dict:
     """Post today's content, filtering out any invalid/failed assets."""
     from content_generator.core.editorial_engine import get_valid_assets
@@ -603,7 +618,30 @@ def _do_publish(content: dict, day_number: int) -> dict:
         filtered_content["yt_short"] = {}
 
     from content_generator.publisher.dispatcher import publish_all
-    return publish_all(filtered_content, day_number=day_number)
+    result = publish_all(filtered_content, day_number=day_number)
+
+    # Track published Instagram media so the insights fetcher can auto-record
+    # its performance tomorrow and feed the learning engine.
+    try:
+        ig = result.get("instagram") or {}
+        if ig.get("success") and ig.get("media_id"):
+            from content_generator.analytics.insights_fetcher import track_published_post
+            piece = filtered_content.get("carousel") or {}
+            if not piece.get("caption"):
+                reels = filtered_content.get("reels") or [{}]
+                piece = reels[0] if reels and isinstance(reels[0], dict) else {}
+            track_published_post(
+                media_id    = ig["media_id"],
+                asset_id    = f"instagram_day{day_number}",
+                track       = "brand",
+                hook        = str(piece.get("hook_text") or piece.get("title") or "")[:120],
+                topic       = str(piece.get("save_mechanic") or piece.get("hook_archetype") or "")[:120],
+                format_used = "carousel" if filtered_content.get("carousel", {}).get("caption") else "single_image",
+            )
+    except Exception as e:
+        logger.warning("[publish] Could not track published post for insights: %s", e)
+
+    return result
 
 
 def _do_founder_report(content: dict, nurture_result: dict, publish_result: dict = None) -> bool:
