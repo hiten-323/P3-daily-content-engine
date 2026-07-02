@@ -75,33 +75,64 @@ def post_content(content: dict, day: int = 0) -> dict:
     return result
 
 
+# 25-tag fallback: 5 broad + 5 niche + 5 Indian + 5 discovery + 5 brand
+_FALLBACK_HASHTAGS = (
+    "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime "
+    "#PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity "
+    "#IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands "
+    "#CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife "
+    "#PurityBeans #PurityBeansCoffee #NoChicory #BrewPure #PureCoffeeExperience"
+)
+
+
 def _extract_caption(content: dict) -> str:
-    """Build Instagram caption from content."""
-    # Try carousel caption first
+    """
+    Build the full viral-ready Instagram caption:
+    caption body + comment trigger + save trigger + all 25 generated hashtags.
+    """
+    # Try carousel first, then first reel
+    piece = None
     carousel = content.get("carousel") or {}
-    if isinstance(carousel, dict):
-        cap = carousel.get("caption") or carousel.get("hook") or ""
-        if cap:
-            return _append_hashtags(str(cap))
+    if isinstance(carousel, dict) and (carousel.get("caption") or carousel.get("hook")):
+        piece = carousel
+    else:
+        reels = content.get("reels") or []
+        if reels and isinstance(reels[0], dict):
+            piece = reels[0]
 
-    # Try first reel hook
-    reels = content.get("reels") or []
-    if reels:
-        hook = reels[0].get("hook", "")
-        cta  = reels[0].get("cta", "")
-        if hook:
-            return _append_hashtags(f"{hook}\n\n{cta}")
+    if not piece:
+        return _assemble_caption("Pure instant coffee. Zero chicory. 100% coffee. ☕", {}, )
 
-    return _append_hashtags("Pure instant coffee. Zero chicory. 100% coffee. ☕")
+    body = str(piece.get("caption") or piece.get("hook") or "").strip()
+    cta  = str(piece.get("cta") or "").strip()
+    if cta and cta.lower() not in body.lower():
+        body = f"{body}\n\n{cta}"
+    return _assemble_caption(body, piece)
 
 
-def _append_hashtags(text: str) -> str:
-    tags = (
-        "\n\n#PurityBeans #PureCoffee #InstantCoffee #CoffeeLover "
-        "#NoCicory #PremiumCoffee #IndianCoffee #CoffeeIndia"
-    )
-    full = text + tags
-    return full[:2200]   # Instagram caption limit
+def _assemble_caption(body: str, piece: dict) -> str:
+    """Append engagement triggers + the asset's own 25 hashtags. 2200-char safe."""
+    parts = [body]
+
+    comment = str(piece.get("comment_trigger") or "").strip()
+    save    = str(piece.get("save_trigger") or "").strip()
+    if comment and comment.lower() not in body.lower():
+        parts.append(comment)
+    if save and save.lower() not in body.lower():
+        parts.append(save)
+
+    # Use the LLM-generated 25 hashtags; fall back to the standard 25-tag set
+    tags = piece.get("hashtags")
+    if isinstance(tags, list):
+        tags = " ".join(str(t) for t in tags)
+    tags = str(tags or "").strip() or _FALLBACK_HASHTAGS
+
+    caption = "\n\n".join(p for p in parts if p)
+    # Hashtags must survive the 2200-char limit — trim the body, never the tags
+    max_body = 2200 - len(tags) - 2
+    if len(caption) > max_body:
+        caption = caption[:max_body].rsplit(" ", 1)[0]
+    return f"{caption}\n\n{tags}"
 
 
 def _find_carousel_images(content: dict) -> list[str]:
