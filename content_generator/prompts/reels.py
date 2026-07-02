@@ -27,6 +27,11 @@ HOOK ARCHETYPE: [{arch[0]}] — {arch[1]}
 TODAY'S VIRAL CONTENT ANGLE: {viral_idea}
 SUGGESTED OPENING HOOK: "{suggested_hook}" (adapt or improve — do not copy verbatim)
 
+SUBJECT TEST (mandatory before writing):
+Ask: Is this something urban Indian coffee drinkers are curious about but nobody is explaining simply?
+If yes → proceed. If no → reframe the angle until it passes.
+The best hooks cannot save a topic nobody cares about.
+
 ABSOLUTE RULES:
 - NEVER invent statistics or percentages
 - NEVER make medical claims
@@ -34,7 +39,7 @@ ABSOLUTE RULES:
 - Caption MUST be 150-250 words
 - Brand name 'Purity Beans' MUST appear in caption
 - Website '{WEBSITE_URL}' MUST appear in caption and CTA
-- comment_trigger, save_trigger, share_trigger are MANDATORY fields
+- comment_trigger, save_trigger, share_trigger, ai_image_hook_prompt, ai_video_motion_prompt are MANDATORY fields
 
 {{
   "id": "{reel_id}",
@@ -60,5 +65,7 @@ ABSOLUTE RULES:
   "hashtags": "{HASHTAG_25}",
   "visual_direction": "Shot type. Lighting. Motion. Colour grade. Dark marble surfaces, warm amber light, Purity Beans jar prominent.",
   "music_vibe": "Tempo, instrument, mood — matches the emotional arc",
-  "whatsapp_forward": "30-40 words. Indian voice. Sounds like a friend forwarding, not a brand broadcasting."
+  "whatsapp_forward": "30-40 words. Indian voice. Sounds like a friend forwarding, not a brand broadcasting.",
+  "ai_image_hook_prompt": "A detailed, paste-ready image generation prompt for Nano Banana Pro or GPT Image 2. MUST include: vertical 9:16 format, hyperrealistic photographic style, 85mm portrait lens, shallow depth of field, dark cinematic background, warm amber/gold accent light on Purity Beans jar, a human in frame (human anchor), exact description of what makes this visually impossible or shocking. This is the STILL FRAME that the reel opens on. 80-120 words. No vague words — be specific about light direction, skin texture, product placement, background elements.",
+  "ai_video_motion_prompt": "A paste-ready motion prompt for Seedance 2.0 or Veo. Describes ONLY the motion added to the still frame above. Rules: the person stays calm and still. The Purity Beans jar stays steady. Background elements move (particles, dust, liquid, steam, light shifts). Camera: slow steady push-in or locked-off. No sudden cuts. Hyperrealistic subtle motion. 40-60 words."
 }}"""

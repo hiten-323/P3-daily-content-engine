@@ -26,6 +26,7 @@ from content_generator.rotation import (
 from content_generator.prompts import (
     reels, instagram_post, carousel, linkedin, blog, stories, yt_short, video_prompts,
 )
+from content_generator.prompts import growth_reel
 from content_generator.prompts.brand import build_avoid_block
 from content_generator.providers.llm_router import call as llm_call, get_usage_log
 
@@ -168,6 +169,15 @@ def generate_daily_content(
     # Context suffix injected into every prompt
     ctx = _build_context_suffix(research_context or {})
 
+    # Continuous learning — inject what worked / failed from past posts
+    try:
+        from content_generator.core.learning_engine import get_learning_block
+        learning = get_learning_block()
+        if learning:
+            ctx += "\n\n" + learning
+    except Exception as e:
+        logger.debug("[pipeline] learning block unavailable: %s", e)
+
     logger.info(
         "[pipeline] Day #%d (%s) | product=%s | Reel1=%s | Reel2=%s | Carousel=%s | LinkedIn=%s",
         day_number, todays_date, product, arch_1[0], arch_2[0], mech[0], angle[0],
@@ -179,16 +189,17 @@ def generate_daily_content(
     _extended = os.getenv("ENABLE_EXTENDED_CONTENT", "false").lower() == "true"
 
     phase1_tasks = {
-        "reel_1":         (reels.build,          ("reel_1", arch_1, "morning (7-9am)",       "reel_morning", avoid), 1800),
-        "carousel":       (carousel.build,       (mech, avoid),                                                       2200),
+        "reel_1":         (reels.build,          ("reel_1", arch_1, "morning (7-9am)",       "reel_morning", avoid, day_number), 1800),
+        "carousel":       (carousel.build,       (mech, avoid, day_number),                                           2200),
         "linkedin_post":  (linkedin.build,       (angle, avoid),                                                      1200),
         "instagram_post": (instagram_post.build, (day_number, avoid),                                                  800),
+        "growth_reel":    (growth_reel.build,    (day_number, avoid),                                                 2500),
     }
 
     # Extended content — skipped by default to reduce TPM load
     if _extended:
         phase1_tasks.update({
-            "reel_2":   (reels.build,    ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night", avoid), 1800),
+            "reel_2":   (reels.build,    ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night", avoid, day_number), 1800),
             "blog_post": (blog.build,    (topic,),                                                           3000),
             "stories":   (stories.build, (),                                                                 1500),
             "yt_short":  (yt_short.build,(product, day_number),                                              1500),
@@ -236,6 +247,7 @@ def generate_daily_content(
         "blog_post":      phase1_results["blog_post"],
         "stories":        phase1_results["stories"],
         "yt_short":       phase1_results["yt_short"],
+        "growth_reel":    phase1_results.get("growth_reel", {}),
         **vp,
         **_image_prompts(),
         "performance_targets": {

@@ -37,6 +37,8 @@ class ReelSchema(BaseModel):
     visual_direction: Optional[str] = None
     music_vibe: Optional[str] = None
     whatsapp_forward: Optional[str] = None
+    ai_image_hook_prompt: Optional[str] = None
+    ai_video_motion_prompt: Optional[str] = None
     editorial_score: Optional[EditorialScore] = None
     objective: Optional[str] = None
     success_metric: Optional[str] = None

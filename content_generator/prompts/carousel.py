@@ -25,6 +25,10 @@ TODAY'S VIRAL CONTENT ANGLE: {viral_idea}
 Every slide must make the viewer think: I need to save this for later.
 PURPOSE: Maximize saves and shares through comparison, myth-busting, coffee tips, education, or buying guide.
 
+SUBJECT TEST (mandatory before writing):
+Ask: Is this something urban Indian coffee drinkers are curious about but nobody has explained simply?
+If yes → proceed. If no → reframe until it passes. The best carousel design cannot save a topic nobody cares about.
+
 ABSOLUTE RULES:
 - NEVER invent statistics or percentages
 - NEVER make medical claims

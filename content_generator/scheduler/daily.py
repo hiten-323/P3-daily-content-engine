@@ -95,7 +95,7 @@ def run_full_pipeline(day_number: int = None) -> dict:
     dn = content.get("day_number", 0)
 
     # ── 3. Brand injection + editorial review ────────────────────────────────
-    _inject_brand_into_content(content)
+    _inject_brand_into_content(content, day=dn)
     with timed_step_hard("editorial_review", timeout_s=420):
         rm.run(fn=lambda: _do_editorial(content), label="editorial_review", max_retries=1)
 
@@ -285,9 +285,40 @@ def _ensure_captions(content: dict) -> None:
         )
 
 
-def _inject_brand_into_content(content: dict) -> None:
+def _inject_jar_creative_into_reels(content: dict, day: int) -> None:
+    """
+    For every reel that does not already have ai_image_hook_prompt / ai_video_motion_prompt,
+    generate them using the actual jar images via jar_composer.
+    This ensures every reel output has paste-ready Nano Banana Pro + Seedance prompts.
+    """
+    try:
+        from content_generator.creative.jar_composer import build_reel_hook_prompt, get_jar_paths_for_content
+    except Exception:
+        return
+
+    reels = content.get("reels") or []
+    for i, reel in enumerate(reels):
+        if not isinstance(reel, dict):
+            continue
+        # Only inject if the LLM did not already produce these fields
+        if reel.get("ai_image_hook_prompt") and reel.get("ai_video_motion_prompt"):
+            continue
+        try:
+            hook_package = build_reel_hook_prompt(day=day + i)
+            reel["ai_image_hook_prompt"]    = hook_package["image_prompt"]
+            reel["ai_video_motion_prompt"]  = hook_package["motion_prompt"]
+            reel["reference_jar_paths"]     = hook_package["reference_jar_paths"]
+            reel["hook_visual_concept"]     = hook_package["concept"]
+            reel.setdefault("hook_text_overlay", hook_package["hook_text"])
+            logger.info("[creative] Jar hook prompts injected into reel_%d", i + 1)
+        except Exception as e:
+            logger.warning("[creative] Could not inject jar hook into reel_%d: %s", i + 1, e)
+
+
+def _inject_brand_into_content(content: dict, day: int = 0) -> None:
     """Run caption fill + engagement field fill + brand injection + stat scrubbing."""
     _ensure_captions(content)
+    _inject_jar_creative_into_reels(content, day)
 
     reels = content.get("reels") or []
     for i, label in enumerate(["reel_1", "reel_2"]):
@@ -492,6 +523,17 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
         results["reel"] = path
         if path:
             logger.info("[images] Generated reel thumbnail: %s", path)
+
+    # UGC + Avatar + Reel Hook — jar-reference creative package
+    try:
+        from content_generator.creative.ugc_generator import generate_daily_ugc
+        ugc_result = generate_daily_ugc(day=day_number)
+        results["ugc_package"] = ugc_result
+        brief = ugc_result.get("tool_brief_path")
+        logger.info("[images] UGC creative package generated. Tool brief: %s", brief)
+    except Exception as e:
+        logger.warning("[images] UGC generation failed (non-blocking): %s", e)
+        results["ugc_package"] = None
 
     return results
 
