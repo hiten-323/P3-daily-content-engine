@@ -598,6 +598,66 @@ After the still frame is generated:
 """
 
 
+REALISM_RULES = """
+# REALISM RULES — EVERY GENERATED VISUAL MUST PASS AS REAL
+
+The single fastest way to lose trust and followers is content that looks AI-generated.
+Every image and video prompt MUST engineer realism deliberately.
+
+## ALWAYS INCLUDE (realism ingredients)
+
+Skin & people:
+- visible skin pores and texture, slight skin oil sheen, natural asymmetric face
+- flyaway hairs, imperfect eyebrows, natural teeth (never bleach-white)
+- real fabric wrinkles on clothing, slightly worn collar or sleeve
+- natural relaxed hand poses (hands holding things slightly imperfectly)
+
+Light:
+- one believable light source with correct shadow direction
+- soft natural falloff, slight lens flare only if a window/lamp is in frame
+- mixed color temperature (warm lamp + cool daylight) like real rooms have
+
+Camera:
+- specify a real camera behavior: "shot on iPhone 15", "85mm f/1.8", "handheld"
+- slight motion blur on moving elements, natural grain, shallow depth of field
+- imperfect framing — subject slightly off-center, real photos are never perfectly composed
+
+Environment:
+- lived-in details: a used spoon, water ring on the counter, crumpled napkin,
+  charging cable, fingerprints on glass, steam fog on a cold surface
+- backgrounds with believable clutter, never showroom-empty
+
+## NEVER INCLUDE (AI tells — these words are banned from image prompts)
+
+- "perfect", "flawless", "stunning", "beautiful render"
+- 3D render, CGI, illustration, digital art, artstation, octane, unreal engine
+- oversaturated colors, HDR glow, plastic skin, symmetric face
+- floating objects, impossible reflections, text in the image (AI mangles text)
+
+## PRODUCT REALISM (brand track)
+
+The jar must look photographed, not composited:
+- correct contact shadow where the jar meets the surface
+- environment reflections visible on the glass/label
+- slight fingerprint smudge or a single droplet if scene implies use
+- label texture catches light like real printed paper, not a flat decal
+
+## MOTION REALISM (video prompts)
+
+- physics first: steam rises and disperses, liquid has weight, cloth drags
+- humans breathe — chest movement, micro blinks, weight shifts
+- camera: subtle handheld sway or slow locked-off push, never floaty drone moves indoors
+- 24fps film feel or phone-video feel, chosen deliberately per asset
+
+## UGC REALISM (growth + UGC track)
+
+Real UGC is imperfect BY DEFINITION:
+- slightly wrong white balance, window overexposed, minor tilt
+- vertical phone framing with thumb-distance closeness
+- ambient sound implied: kitchen noise, street hum, typing
+- if it looks like a brand shot it FAILS as UGC — regenerate uglier and realer
+"""
+
 GROWTH_MODE_CONTEXT = """
 # GROWTH MODE — FOLLOWER-FIRST CONTENT TRACK
 
@@ -715,6 +775,7 @@ def build_system_prompt() -> str:
     return "\n\n".join([
         LANGUAGE_POLICY.strip(),
         SYSTEM_BRAND_RULES.strip(),
+        REALISM_RULES.strip(),
         ELITE_MODE_CONTEXT.strip(),
         GROWTH_MODE_CONTEXT.strip(),
         MASTER_SYSTEM_PROMPT.strip(),

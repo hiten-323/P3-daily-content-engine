@@ -80,10 +80,10 @@ HARD RULES:
     {{"time": "45-55s","beat": "soft CTA",           "on_screen": "FOLLOW FOR MORE", "voiceover": "...", "visual": "..."}}
   ],
   "ai_image_prompts": [
-    "3-5 paste-ready cinematic image prompts. Ultra realistic, natural light, premium, macro detail, steam/texture/hands/beans. 9:16 vertical. NO labels, NO products framed as ads, NO logos."
+    "3-5 paste-ready cinematic image prompts. Photographic (never 'render'), natural light, macro detail, steam/texture/hands/beans. 9:16 vertical. Each prompt MUST include realism ingredients: skin pores if hands/faces present, one light source with correct shadows, natural grain, a lived-in imperfection (water ring, crumbs, steam fog on surface), slightly off-center framing. BANNED words: perfect, flawless, 3D, render, CGI, illustration. NO labels, NO products framed as ads, NO logos, NO text in image."
   ],
   "ai_video_prompts": [
-    "3-5 matching motion prompts. Slow motion, subtle camera moves, something changes every 2-3s."
+    "3-5 matching motion prompts with real physics: steam disperses, liquid has weight, humans breathe with micro blinks. Slow motion or subtle handheld, 24fps film feel, something changes every 2-3s. Faces stay stable — no morphing."
   ],
   "sound_suggestion": "Music mood + any sound-design moments (e.g. pour sound at 6s)",
   "text_overlay_style": "Subtitle/overlay treatment — font energy, when it changes",

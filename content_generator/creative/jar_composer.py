@@ -22,6 +22,35 @@ logger = logging.getLogger(__name__)
 
 _BRAND_ASSETS_DIR = "brand_assets"
 
+# Realism suffixes appended to every generated prompt.
+# These are what separate "AI slop" from believable content.
+
+REALISM_PHOTO = (
+    "Photographed look, not rendered: visible skin pores and texture, natural asymmetric face, "
+    "flyaway hairs, real fabric wrinkles, one believable light source with correct shadow direction, "
+    "mixed color temperature like a real room, natural grain, slight motion blur where relevant, "
+    "subject slightly off-center. Lived-in environment details: a used spoon, water ring, "
+    "charging cable, fingerprints on glass. "
+    "The jar has a correct contact shadow and environment reflections on the glass; "
+    "label texture catches light like printed paper. "
+    "NO perfect symmetry, NO plastic skin, NO oversaturation, NO text in image, NO 3D-render look."
+)
+
+REALISM_UGC = (
+    "Authentic phone-shot look: shot on iPhone, slightly wrong white balance, window overexposed, "
+    "minor tilt, thumb-distance vertical framing, natural grain, imperfect focus. "
+    "Real kitchen/desk clutter in frame. If it looks like a professional brand shoot it fails — "
+    "it must look like a real customer casually filmed their own life. "
+    "NO studio lighting, NO perfect composition, NO text in image."
+)
+
+REALISM_MOTION = (
+    "Physics-true motion: steam rises and disperses naturally, liquid has weight, humans breathe "
+    "with visible chest movement and micro blinks. Subtle handheld sway or slow locked-off push only. "
+    "24fps film feel. No floaty camera moves, no morphing, no extra fingers appearing, "
+    "faces stay stable and consistent throughout."
+)
+
 
 # ── Avatar personas ───────────────────────────────────────────────────────────
 
@@ -253,9 +282,9 @@ def build_avatar_prompt(persona_id: str = None, product: str = None, day: int = 
         f"THE JAR MUST MATCH EXACTLY: use the supplied reference Purity Beans jar — "
         f"same label, same shape, same cap, same product name. Do not redesign. "
         f"Lighting: warm amber/gold accent on the jar, soft natural fill on face. "
-        f"Style: photorealistic, 85mm portrait lens, shallow depth of field, "
+        f"Style: photorealistic, 85mm portrait lens f/1.8, shallow depth of field, "
         f"dark or neutral background, editorial but authentic. "
-        f"Vertical format 9:16. No AI look — must pass as a real phone photo or brand shoot. "
+        f"Vertical format 9:16. {REALISM_PHOTO} "
         f"{jar_note}"
     )
 
@@ -263,8 +292,7 @@ def build_avatar_prompt(persona_id: str = None, product: str = None, day: int = 
         f"The person stays natural and relaxed. The Purity Beans jar stays prominent and still. "
         f"Subtle: slight head tilt or natural breath motion. "
         f"Camera: slow steady push-in. "
-        f"Light on jar glows softly. No sudden moves. "
-        f"Hyperrealistic, phone-shot quality, not cinematic overproduction."
+        f"Light on jar glows softly. No sudden moves. {REALISM_MOTION}"
     )
 
     ugc_caption = (
@@ -310,9 +338,7 @@ def build_ugc_prompt(scene_id: str = None, product: str = None, day: int = 0) ->
         f"THE PURITY BEANS JAR MUST BE EXACTLY AS IN THE REFERENCE IMAGES — "
         f"same label, shape, cap, product name. Place: {scene['jar_placement']}. "
         f"Vibe: {scene['vibe']}. "
-        f"No studio lighting. No white seamless backdrop. No perfect symmetry. "
-        f"This must look like a real person's real life, not a brand ad. "
-        f"Vertical 9:16. Warm, slightly imperfect, believably human. "
+        f"Vertical 9:16. Warm, slightly imperfect, believably human. {REALISM_UGC} "
         f"{jar_note}"
     )
 
@@ -321,8 +347,7 @@ def build_ugc_prompt(scene_id: str = None, product: str = None, day: int = 0) ->
         f"The Purity Beans jar stays visible throughout. "
         f"If a hand is present: natural finger movement or slight tilt of jar. "
         f"No dramatic sweeps. No speed ramps. "
-        f"Looks like a person casually filming their own coffee routine. "
-        f"Slow, natural, authentic motion."
+        f"Looks like a person casually filming their own coffee routine. {REALISM_MOTION}"
     )
 
     return {
@@ -362,7 +387,7 @@ def build_reel_hook_prompt(hook_id: str = None, product: str = None, day: int = 
         f"No redesign. No alternate label. No generic jar. "
         f"Lighting: dark background, single warm amber/gold beam on the Purity Beans jar. "
         f"Style: photorealistic, editorial luxury FMCG, deep shadows, cinematic color grade. "
-        f"Vertical 9:16. No text or typography in the image. "
+        f"Vertical 9:16. No text or typography in the image. {REALISM_PHOTO} "
         f"{jar_note}"
     )
 
@@ -371,7 +396,7 @@ def build_reel_hook_prompt(hook_id: str = None, product: str = None, day: int = 
         f"Camera: {template['camera']}. "
         f"Motion rules: {template['motion']} "
         f"The Purity Beans jar stays sharp and prominent at all times. "
-        f"Hyperrealistic physics. Slow, intentional motion. No cuts. No transitions."
+        f"Slow, intentional motion. No cuts. No transitions. {REALISM_MOTION}"
     )
 
     return {

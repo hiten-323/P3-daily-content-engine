@@ -115,12 +115,23 @@ def validate_copy(text: str) -> tuple[bool, list[str]]:
     return len(issues) == 0, issues
 
 
+_REALISM_SUFFIX = (
+    " Photographed look, not rendered: natural grain, one believable light source with "
+    "correct shadow direction, correct contact shadow under the jar, environment reflections "
+    "on glass, label texture like real printed paper, slight imperfections (a droplet, "
+    "a fingerprint smudge, scattered granules), subject slightly off-center. "
+    "No 3D-render look, no plastic surfaces, no oversaturation, no text in image."
+)
+
+
 def enforce_brand_prompt(prompt: str) -> str:
     """
-    Ensure an image generation prompt is on-brand.
+    Ensure an image generation prompt is on-brand and engineered for realism.
     Always returns a safe, on-brand prompt string.
     """
     _, _, corrected = validate_image_prompt(prompt)
+    if "photographed look" not in corrected.lower():
+        corrected += _REALISM_SUFFIX
     return corrected
 
 
