@@ -56,7 +56,7 @@ def post_content(content: dict, day: int = 0) -> dict:
         return {"success": False, "media_id": "", "permalink": "", "error": "not_configured"}
 
     images  = _find_carousel_images(content)
-    caption = _extract_caption(content)
+    caption = _extract_caption(content, day=day)
 
     if not images:
         logger.warning("[instagram] No images found — skipping Instagram post")
@@ -66,6 +66,9 @@ def post_content(content: dict, day: int = 0) -> dict:
         result = _post_carousel(images[:10], caption)   # Instagram max 10
     else:
         result = _post_single_image(images[0], caption)
+
+    # Expose the exact tags posted so insights can attribute performance to them
+    result["hashtags_used"] = " ".join(w for w in caption.split() if w.startswith("#"))
 
     if result["success"]:
         logger.info("[instagram] Day %d posted | id=%s", day, result["media_id"])
@@ -85,10 +88,10 @@ _FALLBACK_HASHTAGS = (
 )
 
 
-def _extract_caption(content: dict) -> str:
+def _extract_caption(content: dict, day: int = 0) -> str:
     """
     Build the full viral-ready Instagram caption:
-    caption body + comment trigger + save trigger + all 25 generated hashtags.
+    caption body + comment trigger + save trigger + adaptive 25 hashtags.
     """
     # Try carousel first, then first reel
     piece = None
@@ -101,17 +104,17 @@ def _extract_caption(content: dict) -> str:
             piece = reels[0]
 
     if not piece:
-        return _assemble_caption("Pure instant coffee. Zero chicory. 100% coffee. ☕", {}, )
+        return _assemble_caption("Pure instant coffee. Zero chicory. 100% coffee. ☕", {}, day)
 
     body = str(piece.get("caption") or piece.get("hook") or "").strip()
     cta  = str(piece.get("cta") or "").strip()
     if cta and cta.lower() not in body.lower():
         body = f"{body}\n\n{cta}"
-    return _assemble_caption(body, piece)
+    return _assemble_caption(body, piece, day)
 
 
-def _assemble_caption(body: str, piece: dict) -> str:
-    """Append engagement triggers + the asset's own 25 hashtags. 2200-char safe."""
+def _assemble_caption(body: str, piece: dict, day: int = 0) -> str:
+    """Append engagement triggers + adaptive 25 hashtags. 2200-char safe."""
     parts = [body]
 
     comment = str(piece.get("comment_trigger") or "").strip()
@@ -121,11 +124,19 @@ def _assemble_caption(body: str, piece: dict) -> str:
     if save and save.lower() not in body.lower():
         parts.append(save)
 
-    # Use the LLM-generated 25 hashtags; fall back to the standard 25-tag set
-    tags = piece.get("hashtags")
-    if isinstance(tags, list):
-        tags = " ".join(str(t) for t in tags)
-    tags = str(tags or "").strip() or _FALLBACK_HASHTAGS
+    # Adaptive hashtag bank is primary — the mix evolves with real performance.
+    # LLM-generated tags, then the static set, are fallbacks only.
+    tags = ""
+    try:
+        from content_generator.analytics.hashtag_bank import select_hashtags
+        tags = select_hashtags(day=day)
+    except Exception as e:
+        logger.debug("[instagram] adaptive hashtags unavailable: %s", e)
+    if not tags:
+        llm_tags = piece.get("hashtags")
+        if isinstance(llm_tags, list):
+            llm_tags = " ".join(str(t) for t in llm_tags)
+        tags = str(llm_tags or "").strip() or _FALLBACK_HASHTAGS
 
     caption = "\n\n".join(p for p in parts if p)
     # Hashtags must survive the 2200-char limit — trim the body, never the tags

@@ -333,6 +333,13 @@ def _inject_brand_into_content(content: dict, day: int = 0) -> None:
     _ensure_captions(content)
     _inject_jar_creative_into_reels(content, day)
 
+    # Hook A/B: score all hook candidates, publish only the winner
+    try:
+        from content_generator.analytics.hook_selector import run_hook_ab
+        run_hook_ab(content)
+    except Exception as e:
+        logger.warning("[creative] hook A/B skipped: %s", e)
+
     reels = content.get("reels") or []
     for i, label in enumerate(["reel_1", "reel_2"]):
         if i < len(reels) and isinstance(reels[i], dict):
@@ -637,6 +644,7 @@ def _do_publish(content: dict, day_number: int) -> dict:
                 hook        = str(piece.get("hook_text") or piece.get("title") or "")[:120],
                 topic       = str(piece.get("save_mechanic") or piece.get("hook_archetype") or "")[:120],
                 format_used = "carousel" if filtered_content.get("carousel", {}).get("caption") else "single_image",
+                hashtags    = str(ig.get("hashtags_used") or ""),
             )
     except Exception as e:
         logger.warning("[publish] Could not track published post for insights: %s", e)

@@ -178,6 +178,15 @@ def generate_daily_content(
     except Exception as e:
         logger.debug("[pipeline] learning block unavailable: %s", e)
 
+    # Creative fatigue guard — never repeat the last 60 days of hooks/angles
+    try:
+        from content_generator.analytics.hook_selector import get_fatigue_block
+        fatigue = get_fatigue_block()
+        if fatigue:
+            ctx += "\n\n" + fatigue
+    except Exception as e:
+        logger.debug("[pipeline] fatigue block unavailable: %s", e)
+
     logger.info(
         "[pipeline] Day #%d (%s) | product=%s | Reel1=%s | Reel2=%s | Carousel=%s | LinkedIn=%s",
         day_number, todays_date, product, arch_1[0], arch_2[0], mech[0], angle[0],

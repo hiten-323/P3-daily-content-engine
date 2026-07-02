@@ -28,6 +28,15 @@ GROWTH_TOPICS = [
     "Slow mornings vs rushed mornings — a visual essay",
     "What your coffee order says about you",
     "The most expensive coffee in the world vs yours",
+    # Founder track — people follow people more than products
+    "Why I started a coffee brand when everyone said the market was full",
+    "The biggest mistake I made building a food brand in India",
+    "What nobody tells you about competing with giant FMCG brands",
+    "The day I read a competitor's ingredient label and got angry",
+    "Bootstrapping a coffee brand: what Rs 0 in VC funding teaches you",
+    "The hardest lesson from my first year selling coffee in India",
+    "Why I print what we DON'T add on our label — a founder's reasoning",
+    "What running a coffee brand taught me about Indian consumers",
 ]
 
 GROWTH_FORMATS = [

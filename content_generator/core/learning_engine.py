@@ -113,29 +113,59 @@ def analyze() -> dict:
     return {"winners": winners, "failed": failed, "median_score": median, "count": len(scored)}
 
 
+def _infer_reason(entry: dict) -> str:
+    """Infer WHY a post performed from its metric shape — structured viral memory."""
+    m = entry.get("metrics", {})
+    views = m.get("views", 0) or m.get("reach", 0)
+    if not views:
+        return ""
+    save_rate    = m.get("saves", 0)    / views
+    share_rate   = m.get("shares", 0)   / views
+    comment_rate = m.get("comments", 0) / views
+    best = max(save_rate, share_rate, comment_rate)
+    if best == 0:
+        return "reached people but nothing made them act"
+    if best == save_rate:
+        return "high save rate — reference/utility value"
+    if best == share_rate:
+        return "high share rate — identity/social value"
+    return "high comment rate — opinion/conversation trigger"
+
+
 def get_learning_block(max_items: int = 5) -> str:
     """
-    Return a prompt-injectable text block summarizing what worked and what failed.
-    Empty string when there is not enough data yet — prompts stay clean early on.
+    Structured viral memory, prompt-injectable.
+    Top 20% of posts = structures to reuse (with the inferred reason they worked).
+    Bottom 20% = structures to avoid.
+    Empty string when there is not enough data yet.
     """
-    result = analyze()
-    if result["count"] < 3:
-        return ""  # not enough data to learn from yet
+    entries = _load_log()
+    scored = sorted(
+        ((e, _engagement_score(e.get("metrics", {}))) for e in entries if e.get("metrics")),
+        key=lambda x: x[1], reverse=True,
+    )
+    if len(scored) < 3:
+        return ""
 
-    lines = ["PERFORMANCE LEARNINGS (from this account's actual published posts):"]
+    n_top = max(1, len(scored) // 5)   # top 20%
+    top    = scored[:n_top]
+    bottom = scored[-n_top:]
 
-    if result["winners"]:
-        lines.append("PATTERNS THAT WORKED — lean into these:")
-        for e in result["winners"][:max_items]:
-            desc = " | ".join(filter(None, [e.get("hook"), e.get("topic"), e.get("format")]))
-            if desc:
-                lines.append(f"  + {desc}")
+    lines = [
+        "VIRAL MEMORY (this account's actual results — compounds over months):",
+        "Use ONLY hook/topic structures similar to the TOP 20%. AVOID the bottom 20%.",
+        "TOP 20% — reuse these structures:",
+    ]
+    for e, s in top[:max_items]:
+        desc   = " | ".join(filter(None, [e.get("hook"), e.get("topic"), e.get("format")]))
+        reason = _infer_reason(e)
+        if desc:
+            lines.append(f"  + {desc}" + (f"  [why: {reason}]" if reason else ""))
 
-    if result["failed"]:
-        lines.append("PATTERNS THAT FAILED — never repeat these:")
-        for e in result["failed"][:max_items]:
-            desc = " | ".join(filter(None, [e.get("hook"), e.get("topic"), e.get("format")]))
-            if desc:
-                lines.append(f"  - {desc}")
+    lines.append("BOTTOM 20% — never repeat these structures:")
+    for e, s in bottom[:max_items]:
+        desc = " | ".join(filter(None, [e.get("hook"), e.get("topic"), e.get("format")]))
+        if desc:
+            lines.append(f"  - {desc}")
 
-    return "\n".join(lines) if len(lines) > 1 else ""
+    return "\n".join(lines)

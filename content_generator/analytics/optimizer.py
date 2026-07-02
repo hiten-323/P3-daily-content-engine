@@ -12,7 +12,8 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-_MIN_DATA_SAMPLES = 3   # trust performance data only after 3+ samples
+_MIN_DATA_SAMPLES = 12  # trust performance data only after 12+ samples — 3 was
+                        # too few; early outliers dominated future selections
 _EXPLORE_EVERY_N  = 5   # explore a non-top-performer every N days
 
 
@@ -78,7 +79,7 @@ def get_strategy_context() -> dict:
     """
     try:
         from content_generator.analytics.metrics_store import get_hook_performance, get_recent_metrics
-        hooks  = get_hook_performance(min_samples=3)
+        hooks  = get_hook_performance(min_samples=_MIN_DATA_SAMPLES)
         recent = get_recent_metrics(days=7)
     except Exception:
         return {}

@@ -62,6 +62,7 @@ def track_published_post(
     hook: str = "",
     topic: str = "",
     format_used: str = "",
+    hashtags: str = "",
 ) -> None:
     """Record a successfully published post so its insights can be fetched later."""
     if not media_id:
@@ -76,6 +77,7 @@ def track_published_post(
         "hook":        hook,
         "topic":       topic,
         "format":      format_used,
+        "hashtags":    hashtags,
         "published_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "insights_recorded": False,
     })
@@ -219,6 +221,14 @@ def fetch_pending_insights() -> dict:
         post["insights_recorded"] = True
         recorded += 1
         logger.info("[insights] Recorded %s: %s", post["asset_id"], metrics)
+
+        # Feed the adaptive hashtag bank — each tag earns/loses standing
+        try:
+            from content_generator.analytics.hashtag_bank import record_post_hashtags
+            if post.get("hashtags"):
+                record_post_hashtags(post["hashtags"], metrics)
+        except Exception as e:
+            logger.debug("[insights] hashtag attribution skipped: %s", e)
 
     _save_posts(posts)
     logger.info(
