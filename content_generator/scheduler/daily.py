@@ -802,7 +802,13 @@ if __name__ == "__main__":
 
     if "--now" in sys.argv:
         import json
-        result = run_now()
+        from content_generator.scheduler.slots import slots_enabled, get_current_slot, run_publish_slot
+        slot = get_current_slot() if slots_enabled() else "generate"
+        if slot == "generate":
+            result = run_now()
+        else:
+            # Publish-only slot: post this morning's content at its optimal window
+            result = run_publish_slot(slot)
         print(json.dumps(result, indent=2, ensure_ascii=False))
     elif "--report" in sys.argv:
         from content_generator.dashboard.reports import print_report

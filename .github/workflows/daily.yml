@@ -55,8 +55,12 @@ name: Purity Beans Daily Pipeline
 
 on:
   schedule:
-    # 00:30 UTC = 06:00 IST
+    # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, Instagram held
     - cron: '30 0 * * *'
+    # 02:30 UTC = 08:00 IST — MORNING slot: Instagram carousel (7-9 AM window)
+    - cron: '30 2 * * *'
+    # 14:30 UTC = 20:00 IST — EVENING slot: Instagram reel-style post (7-10 PM window)
+    - cron: '30 14 * * *'
 
   # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
@@ -73,6 +77,8 @@ on:
 # Opt into Node.js 24 now (Node 20 deprecated June 2026, removed Sept 2026)
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Timed publishing: generate at 06:00 IST, Instagram at 08:00 + 20:00 IST
+  ENABLE_TIMED_SLOTS: "true"
 
 jobs:
   run-pipeline:
@@ -230,8 +236,15 @@ jobs:
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/ 2>/dev/null || true
+          # Persist today's content + images + slot locks so the later
+          # publish-slot runs (08:00 / 20:00 IST) can load them.
+          # Clean creative files older than 7 days to limit repo growth.
+          find output/creative -type f -mtime +7 -delete 2>/dev/null || true
+          git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
+          git add -f output/creative/ 2>/dev/null || true
+          git add -f output/.running* 2>/dev/null || true
           git pull --rebase --autostash || true
-          git diff --staged --quiet || git commit -m "chore: daily run ${{ github.run_number }} + learning data [skip ci]"
+          git diff --staged --quiet || git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"
           git push || true   # non-fatal if push fails
 
       # ── 10. On failure: alert ─────────────────────────────────────────────────

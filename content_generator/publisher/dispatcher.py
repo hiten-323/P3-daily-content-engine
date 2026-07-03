@@ -62,13 +62,21 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
         results["linkedin"] = {"success": False, "error": str(e)}
 
     # ── Instagram ─────────────────────────────────────────────────────────────
-    try:
-        from content_generator.publisher.instagram import post_content as ig_post
-        logger.info("[publisher] Posting to Instagram...")
-        results["instagram"] = ig_post(content, day=day_number)
-    except Exception as e:
-        logger.error("[publisher] Instagram exception: %s", e)
-        results["instagram"] = {"success": False, "error": str(e)}
+    # With timed slots enabled, Instagram is held for its algorithm-optimal
+    # windows (08:00 + 20:00 IST) and published by the morning/evening slot
+    # runs instead of the 06:00 generate run.
+    import os as _os
+    if _os.getenv("ENABLE_TIMED_SLOTS", "false").lower() == "true":
+        logger.info("[publisher] Instagram held for timed slots (morning/evening runs)")
+        results["instagram"] = {"success": False, "error": "held_for_timed_slot", "held": True}
+    else:
+        try:
+            from content_generator.publisher.instagram import post_content as ig_post
+            logger.info("[publisher] Posting to Instagram...")
+            results["instagram"] = ig_post(content, day=day_number)
+        except Exception as e:
+            logger.error("[publisher] Instagram exception: %s", e)
+            results["instagram"] = {"success": False, "error": str(e)}
 
     # ── Facebook ──────────────────────────────────────────────────────────────
     try:
