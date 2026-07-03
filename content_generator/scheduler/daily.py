@@ -71,6 +71,14 @@ def run_full_pipeline(day_number: int = None) -> dict:
             max_retries=0,
         )
 
+    # ── 0.6 Revenue attribution — Shopify orders -> post-level learning ──────
+    with timed_step("revenue_attribution", timeout_s=60):
+        rm.run(
+            fn=lambda: _do_revenue_attribution(),
+            label="revenue_attribution",
+            max_retries=0,
+        )
+
     # ── 1. Research ───────────────────────────────────────────────────────────
     research: dict = {}
     with timed_step("research", timeout_s=120):
@@ -587,6 +595,12 @@ def _do_fetch_insights() -> dict:
     """Fetch yesterday's Instagram metrics and feed the learning engine. Non-blocking."""
     from content_generator.analytics.insights_fetcher import fetch_pending_insights
     return fetch_pending_insights()
+
+
+def _do_revenue_attribution() -> dict:
+    """Pull Shopify orders, attribute Instagram revenue to posts. Non-blocking."""
+    from content_generator.analytics.revenue_attribution import run_revenue_attribution
+    return run_revenue_attribution()
 
 
 def _do_publish(content: dict, day_number: int) -> dict:

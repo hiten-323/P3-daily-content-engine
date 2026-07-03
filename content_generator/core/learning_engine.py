@@ -27,6 +27,7 @@ _LOG_PATH     = os.path.join(_LEARNING_DIR, "performance_log.json")
 METRIC_FIELDS = [
     "views", "reach", "watch_time_s", "avg_view_duration_s", "completion_rate",
     "shares", "saves", "comments", "profile_visits", "follows_gained", "likes",
+    "revenue", "orders",
 ]
 
 
@@ -83,15 +84,20 @@ def record_performance(
 
 
 def _engagement_score(m: dict) -> float:
-    """Weighted engagement score. Follows and shares weigh most — they compound."""
+    """
+    Weighted score. Revenue outranks everything — a post that sells beats a
+    post that only entertains. Then follows and shares (they compound).
+    """
     return (
-        m.get("follows_gained", 0) * 10.0
-        + m.get("shares", 0)        * 5.0
-        + m.get("saves", 0)         * 4.0
-        + m.get("comments", 0)      * 3.0
+        m.get("revenue", 0)          * 1.0    # Rs 1 = 1 point: sales dominate
+        + m.get("orders", 0)         * 25.0
+        + m.get("follows_gained", 0) * 10.0
+        + m.get("shares", 0)         * 5.0
+        + m.get("saves", 0)          * 4.0
+        + m.get("comments", 0)       * 3.0
         + m.get("profile_visits", 0) * 2.0
-        + m.get("likes", 0)         * 1.0
-        + m.get("views", 0)         * 0.01
+        + m.get("likes", 0)          * 1.0
+        + m.get("views", 0)          * 0.01
     )
 
 
@@ -116,6 +122,8 @@ def analyze() -> dict:
 def _infer_reason(entry: dict) -> str:
     """Infer WHY a post performed from its metric shape — structured viral memory."""
     m = entry.get("metrics", {})
+    if m.get("revenue", 0) > 0:
+        return f"generated Rs {m['revenue']:.0f} in attributed sales — conversion structure"
     views = m.get("views", 0) or m.get("reach", 0)
     if not views:
         return ""
