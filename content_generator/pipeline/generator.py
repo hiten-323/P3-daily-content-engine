@@ -187,6 +187,14 @@ def generate_daily_content(
     except Exception as e:
         logger.debug("[pipeline] fatigue block unavailable: %s", e)
 
+    # Growth Director — stage-aware strategy brief (Million Follower Mode,
+    # one funnel objective per reel, watch-time structure)
+    try:
+        from content_generator.core.growth_director import get_strategy_brief
+        ctx += "\n\n" + get_strategy_brief(day_number)
+    except Exception as e:
+        logger.debug("[pipeline] growth director unavailable: %s", e)
+
     logger.info(
         "[pipeline] Day #%d (%s) | product=%s | Reel1=%s | Reel2=%s | Carousel=%s | LinkedIn=%s",
         day_number, todays_date, product, arch_1[0], arch_2[0], mech[0], angle[0],

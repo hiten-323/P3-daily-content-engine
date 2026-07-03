@@ -39,6 +39,12 @@ class ReelSchema(BaseModel):
     whatsapp_forward: Optional[str] = None
     ai_image_hook_prompt: Optional[str] = None
     ai_video_motion_prompt: Optional[str] = None
+    hook_options: Optional[List[str]] = None
+    hook_ab: Optional[list] = None
+    thumbnail_options: Optional[list] = None
+    reference_jar_paths: Optional[List[str]] = None
+    hook_visual_concept: Optional[str] = None
+    hook_text_overlay: Optional[str] = None
     editorial_score: Optional[EditorialScore] = None
     objective: Optional[str] = None
     success_metric: Optional[str] = None

@@ -45,6 +45,7 @@ ABSOLUTE RULES:
   "id": "{reel_id}",
   "hook_archetype": "{arch[0]}",
   "hook_text": "4 WORDS MAX ALL CAPS — stops the scroll instantly",
+  "hook_options": ["10 alternate hooks, each a different psychological angle (betrayal, curiosity gap, identity, contrarian, myth bust, relatable fail, insider secret, social shame, transformation, direct accusation). The engine scores all candidates and publishes only the winner."],
   "hook_spoken": "First 3 spoken words — mid-action, never Hey guys",
   "frames": [
     {{"on_screen": "4 WORDS MAX ALL CAPS", "spoken": "8-12 words expanding the hook with a real Indian detail"}},
@@ -67,5 +68,8 @@ ABSOLUTE RULES:
   "music_vibe": "Tempo, instrument, mood — matches the emotional arc",
   "whatsapp_forward": "30-40 words. Indian voice. Sounds like a friend forwarding, not a brand broadcasting.",
   "ai_image_hook_prompt": "A detailed, paste-ready image generation prompt for Nano Banana Pro or GPT Image 2. MUST include: vertical 9:16 format, photographic (never 'render'), 85mm f/1.8, shallow depth of field, dark cinematic background, warm amber/gold accent light on Purity Beans jar, a human in frame (human anchor). REALISM INGREDIENTS required in the prompt text: visible skin pores, flyaway hairs, fabric wrinkles, one light source with correct shadow direction, contact shadow under the jar, environment reflections on glass, one lived-in detail (droplet, smudge, scattered granules), subject slightly off-center, natural grain. BANNED words: perfect, flawless, stunning, 3D, render, CGI, illustration. This is the STILL FRAME the reel opens on. 80-120 words.",
-  "ai_video_motion_prompt": "A paste-ready motion prompt for Seedance 2.0 or Veo. Describes ONLY the motion added to the still frame. Rules: the person stays calm but BREATHES (chest movement, micro blinks). The Purity Beans jar stays steady. Background elements move with real physics (steam disperses, liquid has weight, particles fall not float). Camera: slow steady push-in or locked-off, 24fps film feel. Faces stay stable — no morphing. 40-60 words."
+  "ai_video_motion_prompt": "A paste-ready motion prompt for Seedance 2.0 or Veo. Describes ONLY the motion added to the still frame. Rules: the person stays calm but BREATHES (chest movement, micro blinks). The Purity Beans jar stays steady. Background elements move with real physics (steam disperses, liquid has weight, particles fall not float). Camera: slow steady push-in or locked-off, 24fps film feel. Faces stay stable — no morphing. 40-60 words.",
+  "thumbnail_options": [
+    {{"concept": "3 different thumbnail concepts for this reel. Each: a one-line visual concept + a paste-ready image prompt (9:16, photographic, realism rules apply, NO text in image). Vary the psychological angle: one shock-based, one curiosity-based, one product-hero.", "image_prompt": "...", "predicted_ctr_reason": "one sentence: why this stops the scroll in a 2cm feed tile"}}
+  ]
 }}"""
