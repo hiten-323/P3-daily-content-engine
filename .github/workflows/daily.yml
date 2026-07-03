@@ -242,6 +242,7 @@ jobs:
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/creative/ 2>/dev/null || true
+          git add -f output/reports/ 2>/dev/null || true
           git add -f output/.running* 2>/dev/null || true
           git pull --rebase --autostash || true
           git diff --staged --quiet || git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"

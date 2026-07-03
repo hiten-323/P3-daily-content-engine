@@ -43,7 +43,33 @@ account's own median: top 20% = reuse structures, bottom 20% = never repeat.
 | MOMENTUM | 10K–100K | 70/30 | IG revenue ≥ 20% of total revenue |
 | SCALE | 100K+ | 50/50 | Repeat-order rate ≥ 25% |
 
-## Weekly Founder Brief (auto-derivable from stored data)
+## EVPOI — Enterprise Value Per Organic Impression
 
-PPOI trend · follower trend · top-3 winning structures (viral memory) ·
-top-3 risks (fatigue/quota/token expiry) · one actionable recommendation.
+```
+EVPOI v1 = IG-attributed revenue ÷ organic impressions × 1000
+```
+Attribution is **first-touch** via Shopify customer journeys
+(`customerJourneySummary`), so a reel that started a journey days before a
+Google-search checkout still gets credit — it never collapses to last-click.
+
+## Brand Equity Score (0–10)
+
+```
+Brand Equity = repeat_purchase_rate×0.3 + branded_search_index×0.2
+             + ugc_creation_rate×0.2 + review_sentiment×0.3
+```
+- Repeat purchase rate: **auto** from revenue snapshots (25% repeat = 10/10)
+- Other three: weekly manual entry in `output/learning/brand_equity_inputs.json`
+  until data sources exist (Search Console, tagged posts, reviews)
+- Policy: if Brand Equity < 6/10, prioritize trust/education content over
+  aggressive conversion content.
+
+## Weekly Founder Brief (Mondays, auto — `analytics/founder_brief.py`)
+
+Exactly three numbers, nothing else:
+1. **EVPOI** (₹ per 1,000 impressions, 7-day)
+2. **Brand Equity Score** (with components)
+3. **Learning Velocity** (hooks validated / retired this week)
+
+If a metric doesn't answer "value per impression / brand health / getting
+smarter", it does not belong in the brief.

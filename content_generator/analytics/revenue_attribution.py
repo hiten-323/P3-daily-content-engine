@@ -82,8 +82,91 @@ def _is_instagram_order(order: dict) -> bool:
         str(order.get("landing_site") or ""),
         str(order.get("referring_site") or ""),
         str(order.get("source_name") or ""),
+        str(order.get("_journey_sources") or ""),
     ]).lower()
     return any(m in haystack for m in _IG_MARKERS)
+
+
+# ── Anonymous -> Identified bridge (Shopify customer journey, first-touch) ────
+#
+# Shopify already links a customer's anonymous browsing sessions to the order
+# at checkout: order.customerJourneySummary carries the FIRST visit's source
+# and UTM parameters plus the touchpoint count. Using it means an order that
+# started from a reel days ago — but converted via a Google search — is still
+# credited to Instagram (first-touch), instead of collapsing to last-click.
+# No pixel, no cookie code, no website changes required.
+
+_JOURNEY_QUERY = """
+query($q: String!) {
+  orders(first: 50, query: $q) {
+    edges { node {
+      legacyResourceId
+      customerJourneySummary {
+        momentsCount { count }
+        firstVisit  { source referrerUrl utmParameters { source medium } }
+        lastVisit   { source referrerUrl utmParameters { source medium } }
+      }
+    } }
+  }
+}
+"""
+
+
+def _shopify_graphql(query: str, variables: dict) -> dict | None:
+    domain = os.getenv("SHOPIFY_STORE_DOMAIN")
+    token  = os.getenv("SHOPIFY_ADMIN_TOKEN")
+    if not domain or not token:
+        return None
+    body = json.dumps({"query": query, "variables": variables}).encode("utf-8")
+    try:
+        req = urllib.request.Request(
+            f"https://{domain}/admin/api/{_API_VERSION}/graphql.json",
+            data=body,
+            headers={"X-Shopify-Access-Token": token,
+                     "Content-Type": "application/json",
+                     "User-Agent": "PurityBeans/1.0"},
+            method="POST",
+        )
+        resp = urllib.request.urlopen(req, timeout=_TIMEOUT)
+        return json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        logger.warning("[revenue] Shopify GraphQL failed: %s", e)
+        return None
+
+
+def _enrich_with_journeys(orders: list[dict], since: datetime.datetime) -> None:
+    """
+    Attach first-touch journey sources to each order (in place) so
+    _is_instagram_order sees the FULL journey, not just the last click.
+    Degrades silently to last-click attribution if GraphQL is unavailable.
+    """
+    q = f"created_at:>={since.date().isoformat()} financial_status:paid"
+    data = _shopify_graphql(_JOURNEY_QUERY, {"q": q})
+    if not data:
+        return
+    journeys: dict[str, str] = {}
+    try:
+        for edge in data["data"]["orders"]["edges"]:
+            node = edge["node"]
+            js   = node.get("customerJourneySummary") or {}
+            parts = []
+            for visit_key in ("firstVisit", "lastVisit"):
+                v = js.get(visit_key) or {}
+                utm = v.get("utmParameters") or {}
+                parts += [str(v.get("source") or ""), str(v.get("referrerUrl") or ""),
+                          str(utm.get("source") or "")]
+            journeys[str(node.get("legacyResourceId"))] = " ".join(p for p in parts if p)
+    except Exception as e:
+        logger.debug("[revenue] journey parse failed: %s", e)
+        return
+    matched = 0
+    for o in orders:
+        j = journeys.get(str(o.get("id")))
+        if j:
+            o["_journey_sources"] = j
+            matched += 1
+    if matched:
+        logger.info("[revenue] First-touch journeys attached to %d/%d orders", matched, len(orders))
 
 
 # ── Attribution ───────────────────────────────────────────────────────────────
@@ -103,6 +186,7 @@ def run_revenue_attribution(window_hours: int = 48) -> dict:
     now    = datetime.datetime.now()
     since  = now - datetime.timedelta(hours=window_hours)
     orders = _fetch_orders_since(since)
+    _enrich_with_journeys(orders, since)   # first-touch, not just last-click
 
     total_rev = sum(float(o.get("total_price") or 0) for o in orders)
     ig_orders = [o for o in orders if _is_instagram_order(o)]

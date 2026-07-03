@@ -741,6 +741,11 @@ def _maybe_weekly_summary() -> None:
         generate_weekly_summary(days=7)
     except Exception as e:
         logger.warning("[scheduler] Weekly summary failed: %s", e)
+    try:
+        from content_generator.analytics.founder_brief import generate_founder_brief
+        generate_founder_brief()
+    except Exception as e:
+        logger.warning("[scheduler] Founder brief failed: %s", e)
 
 
 # ── Manual trigger ────────────────────────────────────────────────────────────

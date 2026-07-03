@@ -3,6 +3,25 @@
 The rules the system enforces automatically, and where each lives in code.
 These are running policies, not aspirations — each row is executable today.
 
+## Policy #001: Prohibited Growth Tactics (supreme — outranks all metrics)
+
+The system is explicitly prohibited from executing or recommending any tactic
+that automates artificial engagement, including:
+
+- Follow/unfollow systems
+- Engagement pods
+- Mass auto-DM tools
+- Purchased views, likes, or followers
+- Any service that simulates audience behavior
+
+Any generated recommendation that violates this policy is **invalid**: it must
+not be executed, must be excluded from published output, and should be logged.
+
+Why supreme: attribution, EVPOI, and the entire learning loop depend on *real
+buyer behavior*. Artificial engagement poisons Company Memory — the system
+would learn from fake signals and optimize toward them. Trust and data quality
+outrank every short-term metric (GOAL_HIERARCHY.md L0).
+
 ## Content policies
 
 | Policy | Enforcement point |
