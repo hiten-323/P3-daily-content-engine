@@ -1,0 +1,122 @@
+"""
+Gemini Scene Composer — puts the REAL jar into cinematic scenes.
+
+Unlike FLUX/Pollinations (text-to-image — they invent fake jars), Gemini's
+image model accepts the actual jar photo as INPUT and edits it into a scene:
+dark marble, steam, golden light — with the real label preserved.
+
+Quality tiers for brand images:
+  1. Gemini scene (this module)    — real jar inside a cinematic scene
+  2. Card composer (real_jar_composer) — real jar on branded canvas (always works)
+
+Uses the REST API directly (no SDK dependency drift). Free-tier friendly:
+only called for the highest-impact images (reel thumbnail + carousel cover),
+everything else uses the card composer.
+
+Required secret: GEMINI_API_KEY
+"""
+from __future__ import annotations
+import base64
+import datetime
+import json
+import logging
+import os
+import urllib.request
+
+logger = logging.getLogger(__name__)
+
+_OUT_DIR  = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
+_MODEL    = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
+_TIMEOUT  = 120
+
+_SCENE_RULES = (
+    "Take the product jar from the supplied photo and place it in this scene. "
+    "CRITICAL: keep the jar EXACTLY as photographed — same label, same text, "
+    "same cap, same shape, same colors. Do not redesign, redraw, or alter the "
+    "label in any way. Only change the environment around it. "
+    "Photographic realism: correct contact shadow where the jar meets the "
+    "surface, environment reflections on the glass, natural grain, one "
+    "believable light source. No text overlays. Vertical 9:16 composition."
+)
+
+
+def is_configured() -> bool:
+    return bool(os.getenv("GEMINI_API_KEY"))
+
+
+def generate_scene_with_real_jar(
+    scene_prompt: str,
+    day: int = 0,
+    idx: int = 0,
+    product: str | None = None,
+    label: str = "gemini_scene",
+) -> str | None:
+    """
+    Place the real jar photo into the described scene via Gemini image editing.
+    Returns the saved file path, or None on any failure (callers fall back
+    to the card composer).
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return None
+
+    from content_generator.creative.real_jar_composer import pick_jar_photo
+    jar_path = pick_jar_photo(day, idx, product)
+    if not jar_path:
+        return None
+
+    try:
+        with open(jar_path, "rb") as f:
+            jar_b64 = base64.b64encode(f.read()).decode("utf-8")
+    except Exception as e:
+        logger.warning("[gemini_scene] Could not read jar photo: %s", e)
+        return None
+
+    body = json.dumps({
+        "contents": [{
+            "parts": [
+                {"inline_data": {"mime_type": "image/png", "data": jar_b64}},
+                {"text": f"{_SCENE_RULES}\n\nSCENE: {scene_prompt}"},
+            ]
+        }],
+        "generationConfig": {"responseModalities": ["IMAGE"]},
+    }).encode("utf-8")
+
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{_MODEL}:generateContent?key={api_key}")
+
+    try:
+        req = urllib.request.Request(
+            url, data=body,
+            headers={"Content-Type": "application/json",
+                     "User-Agent": "PurityBeans/1.0"},
+            method="POST",
+        )
+        resp = urllib.request.urlopen(req, timeout=_TIMEOUT)
+        data = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        logger.warning("[gemini_scene] Gemini API failed: %s", e)
+        return None
+
+    # Extract the returned image
+    try:
+        for cand in data.get("candidates", []):
+            for part in (cand.get("content") or {}).get("parts", []):
+                inline = part.get("inlineData") or part.get("inline_data")
+                if inline and inline.get("data"):
+                    image_bytes = base64.b64decode(inline["data"])
+                    if len(image_bytes) < 5000:
+                        continue
+                    os.makedirs(_OUT_DIR, exist_ok=True)
+                    date_str = datetime.date.today().isoformat()
+                    path = os.path.join(_OUT_DIR, f"{label}_{date_str}.jpg")
+                    with open(path, "wb") as f:
+                        f.write(image_bytes)
+                    logger.info("[gemini_scene] Real jar placed in scene -> %s (base: %s)",
+                                path, os.path.basename(jar_path))
+                    return path
+    except Exception as e:
+        logger.warning("[gemini_scene] Response parse failed: %s", e)
+
+    logger.warning("[gemini_scene] No image in Gemini response")
+    return None

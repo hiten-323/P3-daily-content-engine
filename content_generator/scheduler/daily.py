@@ -530,6 +530,26 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
     slides   = carousel.get("slides") or []
     if slides:
         paths = compose_carousel_slides(slides, day_number)
+
+        # Quality tier: Gemini places the REAL jar into a cinematic scene for
+        # the cover slide (label preserved). Card version replaced on success.
+        try:
+            from content_generator.creative.gemini_scene import generate_scene_with_real_jar
+            first = slides[0] if isinstance(slides[0], dict) else {}
+            scene = (first.get("visual")
+                     or "dark marble kitchen counter at dawn, warm golden side light, "
+                        "soft steam rising from a cup beside the jar, deep shadows, "
+                        "premium editorial FMCG photography")
+            cover = generate_scene_with_real_jar(
+                scene, day=day_number, idx=0,
+                label=f"carousel_slide_1_day{day_number}_scene",
+            )
+            if cover and paths:
+                paths[0] = cover
+                logger.info("[images] Carousel cover upgraded to Gemini scene")
+        except Exception as e:
+            logger.debug("[images] Gemini cover skipped: %s", e)
+
         results["carousel"] = paths
         logger.info("[images] Composed %d carousel slides from real jar photos", len(paths))
 
@@ -543,10 +563,24 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
         except Exception as e:
             logger.error("[images] Carousel image fallback failed: %s", e)
 
-    # Reel thumbnail — real jar photo + hook text
+    # Reel thumbnail — Gemini scene with real jar first, card composer fallback
     reel = content.get("reels", [{}])[0] if content.get("reels") else {}
     if reel:
-        path = compose_reel_thumbnail(reel, day_number, label="reel_1")
+        path = None
+        try:
+            from content_generator.creative.gemini_scene import generate_scene_with_real_jar
+            scene = (reel.get("hook_visual_concept")
+                     or reel.get("visual_direction")
+                     or "dramatic dark studio, single warm gold beam on the jar, "
+                        "coffee granules scattered on black marble, faint steam")
+            path = generate_scene_with_real_jar(
+                str(scene)[:400], day=day_number, idx=7,
+                label=f"reel_1_thumb_day{day_number}",
+            )
+        except Exception as e:
+            logger.debug("[images] Gemini reel thumb skipped: %s", e)
+        if not path:
+            path = compose_reel_thumbnail(reel, day_number, label="reel_1")
         if not path:
             try:
                 from content_generator.creative.flux_generator import generate_reel_thumbnail
