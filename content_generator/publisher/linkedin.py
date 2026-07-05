@@ -105,11 +105,14 @@ def _find_image(content: dict) -> str | None:
 
     creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
 
-    # Look for carousel cover first, then any generated image
+    # Look for carousel cover first, then any generated image — today's only
+    # (creative files persist 7 days in the repo for the publish slots)
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
     patterns = [
-        os.path.join(creative_dir, "carousel_slide_1_*.jpg"),
-        os.path.join(creative_dir, "carousel_cover_*.jpg"),
-        os.path.join(creative_dir, "*.jpg"),
+        os.path.join(creative_dir, f"carousel_slide_1_*{today}.jpg"),
+        os.path.join(creative_dir, f"carousel_cover_*{today}.jpg"),
+        os.path.join(creative_dir, f"*{today}.jpg"),
     ]
     for pat in patterns:
         files = sorted(_glob.glob(pat), reverse=True)

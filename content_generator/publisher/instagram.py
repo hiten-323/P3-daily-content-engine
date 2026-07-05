@@ -163,12 +163,17 @@ def _find_carousel_images(content: dict) -> list[str]:
         "*.png",
     ]
 
+    import datetime as _dt
+    today = _dt.date.today().isoformat()
+
     images = []
     for pattern in patterns:
         images.extend(sorted(_glob.glob(os.path.join(creative_dir, pattern))))
 
-    # Remove duplicates but preserve order
-    images = list(dict.fromkeys(images))
+    # Remove duplicates but preserve order; ONLY today's files —
+    # creative images persist 7 days in the repo for the publish slots,
+    # so without this filter we would post a mix of old days' slides.
+    images = [p for p in dict.fromkeys(images) if today in os.path.basename(p)]
 
     logger.info("[instagram] CREATIVE_OUTPUT_DIR=%s", creative_dir)
     if not images:
