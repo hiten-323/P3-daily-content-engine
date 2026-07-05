@@ -742,6 +742,13 @@ def _maybe_weekly_summary() -> None:
     except Exception as e:
         logger.warning("[scheduler] Weekly summary failed: %s", e)
     try:
+        # Auto-refresh brand equity signals (Trends, UGC hashtag, comment
+        # sentiment) BEFORE the brief so it reports fresh numbers
+        from content_generator.analytics.brand_signals import update_brand_equity_inputs
+        update_brand_equity_inputs()
+    except Exception as e:
+        logger.warning("[scheduler] Brand signals update failed: %s", e)
+    try:
         from content_generator.analytics.founder_brief import generate_founder_brief
         generate_founder_brief()
     except Exception as e:
