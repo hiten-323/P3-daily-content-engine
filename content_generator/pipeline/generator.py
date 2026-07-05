@@ -218,7 +218,7 @@ def generate_daily_content(
         phase1_tasks.update({
             "reel_2":   (reels.build,    ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night", avoid, day_number), 1800),
             "blog_post": (blog.build,    (topic,),                                                           3000),
-            "stories":   (stories.build, (),                                                                 1500),
+            "stories":   (stories.build, (day_number,),                                                      1500),
             "yt_short":  (yt_short.build,(product, day_number),                                              1500),
         })
 

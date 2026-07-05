@@ -1,10 +1,11 @@
 """YouTube Shorts prompt — full publish-ready asset."""
 from content_generator.prompts.brand import brand_block
-from content_generator.rotation import COMMERCIAL_EMOTIONS, WEBSITE_URL
+from content_generator.rotation import COMMERCIAL_EMOTIONS, WEBSITE_URL, get_todays_viral_idea
 
 
 def build(product: str, day: int) -> str:
-    emotion = COMMERCIAL_EMOTIONS[day % len(COMMERCIAL_EMOTIONS)]
+    emotion   = COMMERCIAL_EMOTIONS[day % len(COMMERCIAL_EMOTIONS)]
+    companion = get_todays_viral_idea(day + 15)
 
     return f"""{brand_block()}
 
@@ -13,6 +14,10 @@ Generate ONE complete publish-ready YouTube Shorts script for Purity Beans. Retu
 PRODUCT: {product}
 EMOTION ARC: {emotion[0]} — {emotion[1]}
 TARGET DURATION: 20-40 seconds
+COMPANION CONCEPT (shared with today's Instagram Story — the same vertical
+video is posted to both): {companion}
+IMPORTANT: This concept is deliberately DIFFERENT from today's Instagram Reels.
+Do not reuse the reels' hooks or angles.
 
 ABSOLUTE RULES:
 - NEVER invent statistics

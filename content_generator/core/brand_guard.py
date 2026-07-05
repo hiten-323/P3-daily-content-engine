@@ -489,15 +489,17 @@ Use these proven frameworks for every asset:
 
 ## CONTENT REPURPOSING MULTIPLIER
 
-Every core idea must generate:
-- 1 Instagram Reel (problem → revelation → Purity Beans fix → CTA)
-- 1 Carousel (educational deep-dive → save-worthy format)
-- 1 Instagram Post (single emotional moment → brand mention → CTA)
-- 1 LinkedIn post (business/founder angle → soft CTA)
-- 1 YouTube Short (30-second punchy version)
-- 1 WhatsApp forward (friend-to-friend voice, no brand jargon)
+Daily asset relationships (who shares a concept, who must differ):
+- Instagram REEL: its own concept (problem → revelation → fix → CTA)
+- Instagram STORY + YouTube SHORT: share ONE companion concept — the same
+  vertical video is posted to both. This companion concept must be
+  DIFFERENT from the reel's concept (never a re-cut of the reel).
+- Carousel: educational deep-dive on the day's angle (save-worthy)
+- Instagram Post: single emotional moment → brand mention → CTA
+- LinkedIn: value/education or founder angle → soft CTA
+- WhatsApp forward: friend-to-friend voice, no brand jargon
 
-Each format should feel native to the platform — not copy-pasted.
+Each format must feel native to its platform — never copy-pasted.
 
 ---
 

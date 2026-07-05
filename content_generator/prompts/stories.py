@@ -1,12 +1,21 @@
 """4-part Instagram Story sequence prompt."""
 from content_generator.prompts.brand import brand_block
-from content_generator.rotation import WEBSITE_URL
+from content_generator.rotation import WEBSITE_URL, get_todays_viral_idea
 
 
-def build() -> str:
+def build(day: int = 0) -> str:
+    # Story + YouTube Short share ONE companion concept (same video is reused
+    # for both). Offset keeps it DISTINCT from today's reels.
+    companion = get_todays_viral_idea(day + 15)
+
     return f"""{brand_block()}
 
 Generate ONE 4-story Instagram Story sequence for Purity Beans. Return a single JSON object.
+
+COMPANION CONCEPT (shared with today's YouTube Short — the same vertical video
+is posted to both): {companion}
+IMPORTANT: This concept is deliberately DIFFERENT from today's Instagram Reels.
+Do not reuse the reels' hooks or angles.
 
 {{
   "story_1": {{
