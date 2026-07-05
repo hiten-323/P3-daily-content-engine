@@ -45,8 +45,8 @@
 #   RUNWAY_API_KEY       — Runway video generation
 #   SMTP_USER            — email nurture sequences
 #   SMTP_PASS            — email nurture sequences
-#   SHOPIFY_STORE_URL    — Shopify revenue attribution
-#   SHOPIFY_API_KEY      — Shopify revenue attribution
+#   SHOPIFY_STORE_DOMAIN — your-store.myshopify.com (revenue attribution)
+#   SHOPIFY_ADMIN_TOKEN  — Admin API token, read_orders scope (revenue attribution)
 #
 # Manual trigger:
 #   GitHub UI → Actions → "Purity Beans Daily Pipeline" → Run workflow
@@ -181,9 +181,9 @@ jobs:
           SMTP_PASS:           ${{ secrets.SMTP_PASS }}
           NURTURE_FROM_EMAIL:  ${{ secrets.NURTURE_FROM_EMAIL }}
 
-          # Optional: Shopify attribution
-          SHOPIFY_STORE_URL:   ${{ secrets.SHOPIFY_STORE_URL }}
-          SHOPIFY_API_KEY:     ${{ secrets.SHOPIFY_API_KEY }}
+          # Shopify revenue attribution (names must match revenue_attribution.py)
+          SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
 
           # Config
           WEBSITE_URL:         https://p3online.in
