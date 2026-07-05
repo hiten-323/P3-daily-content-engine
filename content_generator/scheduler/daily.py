@@ -515,42 +515,47 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
     Saves carousel slides and reel thumbnail to output/creative/.
     These files are then found by instagram.py and linkedin.py publishers.
     """
-    from content_generator.creative.flux_generator import (
-        generate_carousel_images,
-        generate_reel_thumbnail,
+    # Brand images are composed from REAL jar photos (brand_assets/*.png).
+    # Text-to-image AI cannot see reference images and invents fake jars with
+    # gibberish labels — so AI generation is only the fallback, never primary.
+    from content_generator.creative.real_jar_composer import (
+        compose_carousel_slides,
+        compose_reel_thumbnail,
     )
 
     results = {"carousel": [], "reel": None}
 
-    # Carousel slides
+    # Carousel slides — one real jar photo per slide, rotating daily
     carousel = content.get("carousel") or {}
     slides   = carousel.get("slides") or []
     if slides:
-        paths = generate_carousel_images(slides, day_number)
+        paths = compose_carousel_slides(slides, day_number)
         results["carousel"] = paths
-        logger.info("[images] Generated %d carousel slides", len(paths))
-    else:
-        # Fallback: use ai_image_prompts if slides have no image_prompt
-        prompts = content.get("ai_image_prompts") or {}
-        carousel_prompt = (
-            prompts.get("carousel_cover")
-            or prompts.get("carousel")
-            or "Purity Beans premium instant coffee jar, dark moody editorial"
-        )
-        from content_generator.creative.flux_generator import generate_image
-        path = generate_image(carousel_prompt, width=1080, height=1080,
-                              label=f"carousel_slide_1_day{day_number}", seed=day_number)
-        if path:
-            results["carousel"] = [path]
-            logger.info("[images] Generated carousel cover from ai_image_prompts")
+        logger.info("[images] Composed %d carousel slides from real jar photos", len(paths))
 
-    # Reel thumbnail (reel_1)
+    if not results["carousel"]:
+        # Fallback: AI generation (may not match the real jar)
+        try:
+            from content_generator.creative.flux_generator import generate_carousel_images
+            paths = generate_carousel_images(slides, day_number) if slides else []
+            results["carousel"] = paths
+            logger.warning("[images] Fell back to AI-generated carousel (%d slides)", len(paths))
+        except Exception as e:
+            logger.error("[images] Carousel image fallback failed: %s", e)
+
+    # Reel thumbnail — real jar photo + hook text
     reel = content.get("reels", [{}])[0] if content.get("reels") else {}
     if reel:
-        path = generate_reel_thumbnail(reel, day_number, label="reel_1")
+        path = compose_reel_thumbnail(reel, day_number, label="reel_1")
+        if not path:
+            try:
+                from content_generator.creative.flux_generator import generate_reel_thumbnail
+                path = generate_reel_thumbnail(reel, day_number, label="reel_1")
+            except Exception:
+                path = None
         results["reel"] = path
         if path:
-            logger.info("[images] Generated reel thumbnail: %s", path)
+            logger.info("[images] Reel thumbnail: %s", path)
 
     # UGC + Avatar + Reel Hook — jar-reference creative package
     try:
