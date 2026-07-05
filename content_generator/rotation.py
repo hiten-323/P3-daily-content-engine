@@ -149,6 +149,12 @@ VIRAL_HOOKS = [
     "Everyone in your office is drinking adulterated coffee.",
     "The real reason your coffee does not taste like coffee.",
     "Indian brand. Nothing hidden. Everything on the label.",
+    # Reverse-qualifier hooks — exclusion triggers curiosity + pre-qualifies
+    "If you already drink single-origin coffee, skip this reel.",
+    "This is not for people who enjoy chicory.",
+    "Don't watch this if you're happy with your instant coffee.",
+    "Real coffee is not for everyone. Scroll if that's you.",
+    "If you've never read a coffee label, this will hurt.",
 ]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

@@ -55,7 +55,9 @@ FUNNEL_OBJECTIVES = [
                    "Success metric: saves."),
     ("CONVERSION", "Route to website. Product visible, clear buy CTA, https://p3online.in. "
                    "Success metric: link clicks. (Brand track only.)"),
-    ("COMMUNITY",  "Spark conversation. Opinion bait, this-or-that, identity question. "
+    ("COMMUNITY",  "Spark conversation. Opinion bait, this-or-that, identity question, "
+                   "or intent-comment mechanic (withhold price/variant info — "
+                   "'Comment PRICE / BOLD / GIFT' — each comment is a lead). "
                    "Success metric: comments."),
 ]
 

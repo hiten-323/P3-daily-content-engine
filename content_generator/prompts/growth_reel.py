@@ -44,6 +44,8 @@ GROWTH_FORMATS = [
     "myth vs reality", "expectation vs reality", "30-day experiment story",
     "POV morning routine", "visual explainer", "unexpected comparison",
     "hidden facts listicle",
+    "talking-head direct-to-camera (founder voice, one strong claim, no B-roll crutch)",
+    "reverse-qualifier ('this is NOT for you if...' — exclusion drives curiosity)",
 ]
 
 

@@ -509,6 +509,24 @@ Examples:
 - "Are you a real coffee person? Comment YES."
 - "Tag someone who needs to read this."
 
+**Intent-Comment Engineering (comment-to-lead mechanic):**
+Deliberately withhold ONE piece of information buyers want (price, where to buy,
+which variant fits them) and make commenting the way to get it. Each such
+comment is a high-intent lead AND an engagement signal the algorithm rewards.
+Examples:
+- "Comment PRICE and I will reply with the launch offer."
+- "Comment BOLD or SMOOTH and I will tell you which variant fits your taste."
+- "Want the corporate gifting rate card? Comment GIFT."
+Rule: the founder replies personally (Policy #001 — no mass auto-DM tools).
+
+**Reverse-Qualifier Hooks (exclusion triggers curiosity):**
+Telling part of the audience the content is NOT for them stops the scroll
+harder than inviting them, and pre-qualifies who engages.
+Examples:
+- "If you already drink single-origin coffee, skip this reel."
+- "This is not for people who enjoy chicory."
+- "Don't watch this if you're happy with your instant coffee."
+
 **Save Bait:** Give a reason to bookmark before posting.
 Examples:
 - "Save this before your next grocery run."
