@@ -10,10 +10,10 @@ So instead of publishing everything at 06:00 IST, the day is split:
   SLOT       UTC cron    IST     WHAT HAPPENS
   generate   30 0 * * *  06:00   Full pipeline: insights, revenue, generate,
                                  editorial, images, LinkedIn/blog/YouTube.
-                                 Instagram is HELD for its optimal windows.
-  morning    30 2 * * *  08:00   Instagram carousel/feed post (7-9 AM window)
-  evening    30 14 * * * 20:00   Instagram reel-style single image with the
-                                 reel's caption (7-10 PM window)
+                                 Instagram + Facebook HELD for their windows.
+  morning    30 4 * * *  10:00   IG carousel + FB mirror (owner-chosen time)
+  evening    30 16 * * * 22:00   IG reel-style post + FB mirror
+                                 (owner-chosen time)
 
 Content + images are committed to the repo by the generate run, so the
 later stateless CI runs can load and publish them.
@@ -116,11 +116,12 @@ def run_publish_slot(slot: str) -> dict:
     day = content.get("day_number", 0)
 
     if slot == "morning":
-        # Carousel / feed post — 7-9 AM IST window
+        # Carousel / feed post — 10:00 IST (owner-chosen)
         from content_generator.publisher.instagram import post_content
         result = post_content(content, day=day)
         piece = content.get("carousel") or {}
         _track(result, content, slot, piece)
+        _mirror_to_facebook(content, day, slot)
         logger.info("[slots] morning publish: %s", result.get("success"))
         return {"slot": slot, **result}
 
@@ -151,7 +152,19 @@ def run_publish_slot(slot: str) -> dict:
         result = _post_single_image(image, caption)
         result["hashtags_used"] = " ".join(w for w in caption.split() if w.startswith("#"))
         _track(result, content, slot, reel)
+        _mirror_to_facebook(content, day, slot, image=image, message=caption)
         logger.info("[slots] evening publish: %s", result.get("success"))
         return {"slot": slot, **result}
 
     return {"slot": slot, "success": False, "error": f"unknown_slot_{slot}"}
+
+
+def _mirror_to_facebook(content: dict, day: int, slot: str,
+                        image: str | None = None, message: str | None = None) -> None:
+    """Facebook copies Instagram's timing: same slot, same image, same text."""
+    try:
+        from content_generator.publisher.facebook import post_content as fb_post
+        r = fb_post(content, day=day, preferred_image=image, message_override=message)
+        logger.info("[slots] facebook mirror (%s): %s", slot, r.get("success"))
+    except Exception as e:
+        logger.warning("[slots] facebook mirror failed (%s): %s", slot, e)

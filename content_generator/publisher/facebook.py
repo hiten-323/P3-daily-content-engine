@@ -36,9 +36,14 @@ def is_configured() -> bool:
     )
 
 
-def post_content(content: dict, day: int = 0) -> dict:
+def post_content(content: dict, day: int = 0,
+                 preferred_image: str | None = None,
+                 message_override: str | None = None) -> dict:
     """
     Post today's content to Facebook Page.
+
+    preferred_image/message_override let the slot scheduler mirror the
+    Instagram post exactly (same image, same caption, same time).
 
     Returns:
         {"success": bool, "post_id": str, "url": str, "error": str|None}
@@ -49,11 +54,11 @@ def post_content(content: dict, day: int = 0) -> dict:
 
     page_id = os.getenv("FACEBOOK_PAGE_ID", "")
     token   = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN") or os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
-    message = _build_message(content)
+    message = message_override or _build_message(content)
     link    = os.getenv("WEBSITE_URL", "https://p3online.in")
 
     # Find an image to attach
-    image_path = _find_image(content)
+    image_path = preferred_image or _find_image(content)
 
     result = _post_to_page(page_id, token, message, link, image_path)
 

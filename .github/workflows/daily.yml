@@ -55,12 +55,12 @@ name: Purity Beans Daily Pipeline
 
 on:
   schedule:
-    # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, Instagram held
+    # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, IG/FB held
     - cron: '30 0 * * *'
-    # 02:30 UTC = 08:00 IST — MORNING slot: Instagram carousel (7-9 AM window)
-    - cron: '30 2 * * *'
-    # 14:30 UTC = 20:00 IST — EVENING slot: Instagram reel-style post (7-10 PM window)
-    - cron: '30 14 * * *'
+    # 04:30 UTC = 10:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
+    - cron: '30 4 * * *'
+    # 16:30 UTC = 22:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
+    - cron: '30 16 * * *'
 
   # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
@@ -190,9 +190,9 @@ jobs:
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY:   "true"
           ENABLE_USAGE_LOG:        "false"
-          # Set to "true" to also generate blog, stories, yt_short, reel_2
-          # Keep "false" to stay within free-tier TPM limits
-          ENABLE_EXTENDED_CONTENT: "false"
+          # Generates blog, stories, yt_short, reel_2 (owner enabled — stories +
+          # YouTube Shorts are part of the growth plan; watch TPM in logs)
+          ENABLE_EXTENDED_CONTENT: "true"
           PYTHONIOENCODING:        utf-8
           # Optional day override from manual trigger
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}

@@ -78,14 +78,18 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
             logger.error("[publisher] Instagram exception: %s", e)
             results["instagram"] = {"success": False, "error": str(e)}
 
-    # ── Facebook ──────────────────────────────────────────────────────────────
-    try:
-        from content_generator.publisher.facebook import post_content as fb_post
-        logger.info("[publisher] Posting to Facebook...")
-        results["facebook"] = fb_post(content, day=day_number)
-    except Exception as e:
-        logger.error("[publisher] Facebook exception: %s", e)
-        results["facebook"] = {"success": False, "error": str(e)}
+    # ── Facebook (mirrors Instagram timing when slots are enabled) ───────────
+    if _os.getenv("ENABLE_TIMED_SLOTS", "false").lower() == "true":
+        logger.info("[publisher] Facebook held for timed slots (mirrors Instagram)")
+        results["facebook"] = {"success": False, "error": "held_for_timed_slot", "held": True}
+    else:
+        try:
+            from content_generator.publisher.facebook import post_content as fb_post
+            logger.info("[publisher] Posting to Facebook...")
+            results["facebook"] = fb_post(content, day=day_number)
+        except Exception as e:
+            logger.error("[publisher] Facebook exception: %s", e)
+            results["facebook"] = {"success": False, "error": str(e)}
 
     # ── YouTube ───────────────────────────────────────────────────────────────
     try:

@@ -67,17 +67,35 @@ SAVE_MECHANICS = [
 ]
 
 LINKEDIN_ANGLES = [
+    # Value-first education (keyword-rich — what professionals actually search)
+    ("COFFEE HEALTH EDUCATION", "Coffee and focus/energy for working professionals — antioxidants, "
+                                "clean caffeine, what research broadly suggests. Educational hedged "
+                                "framing only, NEVER medical claims or cures"),
+    ("COFFEE CONSUMPTION GUIDE","How much coffee per day, best timing for productivity, caffeine "
+                                "half-life explained simply — practical value a reader saves"),
+    ("COFFEE MARKET INDIA",     "The Indian coffee market: chai-to-coffee shift, cafe culture growth, "
+                                "what it means for consumers and businesses — observation, not invented stats"),
+    ("COFFEE BUYING GUIDE",     "How to read an instant coffee label like an expert — chicory, "
+                                "agglomerated vs freeze-dried, what 'premium' actually means"),
+    ("WORKPLACE COFFEE",        "Coffee culture in Indian offices — pantry decisions, corporate gifting, "
+                                "what your office coffee says about your company"),
+    ("COFFEE ECONOMICS",        "Rs18 home cup vs Rs180 cafe cup — the honest math of coffee spending "
+                                "for professionals, 10-year view"),
+    # Founder / business angles
     ("FOUNDER CONFESSION",  "Raw honest failure/insight building premium FMCG in India without VC"),
-    ("INDUSTRY EXPOSE",     "What the Rs4000Cr Indian instant coffee industry hides from buyers"),
+    ("INDUSTRY EXPOSE",     "What the Indian instant coffee industry hides from buyers"),
     ("CONTRARIAN BUSINESS", "Why competing on price destroys FMCG brands — compete on purity instead"),
-    ("PERSONAL EXPERIMENT", "I replaced morning chai with pure coffee for 60 days — here is the data"),
     ("CONSUMER PSYCHOLOGY", "Why Indians accept chicory in coffee but revolt over adulterated milk"),
     ("STARTUP LESSON",      "The hardest thing about building a food brand Indians actually trust"),
-    ("MARKET INSIGHT",      "The Rs4000Cr instant coffee opportunity and who is actually winning it"),
-    ("HEALTH SCIENCE",      "What pure caffeine does vs adulterated coffee — with peer-reviewed sources"),
     ("DISTRIBUTION TRUTH",  "Why the best product in India never wins without cracking distribution"),
-    ("PRICING PSYCHOLOGY",  "Why Rs18/cup feels risky to Indians but Rs180 at a cafe feels normal"),
 ]
+
+LINKEDIN_SEO_KEYWORDS = (
+    "coffee benefits, health benefits of coffee, coffee consumption, "
+    "coffee market in India, instant coffee India, best instant coffee, "
+    "coffee for productivity, workplace coffee culture, premium coffee brands India, "
+    "coffee industry trends"
+)
 
 COMMERCIAL_EMOTIONS = [
     ("RELIEF",    "the exhale moment — finally getting real coffee after years of filler"),

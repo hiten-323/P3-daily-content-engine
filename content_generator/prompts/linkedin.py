@@ -1,6 +1,6 @@
 """LinkedIn post prompt — full publish-ready asset."""
 from content_generator.prompts.brand import brand_block
-from content_generator.rotation import WEBSITE_URL
+from content_generator.rotation import WEBSITE_URL, LINKEDIN_SEO_KEYWORDS
 
 HASHTAG_15 = (
     "#PurityBeans #D2CBrand #FoodBusiness #IndianStartup #PureCoffee "
@@ -18,8 +18,12 @@ Generate ONE complete publish-ready LinkedIn post for Purity Beans. Return a sin
 
 ANGLE: [{angle[0]}] — {angle[1]}
 
-ALLOWED CONTENT: founder stories, startup lessons, coffee industry insights, consumer behavior, brand-building lessons.
-PROHIBITED: fake stories, invented revenue, invented customer counts, invented events, fabricated statistics.
+PURPOSE: Create genuine VALUE for the reader first — education they save and
+share. Weave these search keywords naturally into hook and body (never stuffed):
+{LINKEDIN_SEO_KEYWORDS}
+
+ALLOWED CONTENT: coffee education (benefits framed as general knowledge, consumption guides, buying guides), coffee market India insights, founder stories, startup lessons, consumer behavior, brand-building lessons.
+PROHIBITED: medical claims or cures (say 'coffee is widely associated with focus and alertness', NEVER 'coffee prevents/treats X'), fake stories, invented revenue, invented customer counts, invented events, fabricated statistics.
 If any information is unknown: state assumptions clearly and explicitly.
 
 ABSOLUTE RULES:
