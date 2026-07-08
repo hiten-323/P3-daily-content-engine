@@ -341,6 +341,14 @@ def _inject_brand_into_content(content: dict, day: int = 0) -> None:
     _ensure_captions(content)
     _inject_jar_creative_into_reels(content, day)
 
+    # Decision layer: attach per-asset metadata (Company Memory records +
+    # campaign/experiment/playbook) so every published asset carries reasoning
+    try:
+        from content_generator.intelligence.decision_layer import attach_asset_metadata
+        attach_asset_metadata(content, day)
+    except Exception as e:
+        logger.debug("[creative] asset metadata skipped: %s", e)
+
     # Hook A/B: score all hook candidates, publish only the winner
     try:
         from content_generator.analytics.hook_selector import run_hook_ab
