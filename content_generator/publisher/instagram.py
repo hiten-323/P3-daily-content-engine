@@ -201,14 +201,22 @@ def _post_single_image(image_path: str, caption: str) -> dict:
         return {"success": False, "media_id": "", "permalink": "", "error": "image_upload_failed"}
 
     try:
-        # 2. Create media container
+        # 2. Create media container (+ product tags if IG Shopping is set up)
+        params = {
+            "image_url":    image_url,
+            "caption":      caption,
+            "access_token": token,
+        }
+        try:
+            from content_generator.publisher.product_tags import build_image_product_tags
+            tags = build_image_product_tags(caption)
+            if tags:
+                params["product_tags"] = tags
+        except Exception as e:
+            logger.debug("[instagram] product tagging skipped: %s", e)
         container_resp = requests.post(
             f"{_GRAPH_API}/{acct_id}/media",
-            params={
-                "image_url":   image_url,
-                "caption":     caption,
-                "access_token": token,
-            },
+            params=params,
             timeout=30,
         )
         container_data = container_resp.json()

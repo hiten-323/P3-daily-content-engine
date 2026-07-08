@@ -154,6 +154,11 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN:    ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           # Required for Instagram image hosting (free: api.imgbb.com)
           IMGBB_API_KEY:             ${{ secrets.IMGBB_API_KEY }}
+          # Shoppable posts (optional): set ONE after enabling Instagram Shopping.
+          # IG_PRODUCT_ID = tag every post with one product; or
+          # IG_CATALOG_ID = engine resolves a product per post by keyword.
+          IG_PRODUCT_ID:             ${{ secrets.IG_PRODUCT_ID }}
+          IG_CATALOG_ID:             ${{ secrets.IG_CATALOG_ID }}
           # Optional: Cloudinary image hosting (free 25GB/month)
           CLOUDINARY_URL:            ${{ secrets.CLOUDINARY_URL }}
 
