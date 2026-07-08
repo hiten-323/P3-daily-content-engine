@@ -116,12 +116,19 @@ def run_publish_slot(slot: str) -> dict:
     day = content.get("day_number", 0)
 
     if slot == "morning":
-        # Carousel / feed post — 10:00 IST (owner-chosen)
-        from content_generator.publisher.instagram import post_content
+        # Carousel / feed post + Instagram Story — 10:00 IST (owner-chosen)
+        from content_generator.publisher.instagram import post_content, post_story
         result = post_content(content, day=day)
         piece = content.get("carousel") or {}
         _track(result, content, slot, piece)
         _mirror_to_facebook(content, day, slot)
+        # Instagram Story (image, 24h) — separate method, same slot
+        try:
+            story_res = post_story(content, day=day)
+            logger.info("[slots] instagram story: %s", story_res.get("success"))
+            result["story"] = story_res
+        except Exception as e:
+            logger.warning("[slots] instagram story failed: %s", e)
         logger.info("[slots] morning publish: %s", result.get("success"))
         return {"slot": slot, **result}
 

@@ -302,6 +302,68 @@ def _post_carousel(image_paths: list[str], caption: str) -> dict:
         return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
 
 
+def post_story(content: dict, day: int = 0) -> dict:
+    """
+    Publish an Instagram Story (image, 9:16, 24h ephemeral).
+
+    Composes a story image from today's story content + a real jar photo, then
+    publishes via media_type=STORIES. Interactive stickers (polls/questions)
+    cannot be set via the API — those stay manual; this keeps a daily story
+    presence and can carry a swipe-up/link on eligible accounts.
+    """
+    if not is_configured():
+        return {"success": False, "media_id": "", "error": "not_configured"}
+
+    # Build the story image from story_1 (or a brand default)
+    story = content.get("stories") or {}
+    s1    = story.get("story_1") or {}
+    headline = str(s1.get("headline") or s1.get("poll_question")
+                   or "REAL COFFEE. ZERO CHICORY.")
+    sub      = str(s1.get("subtext") or "")
+
+    image_path = None
+    try:
+        from content_generator.creative.real_jar_composer import compose_post_image
+        image_path = compose_post_image(
+            headline=headline, body=sub, day=day, idx=9,
+            width=1080, height=1920, label=f"story_day{day}",
+        )
+    except Exception as e:
+        logger.warning("[instagram] story image compose failed: %s", e)
+    if not image_path:
+        return {"success": False, "media_id": "", "error": "no_story_image"}
+
+    try:
+        import requests
+    except ImportError:
+        return {"success": False, "media_id": "", "error": "requests_not_installed"}
+
+    acct_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
+    token   = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+    image_url = _upload_to_public_url(image_path)
+    if not image_url:
+        return {"success": False, "media_id": "", "error": "image_upload_failed"}
+
+    try:
+        resp = requests.post(
+            f"{_GRAPH_API}/{acct_id}/media",
+            params={"image_url": image_url, "media_type": "STORIES",
+                    "access_token": token},
+            timeout=30,
+        )
+        container_id = resp.json().get("id", "")
+        if not container_id:
+            err = resp.json().get("error", {}).get("message", str(resp.json()))
+            return {"success": False, "media_id": "", "error": err}
+        _wait_for_container(container_id, token)
+        result = _publish_container(container_id, acct_id, token)
+        logger.info("[instagram] Story published: %s", result.get("success"))
+        return result
+    except Exception as e:
+        logger.error("[instagram] Story post error: %s", e)
+        return {"success": False, "media_id": "", "error": str(e)}
+
+
 def _publish_container(container_id: str, acct_id: str, token: str) -> dict:
     """Publish a ready media container."""
     try:
