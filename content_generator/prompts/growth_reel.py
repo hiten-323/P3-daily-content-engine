@@ -46,12 +46,37 @@ GROWTH_FORMATS = [
     "hidden facts listicle",
     "talking-head direct-to-camera (founder voice, one strong claim, no B-roll crutch)",
     "reverse-qualifier ('this is NOT for you if...' — exclusion drives curiosity)",
+    "value-unlock (tease a free resource; commenting a keyword is how to get it)",
+    "borrowed meme format (a relatable reaction clip + coffee-truth text overlay, "
+    "low production; stays brand-safe, never off-colour)",
 ]
+
+# Every Nth day is a value-unlock reel — the highest comment-driver, but only
+# works because a REAL resource backs the promise (see assets/lead_magnets.py).
+_VALUE_UNLOCK_EVERY = 4
 
 
 def build(day: int, avoid: str = "") -> str:
     topic  = GROWTH_TOPICS[day % len(GROWTH_TOPICS)]
     fmt    = GROWTH_FORMATS[day % len(GROWTH_FORMATS)]
+
+    # Value-unlock day: force the format and hand the LLM the real resource
+    unlock_block = ""
+    if day % _VALUE_UNLOCK_EVERY == 0:
+        from content_generator.assets.lead_magnets import get_todays_lead_magnet
+        lm = get_todays_lead_magnet(day)
+        fmt = "value-unlock (comment-to-receive a free resource)"
+        unlock_block = f'''
+VALUE-UNLOCK MODE (today's highest-priority mechanic):
+This reel gives away a REAL free resource. Build the whole reel around teasing
+it, then make commenting the keyword the way to receive it.
+- Keyword to comment: {lm['keyword']}
+- What the reel promises: {lm['promise']}
+- Do NOT reveal the full resource in the reel — the value is unlocked by commenting.
+- CTA must be: "Comment {lm['keyword']} and I'll send it to you."
+- The founder replies personally with the resource (no auto-DM). Set
+  comment_trigger to exactly: "Comment {lm['keyword']} and I'll send you {lm['promise']}."
+'''
 
     return f"""GROWTH TRACK ASSET — follower-first, non-branded. GROWTH_MODE_CONTEXT rules apply.
 
@@ -62,6 +87,7 @@ Return a single JSON object.
 
 TODAY'S TOPIC: {topic}
 FORMAT: {fmt}
+{unlock_block}
 
 HARD RULES:
 - NO Purity Beans mention. NO jar. NO logo. NO product. NO website. NO buying language.
