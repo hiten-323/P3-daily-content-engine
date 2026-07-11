@@ -42,6 +42,11 @@ def get_current_slot(now_utc: datetime.datetime = None) -> str:
       02-12 UTC    -> morning   (08:00 IST run)
       >= 12 UTC    -> evening   (20:00 IST run)
     """
+    forced = os.getenv("FORCE_SLOT")
+    if forced in ("generate", "morning", "evening"):
+        logger.info("[slots] Current slot forced by FORCE_SLOT env: %s", forced)
+        return forced
+
     now_utc = now_utc or datetime.datetime.utcnow()
     h = now_utc.hour
     if h < 2:
@@ -111,7 +116,17 @@ def run_publish_slot(slot: str) -> dict:
 
     content = _load_todays_content()
     if not content:
-        return {"slot": slot, "success": False, "error": "no_content_file"}
+        logger.info("[slots] Content file not found. Triggering daily pipeline to generate content first...")
+        try:
+            from content_generator.scheduler.daily import run_full_pipeline
+            content = run_full_pipeline()
+        except Exception as e:
+            logger.error("[slots] Failed to generate content via daily pipeline: %s", e)
+            return {"slot": slot, "success": False, "error": f"generation_failed: {e}"}
+
+        if not content or not isinstance(content, dict) or content.get("_skipped"):
+            logger.error("[slots] Content generation returned empty or skipped status")
+            return {"slot": slot, "success": False, "error": "generation_skipped_or_failed"}
 
     day = content.get("day_number", 0)
 

@@ -119,7 +119,7 @@ except Exception as e:
 section("CHECK 2 - Output schema parity (ENABLE_USAGE_LOG=false)")
 
 EXPECTED_KEYS = {
-    "date", "day_number",
+    "date", "day_number", "growth_reel",
     "reels", "instagram_post", "carousel",
     "linkedin_post", "blog_post", "stories", "yt_short",
     "video_prompts", "ai_image_prompts", "performance_targets",
@@ -145,6 +145,10 @@ _FAKE_REEL = {
     "music_vibe": "lo-fi study beats",
     "whatsapp_forward": "forward this to a coffee lover",
     "primary_cta": "visit p3online.in",
+    "comment_trigger": "Comment COFFEE to get the link!",
+    "save_trigger": "Save this reel for your next brew!",
+    "share_trigger": "Share this reel with a coffee lover!",
+    "hashtags": "#coffee #puritybeans #purecoffee #instantcoffee #chicoryfree",
     "editorial_score": {
         "shareability": 8.0,
         "saveability": 8.0,
@@ -168,6 +172,10 @@ _FAKE_CAROUSEL = {
         {"slide": 5, "heading": "100% Pure Coffee", "body": "Nothing but premium quality instant coffee beans in every jar.", "visual": "Slide 5 visual"},
         {"slide": 6, "heading": "Get Purity Beans", "body": "Order your clean coffee pack now at p3online.in and taste Purity Beans.", "visual": "Slide 6 visual"}
     ],
+    "comment_trigger": "Comment COFFEE to get the link!",
+    "save_trigger": "Save this carousel for your next brew!",
+    "share_trigger": "Share this carousel with a coffee lover!",
+    "hashtags": "#coffee #puritybeans #purecoffee #instantcoffee #chicoryfree",
     "editorial_score": {
         "shareability": 8.0,
         "saveability": 8.0,
@@ -181,6 +189,10 @@ _FAKE_CAROUSEL = {
 
 _FAKE_INSTAGRAM = {
     "caption": "Elevate your morning routine with Purity Beans. 100% Coffee, Zero Chicory, and no hidden fillers. Just pure deliciousness in every cup. Order now at https://p3online.in!",
+    "comment_trigger": "Comment COFFEE to get the link!",
+    "save_trigger": "Save this post for your next brew!",
+    "share_trigger": "Share this post with a coffee lover!",
+    "hashtags": "#coffee #puritybeans #purecoffee #instantcoffee #chicoryfree",
     "editorial_score": {
         "shareability": 8.0,
         "saveability": 8.0,
@@ -196,6 +208,7 @@ _FAKE_LINKEDIN = {
     "hook": "Why we said no to the industry standard pricing model.",
     "body": "When launching Purity Beans, we were advised to add chicory to lower our costs and boost margins. Chicory is cheap, and most consumers do not read labels. But we wanted to build a brand based on honesty and transparency. That is why we chose to offer 100% Coffee with Zero Chicory, even if it meant tighter margins. Because trust is the ultimate metric. We are building India's cleanest instant coffee brand step by step.",
     "cta": "Check our journey at https://p3online.in",
+    "hashtags": "#coffee #puritybeans #purecoffee #instantcoffee #chicoryfree",
     "editorial_score": {
         "shareability": 8.0,
         "saveability": 8.0,

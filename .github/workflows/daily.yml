@@ -190,6 +190,7 @@ jobs:
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
           SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
 
+          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || '')) }}
           # Config
           WEBSITE_URL:         https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"
