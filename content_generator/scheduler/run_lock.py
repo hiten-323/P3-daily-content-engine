@@ -130,11 +130,12 @@ class RunLock:
 
     @staticmethod
     def force_clear() -> None:
-        """Emergency: forcibly remove the lock (use if a run crashed mid-flight)."""
-        try:
-            os.remove(_LOCK_FILE)
-            logger.info("[run_lock] Lock force-cleared")
-        except FileNotFoundError:
-            logger.info("[run_lock] No lock file to clear")
-        except Exception as e:
-            logger.warning("[run_lock] Force clear failed: %s", e)
+        """Emergency: forcibly remove all locks (use if a run crashed mid-flight)."""
+        for filename in (".running", ".running_morning", ".running_evening"):
+            path = os.path.join("output", filename)
+            try:
+                if os.path.exists(path):
+                    os.remove(path)
+                    logger.info("[run_lock] Lock %s force-cleared", filename)
+            except Exception as e:
+                logger.warning("[run_lock] Force clear failed for %s: %s", filename, e)
