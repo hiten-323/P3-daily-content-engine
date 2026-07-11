@@ -57,23 +57,40 @@ def pick_jar_photo(day: int, idx: int = 0, product: str | None = None) -> str | 
     return pool[(day * 3 + idx) % len(pool)]
 
 
-def _font(size: int, bold: bool = True):
+def _font(role: str, size: int):
     from PIL import ImageFont
-    candidates = (
-        ["arialbd.ttf", "arial.ttf"] if bold else ["arial.ttf"]
-    ) + [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
-        else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf",
-    ]
+    if role == "title":
+        # Georgia (elegant serif) -> fallbacks
+        candidates = ["georgiab.ttf", "georgia.ttf", "timesbd.ttf", "times.ttf", "arialbd.ttf"]
+    elif role == "body":
+        # Segoe UI (clean, high legibility sans-serif) -> fallbacks
+        candidates = ["segoeui.ttf", "calibri.ttf", "arial.ttf"]
+    elif role == "footer":
+        # Segoe UI Bold -> fallbacks
+        candidates = ["segoeuib.ttf", "segoeui.ttf", "arialbd.ttf", "arial.ttf"]
+    else:
+        candidates = ["segoeui.ttf", "arial.ttf"]
+
+    extended_candidates = []
     for c in candidates:
+        extended_candidates.append(c)
+        if os.name == "nt":
+            extended_candidates.append(os.path.join("C:\\Windows\\Fonts", c))
+        else:
+            extended_candidates.extend([
+                os.path.join("/usr/share/fonts/truetype/msttcorefonts", c),
+                os.path.join("/usr/share/fonts/truetype/dejavu", c),
+                os.path.join("/usr/share/fonts/truetype/freefont", c)
+            ])
+
+    for c in extended_candidates:
         try:
             return ImageFont.truetype(c, size=size)
         except Exception:
             continue
     try:
         from PIL import ImageFont as IF
-        return IF.load_default(size=size)   # Pillow >= 10.1
+        return IF.load_default(size=size)
     except Exception:
         from PIL import ImageFont as IF
         return IF.load_default()
@@ -109,7 +126,7 @@ def compose_post_image(
     Returns saved file path, or None if Pillow/photos unavailable.
     """
     try:
-        from PIL import Image, ImageDraw
+        from PIL import Image, ImageDraw, ImageFilter
     except ImportError:
         logger.warning("[real_jar] Pillow not installed")
         return None
@@ -124,6 +141,27 @@ def compose_post_image(
     bar = max(8, height // 90)
     draw.rectangle([(0, 0), (width, bar)], fill=_GOLD)
     draw.rectangle([(0, height - bar), (width, height)], fill=_GOLD)
+
+    # 1. Draw a soft, warm radial gold/amber spotlight behind the jar location
+    try:
+        glow_size = int(width * 0.6)
+        glow_mask = Image.new("L", (glow_size, glow_size), 0)
+        glow_draw = ImageDraw.Draw(glow_mask)
+        for r in range(glow_size // 2, 0, -2):
+            alpha = int(210 * (1.0 - (r / (glow_size // 2))) ** 2)
+            glow_draw.ellipse(
+                [(glow_size // 2 - r, glow_size // 2 - r), 
+                 (glow_size // 2 + r, glow_size // 2 + r)], 
+                fill=alpha
+            )
+        glow_mask = glow_mask.filter(ImageFilter.GaussianBlur(20))
+        # Warm golden-amber spotlight glow color
+        gold_glow = Image.new("RGB", (glow_size, glow_size), (40, 28, 12)) 
+        gx = (width - glow_size) // 2
+        gy = height - bar - int(height * 0.55)
+        canvas.paste(gold_glow, (gx, gy), mask=glow_mask)
+    except Exception as e:
+        logger.debug("[real_jar] Radial spotlight failed: %s", e)
 
     # Real jar photo — bottom ~55% of canvas, aspect preserved
     try:
@@ -144,7 +182,7 @@ def compose_post_image(
     # Headline (top area)
     margin = int(width * 0.07)
     max_w  = width - 2 * margin
-    h_font = _font(max(34, width // 14))
+    h_font = _font("title", max(34, width // 14))
     y      = int(height * 0.06)
     for line in _wrap(draw, headline.upper(), h_font, max_w):
         draw.text((width // 2, y), line, font=h_font, fill=_CREAM, anchor="ma")
@@ -152,18 +190,22 @@ def compose_post_image(
 
     # Body
     if body:
-        b_font = _font(max(20, width // 32), bold=False)
+        b_font = _font("body", max(20, width // 32))
         y += int(height * 0.015)
         for line in _wrap(draw, body, b_font, max_w):
             draw.text((width // 2, y), line, font=b_font, fill=_MUTED, anchor="ma")
             y += int(b_font.size * 1.3)
 
     # Footer brand strip (above bottom gold bar, over dark strip)
-    f_font = _font(max(18, width // 36))
+    f_font = _font("footer", max(18, width // 36))
     strip_h = int(height * 0.045)
+    
+    # Gold separator line above the footer strip
+    draw.line([(0, height - bar - strip_h), (width, height - bar - strip_h)], fill=_GOLD, width=2)
+    
     draw.rectangle([(0, height - bar - strip_h), (width, height - bar)], fill=(20, 14, 8))
     draw.text((width // 2, height - bar - strip_h // 2),
-              "PURITY BEANS  •  100% COFFEE, ZERO CHICORY  •  p3online.in",
+              "PURITY BEANS   •   100% COFFEE, ZERO CHICORY   •   p3online.in",
               font=f_font, fill=_GOLD, anchor="mm")
 
     # Save

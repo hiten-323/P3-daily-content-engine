@@ -159,8 +159,6 @@ def _find_carousel_images(content: dict) -> list[str]:
         "slide_*.png",
         "carousel_*.jpg",
         "carousel_*.png",
-        "*.jpg",
-        "*.png",
     ]
 
     import datetime as _dt
