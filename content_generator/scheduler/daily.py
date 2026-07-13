@@ -655,6 +655,17 @@ def _do_publish(content: dict, day_number: int) -> dict:
     from content_generator.core.editorial_engine import get_valid_assets
     from content_generator.core.brand_guard import MIN_REQUIRED_ASSETS
 
+    # Founder policy: auto_publish=false => generate + save only (dry run)
+    try:
+        from content_generator.core.founder_policy import policy
+        if not policy().get("auto_publish", True):
+            logger.warning("[publish] auto_publish=false in founder_policies.yaml — "
+                           "content generated and saved but NOT posted")
+            return {"skipped": True, "reason": "auto_publish_disabled",
+                    "published_platforms": [], "summary": "Dry run (auto_publish off)"}
+    except Exception:
+        pass
+
     # 1. Get validated assets
     valid_assets = get_valid_assets(content)
     logger.info("[editorial] Valid publishable assets found: %s", valid_assets)

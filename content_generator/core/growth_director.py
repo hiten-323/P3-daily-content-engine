@@ -122,7 +122,16 @@ def get_strategy_brief(day: int) -> str:
     stage = get_growth_stage()
     objs  = get_todays_objectives(day)
 
-    return f"""GROWTH DIRECTOR — TODAY'S STRATEGY (this overrides generic instincts):
+    # Founder policy bias (target KPI, voice, priority segments) — the founder
+    # steers the engine by editing founder_policies.yaml, never the prompts.
+    policy_line = ""
+    try:
+        from content_generator.core.founder_policy import policy
+        policy_line = policy().strategy_bias() + "\n\n"
+    except Exception:
+        pass
+
+    return f"""{policy_line}GROWTH DIRECTOR — TODAY'S STRATEGY (this overrides generic instincts):
 
 CURRENT STAGE: {stage['name']} — {stage['followers']} followers
 CONTENT RATIO: {stage['viral_pct']}% viral value / {stage['sell_pct']}% selling

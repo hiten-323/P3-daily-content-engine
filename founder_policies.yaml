@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# FOUNDER POLICIES — the founder edits THIS file, never the prompts or code.
+#
+# Every Director / pipeline step reads these before acting. Change a value here
+# and the whole engine adapts on the next run. Missing keys fall back to the
+# safe defaults in content_generator/core/founder_policy.py.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# What the engine optimizes for. One of: followers | engagement | revenue
+# (At 105 followers, "followers" is correct. Switch to "revenue" once you have
+#  an audience to convert.)
+target_kpi: followers
+
+# Brand voice switches injected into every prompt.
+brand_voice:
+  premium: true            # confident, editorial, never cheap-sounding
+  aggressive_sales: false  # false = value-first; true = harder CTAs, urgency
+  educational: true        # teach-first tone
+
+# Who the content should prioritize speaking to, in order. The engine biases
+# topics/angles toward these segments. Options: general, hotels, corporate,
+# distributors, students, home_brewers, gifting
+priority_segments:
+  - general
+  - corporate
+  - hotels
+
+# Publishing controls.
+auto_publish: true         # false = generate + save only, never post (dry run)
+max_daily_posts:
+  instagram: 3             # carousel + story + evening feed post
+  facebook: 2
+  linkedin: 1
+  youtube: 1
+
+# Guardrails.
+legal_risk_threshold: 0.25 # editorial rejects anything riskier (0=strict,1=lax)
+require_real_jar: true     # product images must use real jar photos, never AI-invented
+
+# Seasonal / campaign override (optional). Leave blank for always-on growth.
+# Set e.g. "Festival Gifting" in Q4 to bias content toward gifting.
+active_campaign_override: ""

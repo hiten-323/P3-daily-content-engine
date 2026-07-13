@@ -147,11 +147,25 @@ def current_campaign(day: int) -> str:
 
 def plan_today(day: int) -> dict:
     """The full decision bundle attached to today's content."""
+    campaign = current_campaign(day)
+    policies = {}
+    try:
+        from content_generator.core.founder_policy import policy
+        p = policy()
+        policies = {"target_kpi": p.get("target_kpi"),
+                    "priority_segments": p.get("priority_segments"),
+                    "auto_publish": p.get("auto_publish")}
+        override = p.get("active_campaign_override", "")
+        if override:
+            campaign = override   # founder override wins
+    except Exception:
+        pass
     return {
         "recommendation": build_recommendation(day),
         "experiment":     current_experiment(day),
-        "campaign":       current_campaign(day),
+        "campaign":       campaign,
         "playbook":       extract_content_dna()["playbook"],
+        "policies":       policies,
     }
 
 
