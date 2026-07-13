@@ -45,8 +45,11 @@
 #   RUNWAY_API_KEY       — Runway video generation
 #   SMTP_USER            — email nurture sequences
 #   SMTP_PASS            — email nurture sequences
-#   SHOPIFY_STORE_DOMAIN — your-store.myshopify.com (revenue attribution)
-#   SHOPIFY_ADMIN_TOKEN  — Admin API token, read_orders scope (revenue attribution)
+#   SHOPIFY_STORE_DOMAIN — your-store.myshopify.com
+#   SHOPIFY_ADMIN_TOKEN  — Admin API token. Scopes: write_content+read_content
+#                          (daily blog publishing); read_orders (optional, for
+#                          revenue attribution)
+#   SHOPIFY_BLOG_ID      — optional; defaults to the store's first blog
 #
 # Manual trigger:
 #   GitHub UI → Actions → "Purity Beans Daily Pipeline" → Run workflow
@@ -189,6 +192,7 @@ jobs:
           # Shopify revenue attribution (names must match revenue_attribution.py)
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
           SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_ID:      ${{ secrets.SHOPIFY_BLOG_ID }}
 
           FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || '')) }}
           # Config

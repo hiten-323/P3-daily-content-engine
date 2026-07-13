@@ -100,6 +100,15 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
         logger.error("[publisher] YouTube exception: %s", e)
         results["youtube"] = {"success": False, "error": str(e)}
 
+    # ── Blog (Shopify article — SEO / organic search) ──────────────────────────
+    try:
+        from content_generator.publisher.shopify_blog import post_content as blog_post
+        logger.info("[publisher] Posting blog to Shopify...")
+        results["blog"] = blog_post(content, day=day_number)
+    except Exception as e:
+        logger.error("[publisher] Blog exception: %s", e)
+        results["blog"] = {"success": False, "error": str(e)}
+
     # ── Summary ───────────────────────────────────────────────────────────────
     published = [p for p, r in results.items() if r.get("success")]
     skipped   = [p for p, r in results.items() if r.get("error") == "not_configured"]
