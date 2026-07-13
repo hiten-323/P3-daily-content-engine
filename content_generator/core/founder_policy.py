@@ -1,55 +1,113 @@
 """
-Founder Policy Engine — the founder edits founder_policies.yaml, never prompts.
+Founder Policy Engine + Version Manager — steer the engine by config, not prompts.
 
-Every pipeline step reads policy through this module. Missing file or keys fall
-back to safe defaults, so the engine never breaks on a bad edit.
+The founder edits founder_policies.yaml. Every pipeline step reads policy here.
+Missing file/keys fall back to safe defaults, so a bad edit never breaks a run.
 
-    from content_generator.core.founder_policy import policy
-    if policy().auto_publish: ...
-    brief_bias = policy().strategy_bias()
+Domain-structured (business / content / brand / marketing / quality /
+publishing / experiments) with a version block. Backward-compatible flat
+accessors are provided so existing callers keep working:
+
+    policy().target_kpi          # -> business.target_kpi
+    policy().auto_publish         # -> content.auto_publish
+    policy().priority_segments    # -> marketing.priority_segments
+    policy().strategy_bias()      # prompt-injectable directive
+    policy().version              # "1.0"
+
+Version Manager: record_policy_version() logs each new version with its
+effective date to output/learning/policy_history.json, so performance can be
+traced back to the policy that produced it (every asset stamps policy_version).
 """
 from __future__ import annotations
+import datetime
+import json
 import logging
 import os
 
 logger = logging.getLogger(__name__)
 
+
 def _policy_path() -> str:
     return os.getenv("FOUNDER_POLICY_FILE", "founder_policies.yaml")
 
 
+def _history_path() -> str:
+    learning = os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
+    return os.path.join(learning, "policy_history.json")
+
+
+# Domain-structured defaults (mirror founder_policies.yaml)
 _DEFAULTS = {
-    "target_kpi": "followers",
-    "brand_voice": {"premium": True, "aggressive_sales": False, "educational": True},
-    "priority_segments": ["general"],
-    "auto_publish": True,
-    "max_daily_posts": {"instagram": 3, "facebook": 2, "linkedin": 1, "youtube": 1},
-    "legal_risk_threshold": 0.25,
-    "require_real_jar": True,
-    "active_campaign_override": "",
+    "version": {"number": "1.0", "effective_date": "", "author": "Founder", "changes": []},
+    "business": {"objective": "growth", "target_kpi": "followers"},
+    "content":  {"auto_publish": True, "reels_per_day": 1, "blogs_per_week": 7,
+                 "require_real_jar": True},
+    "brand":    {"premium": True, "aggressive_sales": False, "educational": True},
+    "marketing": {"priority_segments": ["general"], "active_campaign_override": ""},
+    "quality":  {"minimum_score": 6.5, "legal_risk_threshold": 0.25, "plagiarism_threshold": 0},
+    "publishing": {"instagram": True, "facebook": True, "linkedin": True, "youtube": True,
+                   "max_daily_posts": {"instagram": 3, "facebook": 2, "linkedin": 1, "youtube": 1}},
+    "experiments": {"enabled": True, "max_parallel": 2},
 }
+
+# Backward-compat flat keys -> (domain, key)
+_FLAT_MAP = {
+    "target_kpi":             ("business", "target_kpi"),
+    "objective":              ("business", "objective"),
+    "auto_publish":           ("content", "auto_publish"),
+    "require_real_jar":       ("content", "require_real_jar"),
+    "priority_segments":      ("marketing", "priority_segments"),
+    "active_campaign_override": ("marketing", "active_campaign_override"),
+    "legal_risk_threshold":   ("quality", "legal_risk_threshold"),
+    "minimum_score":          ("quality", "minimum_score"),
+    "max_daily_posts":        ("publishing", "max_daily_posts"),
+}
+
+
+def _deep_merge(base: dict, over: dict) -> dict:
+    out = dict(base)
+    for k, v in (over or {}).items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _deep_merge(out[k], v)
+        else:
+            out[k] = v
+    return out
 
 
 class FounderPolicy:
     def __init__(self, data: dict):
         self._d = data
 
+    # ── access ────────────────────────────────────────────────────────────────
+
+    def domain(self, name: str) -> dict:
+        return self._d.get(name, _DEFAULTS.get(name, {}))
+
+    @property
+    def version(self) -> str:
+        return str(self._d.get("version", {}).get("number", "1.0"))
+
+    @property
+    def brand_voice(self) -> dict:
+        return self.domain("brand")
+
     def __getattr__(self, name):
-        if name in self._d:
-            return self._d[name]
-        if name in _DEFAULTS:
-            return _DEFAULTS[name]
+        if name in _FLAT_MAP:
+            dom, key = _FLAT_MAP[name]
+            return self._d.get(dom, {}).get(key, _DEFAULTS[dom][key])
         raise AttributeError(name)
 
     def get(self, key, default=None):
+        if key in _FLAT_MAP:
+            dom, k = _FLAT_MAP[key]
+            return self._d.get(dom, {}).get(k, _DEFAULTS[dom].get(k, default))
         return self._d.get(key, _DEFAULTS.get(key, default))
 
-    # ── Derived helpers (what the pipeline actually consumes) ────────────────
+    # ── derived (what the pipeline consumes) ─────────────────────────────────
 
     def strategy_bias(self) -> str:
-        """A prompt-injectable sentence encoding the founder's policy intent."""
         kpi = self.get("target_kpi", "followers")
-        voice = self.get("brand_voice", {})
+        voice = self.domain("brand")
         segs = ", ".join(self.get("priority_segments", ["general"]))
         campaign = self.get("active_campaign_override", "")
 
@@ -59,15 +117,16 @@ class FounderPolicy:
             "revenue":    "Optimize for REVENUE — route qualified attention to purchase.",
         }.get(kpi, "Optimize for FOLLOWER GROWTH.")
 
-        bits = [f"FOUNDER POLICY: {kpi_line}"]
         tone = []
         if voice.get("premium", True):
             tone.append("premium/editorial")
         if voice.get("educational", True):
             tone.append("educational")
         tone.append("assertive sales" if voice.get("aggressive_sales") else "value-first (soft CTAs)")
-        bits.append("Voice: " + ", ".join(tone) + ".")
-        bits.append(f"Prioritize speaking to: {segs}.")
+
+        bits = [f"FOUNDER POLICY v{self.version}: {kpi_line}",
+                "Voice: " + ", ".join(tone) + ".",
+                f"Prioritize speaking to: {segs}."]
         if campaign:
             bits.append(f"Active campaign focus: {campaign}.")
         return " ".join(bits)
@@ -83,7 +142,7 @@ def load_policy(force: bool = False) -> FounderPolicy:
     global _cached
     if _cached is not None and not force:
         return _cached
-    data = dict(_DEFAULTS)
+    data = json.loads(json.dumps(_DEFAULTS))   # deep copy
     path = _policy_path()
     try:
         if os.path.exists(path):
@@ -91,18 +150,60 @@ def load_policy(force: bool = False) -> FounderPolicy:
             with open(path, "r", encoding="utf-8") as f:
                 loaded = yaml.safe_load(f) or {}
             if isinstance(loaded, dict):
-                # shallow-merge so partial files keep defaults for missing keys
-                for k, v in loaded.items():
-                    data[k] = v
-            logger.info("[policy] Loaded founder policies (target_kpi=%s, auto_publish=%s)",
-                        data.get("target_kpi"), data.get("auto_publish"))
+                data = _deep_merge(data, loaded)
+            logger.info("[policy] Loaded v%s (kpi=%s, auto_publish=%s)",
+                        data.get("version", {}).get("number"),
+                        data.get("business", {}).get("target_kpi"),
+                        data.get("content", {}).get("auto_publish"))
         else:
-            logger.info("[policy] No founder_policies.yaml — using safe defaults")
+            logger.info("[policy] No founder_policies.yaml — safe defaults")
     except Exception as e:
-        logger.warning("[policy] Could not read %s (%s) — using defaults", path, e)
+        logger.warning("[policy] Could not read %s (%s) — defaults", path, e)
     _cached = FounderPolicy(data)
     return _cached
 
 
 def policy() -> FounderPolicy:
     return load_policy()
+
+
+# ── Version Manager ──────────────────────────────────────────────────────────
+
+def record_policy_version() -> dict:
+    """
+    Log the current policy version + effective date the first time it is seen.
+    Builds an audit trail (policy_history.json) linking version -> date range,
+    so performance reviews can attribute results to the policy in force.
+    """
+    p = load_policy()
+    ver_block = p.as_dict().get("version", {})
+    number = str(ver_block.get("number", "1.0"))
+
+    hist_path = _history_path()
+    history = []
+    if os.path.exists(hist_path):
+        try:
+            with open(hist_path, "r", encoding="utf-8") as f:
+                history = json.load(f)
+        except Exception:
+            history = []
+
+    if history and str(history[-1].get("number")) == number:
+        return history[-1]   # already recorded
+
+    record = {
+        "number":         number,
+        "effective_date": ver_block.get("effective_date") or datetime.date.today().isoformat(),
+        "author":         ver_block.get("author", "Founder"),
+        "changes":        ver_block.get("changes", []),
+        "recorded_at":    datetime.datetime.now().isoformat(timespec="seconds"),
+        "snapshot":       {"target_kpi": p.get("target_kpi"),
+                           "auto_publish": p.get("auto_publish"),
+                           "priority_segments": p.get("priority_segments")},
+    }
+    history.append(record)
+    os.makedirs(os.path.dirname(hist_path), exist_ok=True)
+    with open(hist_path, "w", encoding="utf-8") as f:
+        json.dump(history[-100:], f, indent=2, ensure_ascii=False)
+    logger.info("[policy] Recorded new policy version %s", number)
+    return record

@@ -640,6 +640,12 @@ def _best_assets_by_score(content: dict, count: int) -> list[str]:
 
 def _do_fetch_insights() -> dict:
     """Fetch yesterday's Instagram metrics and feed the learning engine. Non-blocking."""
+    # Version Manager: record the active policy version (audit trail)
+    try:
+        from content_generator.core.founder_policy import record_policy_version
+        record_policy_version()
+    except Exception as e:
+        logger.debug("[policy] version record skipped: %s", e)
     from content_generator.analytics.insights_fetcher import fetch_pending_insights
     return fetch_pending_insights()
 

@@ -149,9 +149,11 @@ def plan_today(day: int) -> dict:
     """The full decision bundle attached to today's content."""
     campaign = current_campaign(day)
     policies = {}
+    policy_version = "1.0"
     try:
         from content_generator.core.founder_policy import policy
         p = policy()
+        policy_version = p.version
         policies = {"target_kpi": p.get("target_kpi"),
                     "priority_segments": p.get("priority_segments"),
                     "auto_publish": p.get("auto_publish")}
@@ -166,6 +168,7 @@ def plan_today(day: int) -> dict:
         "campaign":       campaign,
         "playbook":       extract_content_dna()["playbook"],
         "policies":       policies,
+        "policy_version": policy_version,
     }
 
 
@@ -209,6 +212,7 @@ def attach_asset_metadata(content: dict, day: int) -> list[dict]:
             "experiment":   plan["experiment"]["key"],
             "variant":      plan["experiment"]["variant"],
             "playbook":     plan["playbook"],
+            "policy_version": plan.get("policy_version", "1.0"),
             "publish_time": now,
             "status":       "scheduled",
         })

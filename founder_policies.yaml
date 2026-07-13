@@ -1,42 +1,61 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # FOUNDER POLICIES — the founder edits THIS file, never the prompts or code.
 #
-# Every Director / pipeline step reads these before acting. Change a value here
-# and the whole engine adapts on the next run. Missing keys fall back to the
-# safe defaults in content_generator/core/founder_policy.py.
+# Every Director / pipeline step reads these before acting. Change a value and
+# the whole engine adapts next run. Missing keys fall back to safe defaults.
+#
+# VERSIONING: bump `version` and describe `changes` whenever you edit policy.
+# Every published asset records its policy_version, so later you can see which
+# policy produced which results.
 # ─────────────────────────────────────────────────────────────────────────────
 
-# What the engine optimizes for. One of: followers | engagement | revenue
-# (At 105 followers, "followers" is correct. Switch to "revenue" once you have
-#  an audience to convert.)
-target_kpi: followers
+version:
+  number: "1.0"
+  effective_date: "2026-07-13"
+  author: "Founder"
+  changes:
+    - "Initial domain-structured policy"
+    - "Target KPI: followers (IGNITION stage)"
+    - "Auto-publish enabled across all platforms"
 
-# Brand voice switches injected into every prompt.
-brand_voice:
-  premium: true            # confident, editorial, never cheap-sounding
-  aggressive_sales: false  # false = value-first; true = harder CTAs, urgency
-  educational: true        # teach-first tone
+business:
+  objective: growth            # growth | revenue | balance
+  target_kpi: followers        # followers | engagement | revenue
 
-# Who the content should prioritize speaking to, in order. The engine biases
-# topics/angles toward these segments. Options: general, hotels, corporate,
-# distributors, students, home_brewers, gifting
-priority_segments:
-  - general
-  - corporate
-  - hotels
+content:
+  auto_publish: true           # false = generate + save only (dry run)
+  reels_per_day: 1
+  blogs_per_week: 7
+  require_real_jar: true        # product images use real jar photos, never AI-invented
 
-# Publishing controls.
-auto_publish: true         # false = generate + save only, never post (dry run)
-max_daily_posts:
-  instagram: 3             # carousel + story + evening feed post
-  facebook: 2
-  linkedin: 1
-  youtube: 1
+brand:
+  premium: true
+  aggressive_sales: false       # false = value-first; true = harder CTAs
+  educational: true
 
-# Guardrails.
-legal_risk_threshold: 0.25 # editorial rejects anything riskier (0=strict,1=lax)
-require_real_jar: true     # product images must use real jar photos, never AI-invented
+marketing:
+  priority_segments:            # who to speak to, in order
+    - general
+    - corporate
+    - hotels
+  active_campaign_override: ""  # e.g. "Festival Gifting" in Q4; blank = always-on
 
-# Seasonal / campaign override (optional). Leave blank for always-on growth.
-# Set e.g. "Festival Gifting" in Q4 to bias content toward gifting.
-active_campaign_override: ""
+quality:
+  minimum_score: 6.5            # editorial pass threshold
+  legal_risk_threshold: 0.25    # 0 strict … 1 lax
+  plagiarism_threshold: 0
+
+publishing:
+  instagram: true
+  facebook: true
+  linkedin: true
+  youtube: true
+  max_daily_posts:
+    instagram: 3
+    facebook: 2
+    linkedin: 1
+    youtube: 1
+
+experiments:
+  enabled: true
+  max_parallel: 2
