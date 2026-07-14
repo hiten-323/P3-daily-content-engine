@@ -300,6 +300,58 @@ def _post_carousel(image_paths: list[str], caption: str) -> dict:
         return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
 
 
+def post_reel_video(video_url: str, caption: str) -> dict:
+    """
+    Publish an actual Instagram REEL from a public video URL.
+    Video processing is async, so we poll the container until FINISHED.
+    """
+    if not is_configured():
+        return {"success": False, "media_id": "", "error": "not_configured"}
+    try:
+        import requests
+    except ImportError:
+        return {"success": False, "media_id": "", "error": "requests_not_installed"}
+
+    acct_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
+    token   = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+    try:
+        params = {"media_type": "REELS", "video_url": video_url,
+                  "caption": caption, "share_to_feed": "true", "access_token": token}
+        # product tags on reels (if IG Shopping configured)
+        try:
+            from content_generator.publisher.product_tags import build_reel_product_tags
+            tags = build_reel_product_tags(caption)
+            if tags:
+                params["product_tags"] = tags
+        except Exception:
+            pass
+        resp = requests.post(f"{_GRAPH_API}/{acct_id}/media", params=params, timeout=60)
+        container_id = resp.json().get("id", "")
+        if not container_id:
+            err = resp.json().get("error", {}).get("message", str(resp.json()))
+            return {"success": False, "media_id": "", "error": err}
+
+        # Poll status — video encoding takes time (up to ~60s)
+        import time as _t
+        for _ in range(20):
+            st = requests.get(f"{_GRAPH_API}/{container_id}",
+                              params={"fields": "status_code", "access_token": token},
+                              timeout=20).json()
+            code = st.get("status_code")
+            if code == "FINISHED":
+                break
+            if code == "ERROR":
+                return {"success": False, "media_id": "", "error": "video_processing_error"}
+            _t.sleep(6)
+
+        result = _publish_container(container_id, acct_id, token)
+        logger.info("[instagram] Reel video published: %s", result.get("success"))
+        return result
+    except Exception as e:
+        logger.error("[instagram] Reel video error: %s", e)
+        return {"success": False, "media_id": "", "error": str(e)}
+
+
 def post_story(content: dict, day: int = 0) -> dict:
     """
     Publish an Instagram Story (image, 9:16, 24h ephemeral).

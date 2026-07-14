@@ -148,9 +148,9 @@ def run_publish_slot(slot: str) -> dict:
         return {"slot": slot, **result}
 
     if slot == "evening":
-        # Reel-style single image with the reel's caption — 7-10 PM IST window
+        # Reel video (free motion reel) with image fallback — 22:00 IST
         from content_generator.publisher.instagram import (
-            _post_single_image, _assemble_caption, is_configured,
+            _post_single_image, _assemble_caption, is_configured, post_reel_video,
         )
         if not is_configured():
             return {"slot": slot, "success": False, "error": "not_configured"}
@@ -160,21 +160,39 @@ def run_publish_slot(slot: str) -> dict:
         if not reel:
             return {"slot": slot, "success": False, "error": "no_reel"}
 
-        image = _find_reel_thumbnail()
-        if not image:
-            logger.warning("[slots] no reel thumbnail found — skipping evening post")
-            return {"slot": slot, "success": False, "error": "no_image"}
-
         body = str(reel.get("caption") or reel.get("hook_text") or "").strip()
         cta  = str(reel.get("cta") or "").strip()
         if cta and cta.lower() not in body.lower():
             body = f"{body}\n\n{cta}"
         caption = _assemble_caption(body, reel, day)
 
-        result = _post_single_image(image, caption)
+        # 1. Try an actual REEL VIDEO (free moviepy motion reel -> Cloudinary -> IG)
+        result = None
+        try:
+            from content_generator.creative.reel_video import build_reel_video
+            from content_generator.publisher.video_host import upload_video, is_configured as vhost_ok
+            video_path = build_reel_video(reel, day)
+            if video_path and vhost_ok():
+                video_url = upload_video(video_path)
+                if video_url:
+                    result = post_reel_video(video_url, caption)
+                    if result.get("success"):
+                        logger.info("[slots] evening published as REEL VIDEO")
+        except Exception as e:
+            logger.warning("[slots] reel video path failed (%s) — falling back to image", e)
+
+        # 2. Fallback: reel-style single image
+        if not result or not result.get("success"):
+            image = _find_reel_thumbnail()
+            if not image:
+                return {"slot": slot, "success": False, "error": "no_image"}
+            result = _post_single_image(image, caption)
+            _mirror_to_facebook(content, day, slot, image=image, message=caption)
+        else:
+            _mirror_to_facebook(content, day, slot, message=caption)
+
         result["hashtags_used"] = " ".join(w for w in caption.split() if w.startswith("#"))
         _track(result, content, slot, reel)
-        _mirror_to_facebook(content, day, slot, image=image, message=caption)
         logger.info("[slots] evening publish: %s", result.get("success"))
         return {"slot": slot, **result}
 
