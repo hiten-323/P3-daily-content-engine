@@ -1,0 +1,22 @@
+[
+  {
+    "number": "1.0",
+    "effective_date": "2026-07-13",
+    "author": "Founder",
+    "changes": [
+      "Initial domain-structured policy",
+      "Target KPI: followers (IGNITION stage)",
+      "Auto-publish enabled across all platforms"
+    ],
+    "recorded_at": "2026-07-14T03:48:34",
+    "snapshot": {
+      "target_kpi": "followers",
+      "auto_publish": true,
+      "priority_segments": [
+        "general",
+        "corporate",
+        "hotels"
+      ]
+    }
+  }
+]
