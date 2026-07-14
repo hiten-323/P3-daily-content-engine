@@ -56,12 +56,20 @@ def build_reel_video(reel: dict, day: int, label: str = "reel_video") -> str | N
         logger.info("[reel_video] moviepy unavailable (%s) — skipping video", e)
         return None
 
-    from content_generator.creative.real_jar_composer import compose_post_image
+    # Cinematic frames (real jar, white knocked out, gradient backdrop) —
+    # falls back to the static-post composer if unavailable.
+    try:
+        from content_generator.creative.cinematic_frame import compose_cinematic_frame as _frame
+    except Exception:
+        from content_generator.creative.real_jar_composer import compose_post_image as _frame
 
     beats = _beats_from_reel(reel)
     frame_paths = []
     for i, b in enumerate(beats):
-        p = compose_post_image(
+        p = _frame(
+            headline=b["on"], sub=b["sub"], day=day, idx=i,
+            width=1080, height=1920, label=f"{label}_beat{i}_day{day}",
+        ) if _frame.__name__ == "compose_cinematic_frame" else _frame(
             headline=b["on"], body=b["sub"], day=day, idx=i,
             width=1080, height=1920, label=f"{label}_beat{i}_day{day}",
         )
