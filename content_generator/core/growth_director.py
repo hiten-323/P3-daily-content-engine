@@ -176,6 +176,11 @@ def get_strategy_brief(day: int) -> str:
     stage = get_growth_stage()
     objs  = get_todays_objectives(day)
     angle = get_todays_message_angle(day)
+    try:
+        from content_generator.analytics.social_seo import social_seo_directive
+        seo = "\n\n" + social_seo_directive(day)
+    except Exception:
+        seo = ""
 
     # Founder policy bias (target KPI, voice, priority segments) — the founder
     # steers the engine by editing founder_policies.yaml, never the prompts.
@@ -228,6 +233,8 @@ WATCH-TIME STRUCTURE (Instagram ranks by watch time, not likes):
 0-2s hook | 2-5s retention lock | 5-10s curiosity build | 10-20s reward | final 5s CTA.
 Every frame/beat must earn the next 3 seconds. If a beat only exists to fill
 time, cut it — shorter with full retention beats longer with drop-off.
+
+{seo}
 
 THE ONLY QUESTION THAT MATTERS TODAY:
 What is the fastest way to gain followers tomorrow? Generate for that."""

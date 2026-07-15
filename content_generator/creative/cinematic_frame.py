@@ -156,9 +156,10 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
             draw.text((width // 2, y), line, font=sf, fill=_GOLD, anchor="ma")
             y += int(sf.size * 1.3)
 
-    # Minimal brand footer (no heavy bars — keep it cinematic)
+    # Minimal brand mark — placed in the SAFE ZONE (upper-middle), NOT at the
+    # bottom where Instagram's caption/buttons/audio UI covers it (v7: safe zone).
     ff = _font(max(24, width // 40), bold=True)
-    draw.text((width // 2, height - int(height * 0.04)),
+    draw.text((width // 2, int(height * 0.43)),
               "PURITY BEANS   ·   p3online.in", font=ff, fill=_GOLD, anchor="mm")
 
     import datetime
