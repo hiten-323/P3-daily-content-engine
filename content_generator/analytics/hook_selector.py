@@ -42,6 +42,19 @@ _IDENTITY_WORDS = [
 ]
 _WEAK_OPENERS = ["hey", "hello", "welcome", "today we", "in this", "let me", "i want to"]
 
+# 2026 (heyDominik): conversational "doesn't-sound-like-a-hook" openers slip past
+# the ad-blindness shield and outperform clever/bait hooks.
+_CONVERSATIONAL = [
+    "did you know", "here's something", "here's what", "i noticed", "turns out",
+    "nobody told me", "the other day", "so i", "i just realised", "i just realized",
+    "ever wondered", "little known", "most people don't realise", "most people don't realize",
+]
+# Over-used bait patterns that now read as "this is an ad, skip".
+_BAIT_PATTERNS = [
+    "shocking", "you won't believe", "this one trick", "gone wrong", "!!!",
+    "mind-blowing", "insane", "must watch", "watch till the end",
+]
+
 
 def score_hook(hook: str) -> float:
     """
@@ -69,11 +82,16 @@ def score_hook(hook: str) -> float:
         score += 5
     if any(h.startswith(w) for w in ("this ", "your ", "stop ", "most ", "nobody ")):
         score += 5
-    # Penalties: weak openers, numbers pretending to be stats
+    # Conversational, non-baity opener (2026 — reward feeling real, not "hook-y")
+    if any(c in h for c in _CONVERSATIONAL):
+        score += 12
+    # Penalties: weak openers, numbers pretending to be stats, over-used bait
     if any(h.startswith(w) for w in _WEAK_OPENERS):
         score -= 30
     if re.search(r"\d+%|\d+ out of \d+", h):
         score -= 20  # fabricated-stat risk
+    if any(b in h for b in _BAIT_PATTERNS):
+        score -= 18  # ad-blindness triggers — reads as bait
 
     return max(0.0, min(100.0, score))
 

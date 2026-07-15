@@ -44,7 +44,11 @@ _DEFAULTS = {
                  "require_real_jar": True,
                  "core_avatar": "Urban Indian coffee drinker, 22-40, who cares about what they consume",
                  "core_topic_lane": "The truth about instant coffee quality and how to drink better coffee"},
-    "brand":    {"premium": True, "aggressive_sales": False, "educational": True},
+    "brand":    {"premium": True, "aggressive_sales": False, "educational": True,
+                 "creator_dna": "We are Purity Beans. We make 100% pure instant coffee for "
+                                "Indians who are done being fooled by chicory-filled 'coffee'. "
+                                "Listen to us because we print exactly what's inside — and dare "
+                                "you to read any other label."},
     "marketing": {"priority_segments": ["general"], "active_campaign_override": ""},
     "quality":  {"minimum_score": 6.5, "legal_risk_threshold": 0.25, "plagiarism_threshold": 0},
     "publishing": {"instagram": True, "facebook": True, "linkedin": True, "youtube": True,

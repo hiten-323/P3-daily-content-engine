@@ -114,6 +114,16 @@ def get_todays_message_angle(day: int) -> tuple:
     return MESSAGE_ANGLES[day % len(MESSAGE_ANGLES)]
 
 
+def _creator_dna_line() -> str:
+    dna = ("We are Purity Beans — 100% pure coffee for Indians done being fooled by chicory.")
+    try:
+        from content_generator.core.founder_policy import policy
+        dna = policy().domain("brand").get("creator_dna", dna)
+    except Exception:
+        pass
+    return f"CREATOR DNA (our identity — stay in character): {dna}"
+
+
 def _consistency_block() -> str:
     """Avatar + topic-lane lock — the #1 algorithmic fit-score lever (Kallaway)."""
     avatar = "Urban Indian coffee drinker, 22-40, who cares about what they consume"
@@ -189,6 +199,16 @@ Vary the ANGLE, never the avatar or topic lane above. Do NOT make every post a
 chicory exposé — only EXPOSE/CONTRAST days lead with betrayal; today leads as
 above. The "zero chicory, 100% coffee" fact may appear as a light touch.
 
+STRANGER TEST (every hook + caption): would this work for someone who has NEVER
+seen Purity Beans and couldn't care less? If it only lands for existing fans, rewrite.
+
+HOOK STYLE — 2026 (heyDominik): people are HOOK-BLIND. Clever/loud/ALL-CAPS
+"bait" hooks trigger a 'this is an ad, skip' reflex. Write hooks that DON'T
+sound like hooks — like a real person sharing something, or something overheard:
+"Did you know most instant coffee in India isn't actually coffee?" beats
+"3 SHOCKING COFFEE SECRETS". Conversational, real, curiosity that feels honest.
+{_creator_dna_line()}
+
 ALGORITHM ENGAGEMENT — the sample group (~200 mostly-strangers) must engage or
 the post dies in "200-view jail". Hit all four (Kallaway's four horsemen):
 1. Solve a REAL problem the avatar has (relevant)
@@ -196,8 +216,9 @@ the post dies in "200-view jail". Hit all four (Kallaway's four horsemen):
 3. Make it instantly understandable (high absorption)
 4. Short distance to act — small action, big result
 
-DRIVE COMMENTS (algorithmic boost): take a hard, slightly contrarian stance;
-amplify the framing; attach strong emotion. Hedging kills comments.
+DRIVE COMMENTS (algorithmic boost): take a hard, slightly contrarian stance in
+the BODY; amplify the framing; attach strong emotion. Hedging kills comments.
+(The hook stays conversational; the stance lives in the payload.)
 
 TODAY'S FUNNEL OBJECTIVES (one per asset — NEVER mix objectives in one reel):
 - growth_reel -> [{objs['growth_reel'][0]}] {objs['growth_reel'][1]}
