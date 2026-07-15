@@ -114,6 +114,27 @@ def get_todays_message_angle(day: int) -> tuple:
     return MESSAGE_ANGLES[day % len(MESSAGE_ANGLES)]
 
 
+def _consistency_block() -> str:
+    """Avatar + topic-lane lock — the #1 algorithmic fit-score lever (Kallaway)."""
+    avatar = "Urban Indian coffee drinker, 22-40, who cares about what they consume"
+    lane   = "The truth about instant coffee quality and how to drink better coffee"
+    try:
+        from content_generator.core.founder_policy import policy
+        p = policy()
+        avatar = p.domain("content").get("core_avatar", avatar)
+        lane   = p.domain("content").get("core_topic_lane", lane)
+    except Exception:
+        pass
+    return (
+        "AUDIENCE MATCHING (highest-leverage algo lever — stay consistent):\n"
+        f"- CORE AVATAR (every post is for exactly this person): {avatar}\n"
+        f"- CORE TOPIC LANE (stay inside this): {lane}\n"
+        "Consistency builds the algorithm's fit score so it pushes you to the "
+        "right non-followers. Do NOT chase a viral idea aimed at a different "
+        "audience — even one off-avatar hit weakens your next several posts."
+    )
+
+
 def get_todays_objectives(day: int) -> dict:
     """
     Assign ONE funnel objective per asset for today. Never mixed.
@@ -161,10 +182,22 @@ CURRENT STAGE: {stage['name']} — {stage['followers']} followers
 CONTENT RATIO: {stage['viral_pct']}% viral value / {stage['sell_pct']}% selling
 STAGE FOCUS: {stage['focus']}
 
+{_consistency_block()}
+
 TODAY'S MESSAGE ANGLE: [{angle[0]}] {angle[1]}
-Do NOT make every post a chicory exposé. Only EXPOSE/CONTRAST days lead with
-betrayal; today leads as above. The "zero chicory, 100% coffee" fact may still
-appear, but as a light touch unless today is EXPOSE/CONTRAST.
+Vary the ANGLE, never the avatar or topic lane above. Do NOT make every post a
+chicory exposé — only EXPOSE/CONTRAST days lead with betrayal; today leads as
+above. The "zero chicory, 100% coffee" fact may appear as a light touch.
+
+ALGORITHM ENGAGEMENT — the sample group (~200 mostly-strangers) must engage or
+the post dies in "200-view jail". Hit all four (Kallaway's four horsemen):
+1. Solve a REAL problem the avatar has (relevant)
+2. Say something non-obvious AND tactically usable (new + actionable)
+3. Make it instantly understandable (high absorption)
+4. Short distance to act — small action, big result
+
+DRIVE COMMENTS (algorithmic boost): take a hard, slightly contrarian stance;
+amplify the framing; attach strong emotion. Hedging kills comments.
 
 TODAY'S FUNNEL OBJECTIVES (one per asset — NEVER mix objectives in one reel):
 - growth_reel -> [{objs['growth_reel'][0]}] {objs['growth_reel'][1]}

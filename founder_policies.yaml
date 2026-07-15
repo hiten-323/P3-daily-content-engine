@@ -27,6 +27,12 @@ content:
   reels_per_day: 1
   blogs_per_week: 7
   require_real_jar: true        # product images use real jar photos, never AI-invented
+  # ALGORITHM CONSISTENCY (Kallaway): the algorithm rewards a NARROW, consistent
+  # avatar + topic lane — it builds a strong "fit score" and pushes you to the
+  # right non-followers. Mixing avatars/topics confuses it and you flop. Keep
+  # these tight; vary the ANGLE, never the avatar or lane.
+  core_avatar: "Urban Indian coffee drinker, 22-40, who cares about what they consume"
+  core_topic_lane: "The truth about instant coffee quality and how to drink better coffee"
 
 brand:
   premium: true
