@@ -33,12 +33,15 @@ import os
 
 logger = logging.getLogger(__name__)
 
-_OUTPUT_DIR = os.getenv("PB_OUTPUT_DIR", "output")
+
+def _output_dir() -> str:
+    # Read dynamically so PB_OUTPUT_DIR set after import still takes effect.
+    return os.getenv("PB_OUTPUT_DIR", "output")
 
 
 def _todays_path() -> str:
     date_str = datetime.date.today().isoformat()
-    return os.path.join(_OUTPUT_DIR, f"content_{date_str}.json")
+    return os.path.join(_output_dir(), f"content_{date_str}.json")
 
 
 def get_todays_content(
@@ -76,7 +79,7 @@ def get_todays_content(
         configure(load_env=True, setup_logging=False)
         content = generate_daily_content(day_number=day_number)
         try:
-            save_content(content, output_dir=_OUTPUT_DIR)
+            save_content(content, output_dir=_output_dir())
         except Exception as e:
             logger.warning("[feed] Generated content but could not save: %s", e)
 

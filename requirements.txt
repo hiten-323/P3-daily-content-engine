@@ -41,3 +41,4 @@ runwayml>=0.1.0                 # Runway Gen-3 video (requires RUNWAY_API_KEY)
 pydantic>=2.0.0                 # Schema validation
 langdetect>=1.0.9               # Language detection
 
+PyYAML>=6.0                     # Founder Policy Engine (founder_policies.yaml)
