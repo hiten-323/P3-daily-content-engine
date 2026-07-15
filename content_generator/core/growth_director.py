@@ -91,6 +91,29 @@ def get_growth_stage(followers: int = None) -> dict:
     }
 
 
+# Primary message angle — rotates so the brand isn't a one-note chicory sermon.
+# The "zero chicory" differentiator still appears, but only EXPOSE/CONTRAST days
+# lead with betrayal; other days lead with their own value to reach the ~95% who
+# don't yet care about chicory. (Addresses the one-note-messaging risk.)
+MESSAGE_ANGLES = [
+    ("EDUCATION",   "Lead with genuinely useful coffee knowledge (brewing, storage, "
+                    "caffeine, taste). Brand is a light touch at the end, not the point."),
+    ("EXPOSE",      "Lead with the chicory/adulteration truth — the betrayal hook. "
+                    "This is the differentiator day."),
+    ("ASPIRATION",  "Lead with lifestyle/ritual/identity — the feeling of great coffee. "
+                    "Aspirational, not accusatory."),
+    ("FOUNDER",     "Lead with a founder story/lesson/decision. People follow people."),
+    ("VALUE",       "Lead with practical value — money saved, a guide, a comparison. "
+                    "Helpful first, brand second."),
+    ("CONTRAST",    "Lead with an honest side-by-side (pure vs filler) without naming "
+                    "competitors. Let the viewer conclude."),
+]
+
+
+def get_todays_message_angle(day: int) -> tuple:
+    return MESSAGE_ANGLES[day % len(MESSAGE_ANGLES)]
+
+
 def get_todays_objectives(day: int) -> dict:
     """
     Assign ONE funnel objective per asset for today. Never mixed.
@@ -121,6 +144,7 @@ def get_strategy_brief(day: int) -> str:
     """
     stage = get_growth_stage()
     objs  = get_todays_objectives(day)
+    angle = get_todays_message_angle(day)
 
     # Founder policy bias (target KPI, voice, priority segments) — the founder
     # steers the engine by editing founder_policies.yaml, never the prompts.
@@ -136,6 +160,11 @@ def get_strategy_brief(day: int) -> str:
 CURRENT STAGE: {stage['name']} — {stage['followers']} followers
 CONTENT RATIO: {stage['viral_pct']}% viral value / {stage['sell_pct']}% selling
 STAGE FOCUS: {stage['focus']}
+
+TODAY'S MESSAGE ANGLE: [{angle[0]}] {angle[1]}
+Do NOT make every post a chicory exposé. Only EXPOSE/CONTRAST days lead with
+betrayal; today leads as above. The "zero chicory, 100% coffee" fact may still
+appear, but as a light touch unless today is EXPOSE/CONTRAST.
 
 TODAY'S FUNNEL OBJECTIVES (one per asset — NEVER mix objectives in one reel):
 - growth_reel -> [{objs['growth_reel'][0]}] {objs['growth_reel'][1]}

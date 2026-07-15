@@ -166,18 +166,27 @@ def run_publish_slot(slot: str) -> dict:
             body = f"{body}\n\n{cta}"
         caption = _assemble_caption(body, reel, day)
 
-        # 1. Try an actual REEL VIDEO (free moviepy motion reel -> Cloudinary -> IG)
+        # 1. Try an actual REEL VIDEO — HERO video first (founder-produced,
+        #    the format that actually spreads), else the free motion reel.
         result = None
         try:
-            from content_generator.creative.reel_video import build_reel_video
             from content_generator.publisher.video_host import upload_video, is_configured as vhost_ok
-            video_path = build_reel_video(reel, day)
+            hero = _find_hero_video()
+            if hero:
+                video_path, is_hero = hero, True
+                logger.info("[slots] using HERO video: %s", os.path.basename(hero))
+            else:
+                from content_generator.creative.reel_video import build_reel_video
+                video_path, is_hero = build_reel_video(reel, day), False
             if video_path and vhost_ok():
                 video_url = upload_video(video_path)
                 if video_url:
                     result = post_reel_video(video_url, caption)
                     if result.get("success"):
-                        logger.info("[slots] evening published as REEL VIDEO")
+                        logger.info("[slots] evening published as %s REEL VIDEO",
+                                    "HERO" if is_hero else "motion")
+                        if is_hero:
+                            _mark_hero_posted(video_path)
         except Exception as e:
             logger.warning("[slots] reel video path failed (%s) — falling back to image", e)
 
@@ -197,6 +206,46 @@ def run_publish_slot(slot: str) -> dict:
         return {"slot": slot, **result}
 
     return {"slot": slot, "success": False, "error": f"unknown_slot_{slot}"}
+
+
+_HERO_DIR    = os.getenv("HERO_VIDEO_DIR", "hero_videos")
+_HERO_POSTED = os.path.join(os.getenv("LEARNING_DIR", os.path.join("output", "learning")),
+                            "hero_posted.json")
+
+
+def _find_hero_video() -> str | None:
+    """
+    Return the oldest founder-produced hero video not yet posted.
+    Drop .mp4/.mov files in hero_videos/ and the prime evening slot uses them
+    first (the format that actually spreads) — slideshow is only the fallback.
+    """
+    if not os.path.isdir(_HERO_DIR):
+        return None
+    posted = set()
+    if os.path.exists(_HERO_POSTED):
+        try:
+            posted = set(json.load(open(_HERO_POSTED, encoding="utf-8")))
+        except Exception:
+            posted = set()
+    vids = []
+    for ext in ("*.mp4", "*.mov", "*.MP4", "*.MOV"):
+        vids += _glob.glob(os.path.join(_HERO_DIR, ext))
+    fresh = [v for v in vids if os.path.basename(v) not in posted]
+    if not fresh:
+        return None
+    return sorted(fresh, key=os.path.getmtime)[0]   # oldest first
+
+
+def _mark_hero_posted(path: str) -> None:
+    try:
+        posted = []
+        if os.path.exists(_HERO_POSTED):
+            posted = json.load(open(_HERO_POSTED, encoding="utf-8"))
+        posted.append(os.path.basename(path))
+        os.makedirs(os.path.dirname(_HERO_POSTED), exist_ok=True)
+        json.dump(posted[-500:], open(_HERO_POSTED, "w", encoding="utf-8"), indent=2)
+    except Exception as e:
+        logger.debug("[slots] could not mark hero posted: %s", e)
 
 
 def _mirror_to_facebook(content: dict, day: int, slot: str,

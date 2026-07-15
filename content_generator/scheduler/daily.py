@@ -221,17 +221,34 @@ def _inject_brand_into_piece(label: str, piece: dict) -> dict:
         low = val.lower()
         needs_brand   = "purity beans" not in low
         needs_website = "p3online.in" not in low
+        # Rotate the appended brand line so captions aren't a chicory sermon
+        # every day (one-note-messaging fix). Deterministic by piece text.
+        line = _brand_tagline(val)
         if needs_brand and needs_website:
-            piece[field] = val.rstrip() + " Try Purity Beans — zero chicory, 100% pure coffee. Shop now: https://p3online.in"
+            piece[field] = val.rstrip() + f" {line} Shop: https://p3online.in"
         elif needs_brand:
             piece[field] = val.rstrip() + " — Purity Beans"
         elif needs_website:
-            piece[field] = val.rstrip() + " Shop now: https://p3online.in"
+            piece[field] = val.rstrip() + " Shop: https://p3online.in"
 
     # CTA field is mandatory on brand-track assets — create it if the LLM skipped it
     if label in ("reel_1", "reel_2", "carousel", "instagram_post") and not str(piece.get("cta", "")).strip():
-        piece["cta"] = "Real coffee. Zero chicory. Shop Purity Beans now: https://p3online.in"
+        piece["cta"] = f"{_brand_tagline(str(piece))} Shop Purity Beans: https://p3online.in"
     return piece
+
+
+# Rotating brand taglines — not every one mentions chicory (one-note fix).
+_BRAND_TAGLINES = (
+    "Try Purity Beans — 100% pure coffee.",
+    "Purity Beans — real coffee, nothing added.",
+    "Purity Beans — premium instant coffee, made in India.",
+    "Try Purity Beans — zero chicory, 100% coffee.",
+    "Purity Beans — coffee the way it should be.",
+    "Purity Beans — read the label, taste the difference.",
+)
+
+def _brand_tagline(seed_text: str) -> str:
+    return _BRAND_TAGLINES[hash(seed_text) % len(_BRAND_TAGLINES)]
 
 
 _UNSUPPORTED_STATS = [
