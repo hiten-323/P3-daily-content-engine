@@ -56,6 +56,12 @@ def run_full_pipeline(day_number: int = None) -> dict:
     rm = RetryManager(default_max_retries=2, default_base_wait=30)
     t0 = time.time()
 
+    # Resolve the day number ONCE up front so every path — including the
+    # emergency fallback — carries the correct day (not 0).
+    if day_number is None:
+        from content_generator.rotation import get_day_number
+        day_number = get_day_number()
+
     logger.info("[scheduler] ======= AUTONOMOUS PIPELINE START =======")
 
     # ── 0. Health check ───────────────────────────────────────────────────────
@@ -107,7 +113,7 @@ def run_full_pipeline(day_number: int = None) -> dict:
             # Emergency fallback — never miss a day
             logger.error("[scheduler] All LLM providers failed — activating emergency fallback")
             from content_generator.scheduler.fallback import emergency_content_set
-            content = emergency_content_set(day_number=day_number or 0)
+            content = emergency_content_set(day_number=day_number)
 
     dn = content.get("day_number", 0)
 
