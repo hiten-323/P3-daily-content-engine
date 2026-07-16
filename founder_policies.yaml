@@ -23,7 +23,7 @@ business:
   target_kpi: followers        # followers | engagement | revenue
 
 content:
-  auto_publish: true           # false = generate + save only (dry run)
+  auto_publish: false           # false = generate + save only (dry run)
   reels_per_day: 1
   blogs_per_week: 7
   require_real_jar: true        # product images use real jar photos, never AI-invented
