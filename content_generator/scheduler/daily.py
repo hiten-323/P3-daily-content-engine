@@ -181,7 +181,50 @@ def run_full_pipeline(day_number: int = None) -> dict:
     if failed:
         logger.warning("[scheduler] Steps that needed retry: %s", [h["label"] for h in failed])
 
+    # Concise DAILY SUMMARY — the human-readable "what happened today" line, so
+    # the founder/ops don't have to read 700 log lines.
+    try:
+        _log_daily_summary(content, publish_result, elapsed, failed)
+    except Exception as e:
+        logger.debug("[scheduler] daily summary failed: %s", e)
+
     return content
+
+
+def _log_daily_summary(content: dict, publish_result: dict, elapsed: float, failed: list) -> None:
+    """One compact block summarizing the run: providers, publishing, learning."""
+    pub = publish_result or {}
+    summary = pub.get("summary", "n/a")
+    emergency = bool(content.get("_emergency")) or content.get("day_number") == 0 and "emergency" in str(content).lower()
+
+    # Provider usage from the usage log if present
+    prov = ""
+    try:
+        from content_generator.providers.llm_router import get_usage_log
+        used = get_usage_log() or {}
+        if used:
+            prov = ", ".join(f"{k}:{v}" for k, v in list(used.items())[:6])
+    except Exception:
+        pass
+
+    lines = [
+        "================= DAILY SUMMARY =================",
+        f"Day {content.get('day_number', '?')} | {elapsed:.0f}s"
+        + (" | ** EMERGENCY MODE **" if emergency else ""),
+        f"Publishing: {summary}",
+    ]
+    if prov:
+        lines.append(f"LLM providers used: {prov}")
+    if failed:
+        lines.append(f"Steps retried/failed: {', '.join(h['label'] for h in failed)}")
+    try:
+        from content_generator.core.learning_engine import analyze
+        n = analyze().get("count", 0)
+        lines.append(f"Learning: {n} posts with performance data so far")
+    except Exception:
+        pass
+    lines.append("================================================")
+    logger.info("\n".join(lines))
 
 
 # ── Step implementations ──────────────────────────────────────────────────────

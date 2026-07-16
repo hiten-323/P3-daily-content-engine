@@ -105,28 +105,47 @@ def _graph_get(path: str, params: dict) -> dict | None:
 def _fetch_media_insights(media_id: str) -> dict | None:
     """
     Fetch insight metrics for one media object.
-    Returns a metrics dict in learning_engine field names, or None on failure.
-    """
-    data = _graph_get(f"{media_id}/insights", {"metric": _MEDIA_METRICS})
-    if not data or "data" not in data:
-        # Some media types reject some metrics — retry with the safe core set
-        data = _graph_get(f"{media_id}/insights", {"metric": "reach,saved,comments,likes"})
-        if not data or "data" not in data:
-            return None
 
+    Fix for the HTTP 400 storm: likes/comments are media FIELDS, not insight
+    metrics, and 'views' is only valid on reels/video — mixing them into the
+    /insights `metric` param 400s for image/carousel media. So we:
+      1. read like_count/comments_count from the media object fields (always valid)
+      2. request only valid insight metrics, and progressively narrow on failure
+    Returns a metrics dict, or None if the object is truly unreadable.
+    """
+    # 1. Engagement counts via media FIELDS (valid for every media type)
+    fields = _graph_get(media_id, {"fields": "like_count,comments_count,media_product_type"})
+    likes    = (fields or {}).get("like_count", 0) or 0
+    comments = (fields or {}).get("comments_count", 0) or 0
+    is_reel  = str((fields or {}).get("media_product_type", "")).upper() == "REELS"
+
+    # 2. Insight metrics — reels support 'views', feed/carousel do not
+    metric_sets = (
+        (["reach", "saved", "shares", "total_interactions", "views"] if is_reel
+         else ["reach", "saved", "shares", "total_interactions"]),
+        ["reach", "saved"],
+        ["reach"],
+    )
     raw = {}
-    for item in data["data"]:
-        values = item.get("values") or [{}]
-        raw[item.get("name", "")] = values[0].get("value", 0) or 0
+    for metrics in metric_sets:
+        data = _graph_get(f"{media_id}/insights", {"metric": ",".join(metrics)})
+        if data and "data" in data:
+            for item in data["data"]:
+                values = item.get("values") or [{}]
+                raw[item.get("name", "")] = values[0].get("value", 0) or 0
+            break
+
+    if not raw and fields is None:
+        return None   # object genuinely unreadable (deleted / permission)
 
     return {
-        "views":          raw.get("views", 0),
+        "views":          raw.get("views", raw.get("reach", 0)),
         "reach":          raw.get("reach", 0),
         "saves":          raw.get("saved", 0),
         "shares":         raw.get("shares", 0),
-        "comments":       raw.get("comments", 0),
-        "likes":          raw.get("likes", 0),
-        "profile_visits": raw.get("profile_visits", 0),
+        "comments":       comments,
+        "likes":          likes,
+        "profile_visits": 0,
     }
 
 

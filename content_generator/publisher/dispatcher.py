@@ -110,18 +110,30 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
         results["blog"] = {"success": False, "error": str(e)}
 
     # ── Summary ───────────────────────────────────────────────────────────────
-    published = [p for p, r in results.items() if r.get("success")]
-    skipped   = [p for p, r in results.items() if r.get("error") == "not_configured"]
-    failed    = [
-        p for p, r in results.items()
-        if not r.get("success") and r.get("error") != "not_configured"
-    ]
+    # Held (timed slots) and skipped (not configured / no content) are NOT
+    # failures — label them honestly so the summary reflects reality.
+    _SKIP_ERRORS = ("not_configured", "no_blog_content", "no_content", "no_video", "no_image")
+    def _cat(r):
+        if r.get("success"):
+            return "published"
+        if r.get("held") or r.get("error") == "held_for_timed_slot":
+            return "held"
+        if r.get("error") in _SKIP_ERRORS:
+            return "skipped"
+        return "failed"
+
+    published = [p for p, r in results.items() if _cat(r) == "published"]
+    held      = [p for p, r in results.items() if _cat(r) == "held"]
+    skipped   = [p for p, r in results.items() if _cat(r) == "skipped"]
+    failed    = [p for p, r in results.items() if _cat(r) == "failed"]
 
     parts = []
     if published:
         parts.append(f"Published: {', '.join(p.title() for p in published)}")
+    if held:
+        parts.append(f"Held for slot: {', '.join(p.title() for p in held)}")
     if skipped:
-        parts.append(f"Skipped (not configured): {', '.join(p.title() for p in skipped)}")
+        parts.append(f"Skipped: {', '.join(p.title() for p in skipped)}")
     if failed:
         parts.append(f"Failed: {', '.join(p.title() for p in failed)}")
 

@@ -224,7 +224,12 @@ def generate_daily_content(
 
     phase1_results: dict[str, dict] = {}
 
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    # Concurrency is capped low by default: free-tier LLMs (e.g. Groq 12K TPM)
+    # get 429-throttled when several large generations fire at once — more
+    # workers makes it worse, not better. Raise GEN_MAX_WORKERS only when a
+    # high-quota provider (valid Gemini key) is carrying the load.
+    _workers = max(1, int(os.getenv("GEN_MAX_WORKERS", "2")))
+    with ThreadPoolExecutor(max_workers=_workers) as pool:
         futures = {
             pool.submit(llm_call, fn(*args) + ctx, label, tokens): label
             for label, (fn, args, tokens) in phase1_tasks.items()
