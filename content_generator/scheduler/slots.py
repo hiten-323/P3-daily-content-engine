@@ -108,6 +108,17 @@ def run_publish_slot(slot: str) -> dict:
     """
     from content_generator.scheduler.run_lock import RunLock
 
+    # Respect the founder policy dry-run switch here too — the publish slots
+    # must honor auto_publish=false, not just the generate slot.
+    try:
+        from content_generator.core.founder_policy import policy
+        if not policy().get("auto_publish", True):
+            logger.warning("[slots] auto_publish=false — %s slot generates nothing "
+                           "and posts nothing (dry run)", slot)
+            return {"_skipped": True, "slot": slot, "reason": "auto_publish_disabled"}
+    except Exception:
+        pass
+
     lock = RunLock(lock_path=os.path.join("output", f".running_{slot}"))
     lock.__enter__()
     if lock.already_ran:
