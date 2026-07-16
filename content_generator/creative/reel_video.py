@@ -99,8 +99,16 @@ def build_reel_video(reel: dict, day: int, label: str = "reel_video") -> str | N
     except Exception:
         video = concatenate_videoclips(clips)
 
-    # Optional royalty-free music
+    # Background music: Audio Director picks a mood-matched royalty-free track
+    # from music_library/ for the content; env override wins if set.
     music = os.getenv("REEL_MUSIC_FILE")
+    if not (music and os.path.exists(music)):
+        try:
+            from content_generator.creative.audio_director import get_audio_plan
+            hook = str(reel.get("hook_text") or reel.get("caption") or "")
+            music = get_audio_plan(hook, day).get("local_track")
+        except Exception as e:
+            logger.debug("[reel_video] audio director skipped: %s", e)
     if music and os.path.exists(music):
         try:
             from moviepy import AudioFileClip

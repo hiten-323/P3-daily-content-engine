@@ -422,6 +422,22 @@ def _inject_brand_into_content(content: dict, day: int = 0) -> None:
     except Exception as e:
         logger.warning("[creative] hook A/B skipped: %s", e)
 
+    # Audio Director: attach a per-asset audio plan (auto-embed track + in-app
+    # trending-audio recommendation for the manual posting path)
+    try:
+        from content_generator.creative.audio_director import get_audio_plan
+        for reel in content.get("reels") or []:
+            if isinstance(reel, dict) and reel:
+                hook = str(reel.get("hook_text") or reel.get("caption") or "")
+                reel["audio"] = get_audio_plan(hook, day)
+        for key in ("growth_reel", "stories", "yt_short"):
+            piece = content.get(key)
+            if isinstance(piece, dict) and piece:
+                txt = str(piece.get("chosen_hook") or piece.get("hook") or piece.get("title") or "")
+                piece["audio"] = get_audio_plan(txt, day)
+    except Exception as e:
+        logger.warning("[creative] audio director skipped: %s", e)
+
     reels = content.get("reels") or []
     for i, label in enumerate(["reel_1", "reel_2"]):
         if i < len(reels) and isinstance(reels[i], dict):

@@ -57,6 +57,7 @@ def record_performance(
     posted_at: str = "",
     metrics: dict = None,
     notes: str = "",
+    audio_category: str = "",
 ) -> dict:
     """
     Record performance metrics for a published post.
@@ -72,6 +73,7 @@ def record_performance(
         "hook":       hook,
         "topic":      topic,
         "format":     format_used,
+        "audio_category": audio_category,
         "posted_at":  posted_at or datetime.date.today().isoformat(),
         "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),
         "metrics":    {k: v for k, v in (metrics or {}).items() if k in METRIC_FIELDS},
