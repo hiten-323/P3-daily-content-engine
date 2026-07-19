@@ -258,5 +258,45 @@
       "profile_visits": 0
     },
     "notes": "auto-recorded by insights_fetcher"
+  },
+  {
+    "asset_id": "instagram_evening_day197",
+    "track": "brand",
+    "hook": "",
+    "topic": "",
+    "format": "evening",
+    "audio_category": "",
+    "posted_at": "2026-07-17T17:41:55",
+    "recorded_at": "2026-07-19T04:06:57",
+    "metrics": {
+      "views": 0,
+      "reach": 0,
+      "saves": 0,
+      "shares": 0,
+      "comments": 0,
+      "likes": 0,
+      "profile_visits": 0
+    },
+    "notes": "auto-recorded by insights_fetcher"
+  },
+  {
+    "asset_id": "instagram_morning_day198",
+    "track": "brand",
+    "hook": "",
+    "topic": "",
+    "format": "morning",
+    "audio_category": "",
+    "posted_at": "2026-07-18T06:28:37",
+    "recorded_at": "2026-07-19T04:06:58",
+    "metrics": {
+      "views": 0,
+      "reach": 0,
+      "saves": 0,
+      "shares": 0,
+      "comments": 0,
+      "likes": 0,
+      "profile_visits": 0
+    },
+    "notes": "auto-recorded by insights_fetcher"
   }
 ]
