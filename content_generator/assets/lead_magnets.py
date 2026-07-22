@@ -64,8 +64,82 @@ LEAD_MAGNETS = [
             "and mention 'corporate gifting'."
         ),
     },
+    {
+        "keyword": "MATCH",
+        "promise": "which Purity Beans variant matches how YOU drink coffee",
+        "deliverable": (
+            "Find your match:\n"
+            "- Drink it black / like it strong -> BOLD\n"
+            "- With milk, every morning, everyday cup -> ULTRA BLEND\n"
+            "- You notice quality, want a smooth gourmet cup -> PURISTA\n"
+            "- Gifting, hosting, or want the premium jar -> PURICA\n"
+            "Tell me how you drink it and I'll confirm. Shop: p3online.in"
+        ),
+    },
+    {
+        "keyword": "COST",
+        "promise": "the real math on what your daily coffee costs per year",
+        "deliverable": (
+            "Your coffee math:\n"
+            "- Cafe cup ~Rs 180 x 300 days = ~Rs 54,000/year\n"
+            "- Purity Beans at home ~Rs 18 a cup = ~Rs 5,400/year\n"
+            "- Same caffeine. No chicory. Roughly Rs 48,000 back in your pocket.\n"
+            "Do the math on your own habit — then see p3online.in"
+        ),
+    },
+    {
+        "keyword": "STORE",
+        "promise": "how to store instant coffee so it never goes flat",
+        "deliverable": (
+            "Keep coffee fresh:\n"
+            "1. Airtight, always — oxygen kills aroma faster than time.\n"
+            "2. Cool + dark cupboard. NOT the fridge (moisture ruins granules).\n"
+            "3. Dry spoon only. One wet spoon clumps the whole jar.\n"
+            "4. Buy a size you'll finish in 6-8 weeks.\n"
+            "Purity Beans jars are sealed to hold aroma: p3online.in"
+        ),
+    },
+    {
+        "keyword": "SWAP",
+        "promise": "the 7-day swap plan to move off chicory coffee without missing it",
+        "deliverable": (
+            "7-day swap (so the taste change never jolts you):\n"
+            "Day 1-2: your usual, but half a spoon less.\n"
+            "Day 3-4: half your usual + half Purity Beans in the same cup.\n"
+            "Day 5-6: mostly Purity Beans, slightly less sugar (pure coffee needs less).\n"
+            "Day 7: full cup, no chicory. Most people stop wanting the old taste here.\n"
+            "Start the swap: p3online.in"
+        ),
+    },
 ]
 
 
 def get_todays_lead_magnet(day: int) -> dict:
+    """
+    Today's offer — biased toward keywords that have historically earned the
+    most comments/follows, once the learning loop has data (else round-robin).
+    """
+    ranked = _ranked_by_performance()
+    if ranked:
+        # Rotate within the proven top half so winners repeat without going stale
+        top = ranked[: max(1, len(ranked) // 2)]
+        by_kw = {m["keyword"]: m for m in LEAD_MAGNETS}
+        pool = [by_kw[k] for k in top if k in by_kw]
+        if pool:
+            return pool[day % len(pool)]
     return LEAD_MAGNETS[day % len(LEAD_MAGNETS)]
+
+
+def _ranked_by_performance() -> list[str]:
+    """Keywords ordered best-first by real engagement, from the learning log."""
+    try:
+        from content_generator.core.learning_engine import _load_log, _engagement_score
+        scores: dict[str, list] = {}
+        for e in _load_log():
+            kw = (e.get("lead_magnet") or "").strip().upper()
+            if kw and e.get("metrics"):
+                scores.setdefault(kw, []).append(_engagement_score(e["metrics"]))
+        avg = {k: sum(v) / len(v) for k, v in scores.items() if v}
+        return [k for k, _ in sorted(avg.items(), key=lambda x: x[1], reverse=True)]
+    except Exception:
+        return []

@@ -11,10 +11,33 @@ HASHTAG_25 = (
 )
 
 
+# Carousels are the highest save/comment surface — run the value-unlock here
+# too, offset from the reel so the feed never has two "comment X" posts in a row.
+_UNLOCK_EVERY = 4
+_UNLOCK_OFFSET = 2
+
+
 def build(mech: tuple, avoid: str, day: int = 0) -> str:
     viral_idea = get_todays_viral_idea(day)
 
-    return f"""{brand_block()}
+    unlock_block = ""
+    if (day + _UNLOCK_OFFSET) % _UNLOCK_EVERY == 0:
+        from content_generator.assets.lead_magnets import get_todays_lead_magnet
+        lm = get_todays_lead_magnet(day)
+        unlock_block = f'''
+VALUE-UNLOCK CAROUSEL (today's highest-priority mechanic):
+The final slide gives away a REAL free resource in exchange for a comment.
+- Keyword to comment: {lm['keyword']}
+- What it unlocks: {lm['promise']}
+- Slides 1-N teach enough to prove the resource is worth having, but do NOT
+  give away the resource itself.
+- FINAL SLIDE heading must be: "COMMENT {lm['keyword']}"
+  body: "Comment {lm['keyword']} and I'll send you {lm['promise']}."
+- Set comment_trigger to exactly: "Comment {lm['keyword']} and I'll send you {lm['promise']}."
+- The founder replies personally with the resource (no auto-DM).
+'''
+
+    return f"""{brand_block()}{unlock_block}
 
 Generate ONE complete publish-ready Instagram Carousel for Purity Beans. Return a single JSON object.
 
