@@ -1,18 +1,18 @@
 {
   "#Coffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeLover": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeTime": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeAddict": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeLovers": {
@@ -20,19 +20,19 @@
     "total_score": 0.0
   },
   "#InstantCoffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PremiumCoffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PureCoffee": {
-    "uses": 21,
+    "uses": 23,
     "total_score": 0.0
   },
   "#GourmetCoffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#SpecialtyCoffee": {
@@ -40,19 +40,19 @@
     "total_score": 0.0
   },
   "#IndianCoffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeIndia": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#MadeInIndia": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#IndianBrands": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#SupportIndianBrands": {
@@ -60,19 +60,19 @@
     "total_score": 0.0
   },
   "#NoChicory": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#ChicoryFree": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#ZeroChicory": {
-    "uses": 21,
+    "uses": 23,
     "total_score": 0.0
   },
   "#NoPreservatives": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PreservativeFree": {
@@ -80,23 +80,23 @@
     "total_score": 0.0
   },
   "#PurityBeans": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PurityBeansCoffee": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#BrewPure": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PureCoffeeExperience": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#PurityBeansExperience": {
-    "uses": 20,
+    "uses": 22,
     "total_score": 0.0
   },
   "#CoffeeHolic": {
@@ -164,18 +164,34 @@
     "total_score": 0.0
   },
   "#CoffeeLove": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#CraftCoffee": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#AtmanirbharBharat": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#BestInstantCoffee": {
+    "uses": 2,
+    "total_score": 0.0
+  },
+  "#CoffeeIsLife": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#CoffeeExperience": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#OfficeLifeIndia": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#SmartShopping": {
     "uses": 1,
     "total_score": 0.0
   }
