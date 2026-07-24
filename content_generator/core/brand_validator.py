@@ -128,13 +128,17 @@ def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
 
     # Normalize labels
     clean_label = label.lower().strip()
+    is_valid = True
+    issues = []
 
+    # 1. Run brand validations
     if clean_label in ("reel_1", "reel_2"):
         caption = piece.get("caption", "")
         # Validate Reel caption (requires brand facts, website, mention, length)
-        is_ok, issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_ok, caption_issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
         if not is_ok:
-            return False, [f"Reel caption error: {issues}"]
+            is_valid = False
+            issues.extend([f"Reel caption error: {caption_issues}"])
             
         # Validate Reel overlays (on_screen text inside frames) - naturally short, no facts/website/length/mention
         frames = piece.get("frames") or []
@@ -149,15 +153,16 @@ def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
                     check_length=False
                 )
                 if not is_frame_ok:
-                    return False, [f"Reel frame {i+1} overlay error: {frame_issues}"]
-        return True, []
+                    is_valid = False
+                    issues.extend([f"Reel frame {i+1} overlay error: {frame_issues}"])
 
     elif clean_label == "carousel":
         caption = piece.get("caption", "")
         # Validate Carousel caption (requires brand facts, website, mention, length)
-        is_ok, issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_ok, caption_issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
         if not is_ok:
-            return False, [f"Carousel caption error: {issues}"]
+            is_valid = False
+            issues.extend([f"Carousel caption error: {caption_issues}"])
             
         # Validate Carousel slides (heading/body) - naturally short
         slides = piece.get("slides") or []
@@ -172,20 +177,20 @@ def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
                     check_length=False
                 )
                 if not is_slide_ok:
-                    return False, [f"Carousel slide {i+1} error: {slide_issues}"]
-        return True, []
+                    is_valid = False
+                    issues.extend([f"Carousel slide {i+1} error: {slide_issues}"])
 
     elif clean_label == "instagram_post":
         caption = piece.get("caption", "")
-        return validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_valid, issues = validate_asset_copy(caption, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
 
     elif clean_label == "linkedin_post":
         combined_text = f"{piece.get('hook', '')} {piece.get('body', '')} {piece.get('cta', '')}"
-        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_valid, issues = validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
 
     elif clean_label == "blog_post":
         combined_text = f"{piece.get('title', '')} {piece.get('introduction', '')} {piece.get('body', '')} {piece.get('conclusion', '')}"
-        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_valid, issues = validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
 
     elif clean_label == "yt_short":
         # Support both Format 1 (hook/script/cta) and Format 2 (scenes)
@@ -196,9 +201,45 @@ def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
         else:
             combined_text = f"{piece.get('hook', '')} {piece.get('script', '')} {piece.get('cta', '')}"
             
-        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_valid, issues = validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
 
     else:
         # Fallback validation for any other type
         combined_text = " ".join([str(v) for v in piece.values() if isinstance(v, str)])
-        return validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+        is_valid, issues = validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
+
+    # 2. Instagram Native Quality Gate integration
+    if clean_label in ("reel_1", "reel_2", "growth_reel", "carousel", "instagram_post", "stories"):
+        try:
+            from content_generator.creative.instagram_quality_gate import publish_decision
+            
+            # Map pieces to quality gate parameters
+            if clean_label in ("reel_1", "reel_2"):
+                copy_text = piece.get("hook_text") or piece.get("caption") or ""
+                surface = "reel"
+                reel_plan = piece
+            elif clean_label == "growth_reel":
+                copy_text = piece.get("chosen_hook") or piece.get("caption") or ""
+                surface = "reel"
+                reel_plan = piece
+            elif clean_label == "carousel":
+                copy_text = piece.get("title") or piece.get("caption") or ""
+                surface = "carousel"
+                reel_plan = None
+            elif clean_label == "stories":
+                copy_text = piece.get("hook") or piece.get("chosen_hook") or piece.get("caption") or ""
+                surface = "story"
+                reel_plan = None
+            else:  # instagram_post
+                copy_text = piece.get("caption") or ""
+                surface = "post"
+                reel_plan = None
+                
+            gate_res = publish_decision(copy_text=copy_text, surface=surface, reel_plan=reel_plan)
+            if not gate_res["allow_publish"]:
+                is_valid = False
+                issues.extend(gate_res["issues"])
+        except Exception as e:
+            logger.warning("[validator] instagram quality gate exception: %s", e)
+
+    return is_valid, issues

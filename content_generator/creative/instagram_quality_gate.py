@@ -21,10 +21,23 @@ def inspect_reel_plan(plan: dict) -> dict:
     issues=[]
     duration=float(plan.get("duration_seconds") or 0)
     if duration and duration>35: issues.append("reel too long for discovery-first default")
-    if not plan.get("hook"): issues.append("missing first-second hook")
-    if not plan.get("motion_plan") and not plan.get("scenes"): issues.append("missing motion/scene plan")
-    if not (plan.get("audio_track") or plan.get("audio_recommendation")): issues.append("missing audio plan")
-    if not plan.get("loop_ending"): issues.append("missing loopable ending")
+    
+    # Check for hook (either 'hook', 'hook_text', or 'chosen_hook')
+    if not (plan.get("hook") or plan.get("hook_text") or plan.get("chosen_hook")):
+        issues.append("missing first-second hook")
+        
+    # Check for motion/scene plan (either 'motion_plan', 'scenes', 'ai_video_motion_prompt', 'ai_video_prompts', 'frames', or 'script')
+    if not (plan.get("motion_plan") or plan.get("scenes") or plan.get("ai_video_motion_prompt") or plan.get("ai_video_prompts") or plan.get("frames") or plan.get("script")):
+        issues.append("missing motion/scene plan")
+        
+    # Check for audio plan (either 'audio_track', 'audio_recommendation', 'music_vibe', 'sound_suggestion', or 'audio'):
+    if not (plan.get("audio_track") or plan.get("audio_recommendation") or plan.get("music_vibe") or plan.get("sound_suggestion") or plan.get("audio")):
+        issues.append("missing audio plan")
+        
+    # Check for loopable ending (either 'loop_ending', 'loop_note', or 'loop_ending_note')
+    if not (plan.get("loop_ending") or plan.get("loop_note") or plan.get("loop_ending_note")):
+        issues.append("missing loopable ending")
+        
     return {"ok":not issues,"issues":issues}
 
 def publish_decision(copy_text="", surface="post", reel_plan=None) -> dict:
