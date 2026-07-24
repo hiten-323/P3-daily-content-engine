@@ -49,3 +49,7 @@ Do not reuse the reels' hooks or angles.
     "link": "https://{WEBSITE_URL}"
   }}
 }}"""
+
+
+# Instagram-native V2 rules (shared growth/creative contract)
+from content_generator.prompts.instagram_native import INSTAGRAM_NATIVE_RULES

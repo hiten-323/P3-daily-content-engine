@@ -60,10 +60,10 @@ on:
   schedule:
     # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, IG/FB held
     - cron: '30 0 * * *'
-    # 04:30 UTC = 10:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
-    - cron: '30 4 * * *'
-    # 16:30 UTC = 22:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
-    - cron: '30 16 * * *'
+    # 02:30 UTC = 08:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
+    - cron: '30 2 * * *'
+    # 14:30 UTC = 20:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
+    - cron: '30 14 * * *'
 
   # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
@@ -194,7 +194,7 @@ jobs:
           SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SHOPIFY_BLOG_ID:      ${{ secrets.SHOPIFY_BLOG_ID }}
 
-          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || '')) }}
+          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 2 * * *' && 'morning' || (github.event.schedule == '30 14 * * *' && 'evening' || '')) }}
           # Config
           WEBSITE_URL:         https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"

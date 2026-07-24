@@ -172,9 +172,13 @@ def generate_daily_content(
     # Continuous learning — inject what worked / failed from past posts
     try:
         from content_generator.core.learning_engine import get_learning_block
+        from content_generator.analytics.instagram_growth import get_instagram_growth_block
         learning = get_learning_block()
         if learning:
             ctx += "\n\n" + learning
+        ig_growth = get_instagram_growth_block()
+        if ig_growth:
+            ctx += "\n\n" + ig_growth
     except Exception as e:
         logger.debug("[pipeline] learning block unavailable: %s", e)
 

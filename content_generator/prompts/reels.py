@@ -73,3 +73,7 @@ ABSOLUTE RULES:
     {{"concept": "3 different thumbnail concepts for this reel. Each: a one-line visual concept + a paste-ready image prompt (9:16, photographic, realism rules apply, NO text in image). Vary the psychological angle: one shock-based, one curiosity-based, one product-hero.", "image_prompt": "...", "predicted_ctr_reason": "one sentence: why this stops the scroll in a 2cm feed tile"}}
   ]
 }}"""
+
+
+# Instagram-native V2 rules (shared growth/creative contract)
+from content_generator.prompts.instagram_native import INSTAGRAM_NATIVE_RULES

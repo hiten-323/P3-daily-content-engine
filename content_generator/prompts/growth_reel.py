@@ -138,3 +138,7 @@ HARD RULES:
   "story_version": "How to cut this into a 15s Instagram Story with a poll or slider",
   "shorts_version": "What changes for YouTube Shorts (title with search keyword, tighter cut)"
 }}"""
+
+
+# Instagram-native V2 rules (shared growth/creative contract)
+from content_generator.prompts.instagram_native import INSTAGRAM_NATIVE_RULES

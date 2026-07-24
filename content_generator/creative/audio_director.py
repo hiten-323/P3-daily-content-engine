@@ -79,7 +79,7 @@ def select_local_track(category: str, day: int = 0) -> str | None:
     """
     Pick a royalty-free track from music_library/ matching the category's mood.
     Founder drops files named like 'lofi_1.mp3', 'calm_cafe.mp3' etc.
-    Returns a path or None (then the reel stays silent — still valid).
+    Returns a path or None. Reels without embedded audio must be flagged for manual in-app audio before publishing.
     """
     if not os.path.isdir(_music_dir()):
         return None

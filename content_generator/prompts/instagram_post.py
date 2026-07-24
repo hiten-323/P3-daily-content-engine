@@ -43,3 +43,7 @@ ABSOLUTE RULES:
   "seo_keywords": ["premium instant coffee", "gourmet instant coffee", "freeze dried coffee", "coffee without preservatives", "pure instant coffee india", "best instant coffee brand india"],
   "hashtags": "{HASHTAG_25}"
 }}"""
+
+
+# Instagram-native V2 rules (shared growth/creative contract)
+from content_generator.prompts.instagram_native import INSTAGRAM_NATIVE_RULES

@@ -31,8 +31,7 @@ APPROVED_BACKGROUNDS = [
 ]
 
 FORBIDDEN_BACKGROUNDS = [
-    "white background", "bright", "colourful", "rainbow",
-    "pastel", "neon", "light background",
+    "rainbow clutter", "neon overload",
 ]
 
 # ── Text / copy guardrails ────────────────────────────────────────────────────
@@ -55,9 +54,9 @@ REQUIRED_BRAND_ELEMENTS = ["purity beans", "p3online"]
 
 # ── Prompt guardrails ─────────────────────────────────────────────────────────
 _BRAND_STYLE_SUFFIX = (
-    " — dark espresso tones, single warm amber/gold accent light, "
-    "Purity Beans jar as hero element, no bright colours, no white background, "
-    "editorial luxury FMCG photography style, deep shadows, moody atmosphere"
+    " — premium natural coffee photography, believable environment, disciplined warm brand accents, "
+    "product packaging must remain accurate when shown, mobile-first composition, "
+    "editorial FMCG photography with natural depth and tactile coffee detail"
 )
 
 
@@ -138,7 +137,7 @@ def enforce_brand_prompt(prompt: str) -> str:
 def get_brand_style_block() -> str:
     """Return the standard brand style description for image prompts."""
     return (
-        "Purity Beans visual identity: dark espresso tones, warm amber/gold accent light, "
-        "premium FMCG editorial photography, deep shadows, clean product focus, "
-        "no people unless specified, no white background, moody and luxurious"
+        "Purity Beans visual identity: premium natural coffee photography, warm coffee/amber accents, "
+        "clean mobile-first composition, tactile product and beverage detail, believable light, "
+        "varied real-world backgrounds; preserve exact packaging whenever the product is visible"
     )
