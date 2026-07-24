@@ -135,49 +135,78 @@ def compose_post_image(
     if not jar_path:
         return None
 
-    canvas = Image.new("RGB", (width, height), _BG)
-    draw   = ImageDraw.Draw(canvas)
+    is_lifestyle = "lifestyle" in os.path.basename(jar_path).lower()
 
+    canvas = Image.new("RGB", (width, height), _BG)
+
+    # 1. Process and draw/paste the main background or jar photo
+    try:
+        jar = Image.open(jar_path).convert("RGB")
+        try:
+            resample_filter = Image.Resampling.LANCZOS
+        except AttributeError:
+            resample_filter = Image.LANCZOS
+
+        if is_lifestyle:
+            # Lifestyle photo: scale to COVER the entire canvas, crop center, and apply dark overlay
+            img_ratio = jar.width / jar.height
+            canvas_ratio = width / height
+            if img_ratio > canvas_ratio:
+                new_h = height
+                new_w = int(height * img_ratio)
+            else:
+                new_w = width
+                new_h = int(width / img_ratio)
+            
+            jar = jar.resize((new_w, new_h), resample_filter)
+            x_offset = (new_w - width) // 2
+            y_offset = (new_h - height) // 2
+            jar = jar.crop((x_offset, y_offset, x_offset + width, y_offset + height))
+            canvas.paste(jar, (0, 0))
+            
+            # Apply dark espresso overlay to ensure high copy contrast
+            overlay = Image.new("RGBA", (width, height), (13, 9, 5, 130)) # ~50% opacity
+            canvas = Image.alpha_composite(canvas.convert("RGBA"), overlay).convert("RGB")
+        else:
+            # Regular jar photo: draw radial spotlight and paste jar centered at bottom
+            try:
+                glow_size = int(width * 0.6)
+                glow_mask = Image.new("L", (glow_size, glow_size), 0)
+                glow_draw = ImageDraw.Draw(glow_mask)
+                for r in range(glow_size // 2, 0, -2):
+                    alpha = int(210 * (1.0 - (r / (glow_size // 2))) ** 2)
+                    glow_draw.ellipse(
+                        [(glow_size // 2 - r, glow_size // 2 - r), 
+                         (glow_size // 2 + r, glow_size // 2 + r)], 
+                        fill=alpha
+                    )
+                glow_mask = glow_mask.filter(ImageFilter.GaussianBlur(20))
+                gold_glow = Image.new("RGB", (glow_size, glow_size), (40, 28, 12)) 
+                gx = (width - glow_size) // 2
+                gy = height - max(8, height // 90) - int(height * 0.55)
+                canvas.paste(gold_glow, (gx, gy), mask=glow_mask)
+            except Exception as e:
+                logger.debug("[real_jar] Radial spotlight failed: %s", e)
+
+            # Paste jar at bottom 55%
+            target_h = int(height * 0.52)
+            ratio    = target_h / jar.height
+            jar      = jar.resize((int(jar.width * ratio), target_h), resample_filter)
+            if jar.width > width - 80:
+                r   = (width - 80) / jar.width
+                jar = jar.resize((width - 80, int(jar.height * r)), resample_filter)
+            jx = (width - jar.width) // 2
+            jy = height - max(8, height // 90) - jar.height - int(height * 0.02)
+            canvas.paste(jar, (jx, jy))
+            
+    except Exception as e:
+        logger.warning("[real_jar] Could not process jar photo %s: %s", jar_path, e)
+        return None
+
+    draw = ImageDraw.Draw(canvas)
     bar = max(8, height // 90)
     draw.rectangle([(0, 0), (width, bar)], fill=_GOLD)
     draw.rectangle([(0, height - bar), (width, height)], fill=_GOLD)
-
-    # 1. Draw a soft, warm radial gold/amber spotlight behind the jar location
-    try:
-        glow_size = int(width * 0.6)
-        glow_mask = Image.new("L", (glow_size, glow_size), 0)
-        glow_draw = ImageDraw.Draw(glow_mask)
-        for r in range(glow_size // 2, 0, -2):
-            alpha = int(210 * (1.0 - (r / (glow_size // 2))) ** 2)
-            glow_draw.ellipse(
-                [(glow_size // 2 - r, glow_size // 2 - r), 
-                 (glow_size // 2 + r, glow_size // 2 + r)], 
-                fill=alpha
-            )
-        glow_mask = glow_mask.filter(ImageFilter.GaussianBlur(20))
-        # Warm golden-amber spotlight glow color
-        gold_glow = Image.new("RGB", (glow_size, glow_size), (40, 28, 12)) 
-        gx = (width - glow_size) // 2
-        gy = height - bar - int(height * 0.55)
-        canvas.paste(gold_glow, (gx, gy), mask=glow_mask)
-    except Exception as e:
-        logger.debug("[real_jar] Radial spotlight failed: %s", e)
-
-    # Real jar photo — bottom ~55% of canvas, aspect preserved
-    try:
-        jar = Image.open(jar_path).convert("RGB")
-        target_h = int(height * 0.52)
-        ratio    = target_h / jar.height
-        jar      = jar.resize((int(jar.width * ratio), target_h))
-        if jar.width > width - 80:
-            r   = (width - 80) / jar.width
-            jar = jar.resize((width - 80, int(jar.height * r)))
-        jx = (width - jar.width) // 2
-        jy = height - bar - jar.height - int(height * 0.02)
-        canvas.paste(jar, (jx, jy))
-    except Exception as e:
-        logger.warning("[real_jar] Could not paste jar photo %s: %s", jar_path, e)
-        return None
 
     # Headline (top area)
     margin = int(width * 0.07)
