@@ -45,7 +45,13 @@ ABSOLUTE RULES:
   "id": "{reel_id}",
   "hook_archetype": "{arch[0]}",
   "hook_text": "4 WORDS MAX ALL CAPS — stops the scroll instantly",
-  "hook_options": ["10 alternate hooks, each a different psychological angle (betrayal, curiosity gap, identity, contrarian, myth bust, relatable fail, insider secret, social shame, transformation, direct accusation). The engine scores all candidates and publishes only the winner."],
+  "hook_options": [
+    "12 alternate opening lines across 4 distinct modes (3 of each, output as a flat list):",
+    "1-3. Tension (immediate friction/conflict, e.g. 'Your daily coffee has 40% wood-root filler.')",
+    "4-6. Counterintuitive Claim (contrarian truth, e.g. 'Why premium pure coffee is actually cheaper.')",
+    "7-9. Exact Feeling (names a specific person's exact feeling, e.g. 'You're tired of starting your day with a bitter, muddy-tasting cup.')",
+    "10-12. Open Loop (opens a curiosity loop, e.g. 'We read the back label of India's biggest instant coffee, and found a quiet compromise.')"
+  ],
   "hook_spoken": "First 3 spoken words — mid-action, never Hey guys",
   "frames": [
     {{"on_screen": "4 WORDS MAX ALL CAPS", "spoken": "8-12 words expanding the hook with a real Indian detail"}},

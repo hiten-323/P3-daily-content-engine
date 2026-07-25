@@ -43,8 +43,9 @@ def analyze_growth(window=30):
 
 def get_instagram_growth_block(window=30):
     a=analyze_growth(window)
-    lines=["INSTAGRAM GROWTH DIRECTOR (first-party evidence):",
+    lines=["INSTAGRAM GROWTH DIRECTOR & STRATEGY AUDIT (first-party evidence):",
            "Growth funnel: non-follower reach -> 3-second hold/watch -> completion -> shares/saves -> profile visits -> follows -> website actions. Optimize without spam tactics.",
+           "Invisibility Audit: Actively identify and eliminate the three patterns that make content invisible: (1) saturated/cliché templates, (2) failing to create a clear reason to follow the account (rather than just liking the post), and (3) safe, compromise copy that blends in with giants.",
            "Every growth reel: visible change in first second, <=8-word hook, real motion, fast payoff, captions, audio plan, loopable ending, and one follow/save/share CTA only.",
            "Use carousels for saveable education/comparisons; use Stories for retention, replies and trust; use Reels for discovery.",
            "Do not use follower bots, follow/unfollow automation, engagement pods, or mass unsolicited DMs."]

@@ -103,7 +103,11 @@ HARD RULES:
   "viral_idea": "One sentence: the core idea and why people will share it",
   "psychology_used": ["2-4 triggers from: curiosity gap, open loop, identity, contrarian, myth bust, transformation, emotional contrast, hidden secret"],
   "hook_options": [
-    "10 different hooks for this topic — each under 10 words, each a different psychological angle"
+    "12 alternate opening lines across 4 distinct modes (3 of each, output as a flat list):",
+    "1-3. Tension (immediate friction/conflict)",
+    "4-6. Counterintuitive Claim (contrarian truth)",
+    "7-9. Exact Feeling (names a specific person's exact feeling/situation)",
+    "10-12. Open Loop (opens a curiosity loop)"
   ],
   "chosen_hook": "The strongest of the 10 — the one the reel opens with",
   "title_options": ["3 alternate titles for A/B testing"],

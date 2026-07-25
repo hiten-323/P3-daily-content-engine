@@ -18,6 +18,21 @@ INSTAGRAM-NATIVE CREATIVE SYSTEM — mandatory:
 - Avoid repetitive anti-chicory messaging. Rotate pillars: coffee education, sensory/ASMR, recipes, relatable culture,
   myth/curiosity, product proof, comparisons, founder/BTS, UGC/POV, seasonal moments.
 - No engagement bait, bots, follow/unfollow, pods or mass unsolicited DMs.
+
+---
+
+## FACELESS CONTENT PRODUCTION SYSTEM (Prompt 3 Rules)
+If generating reels or carousels, apply these faceless content principles:
+1. **7-Slide Carousel Format**:
+   - Slide 1: Cover Hook (6 words max, intense pattern interrupt)
+   - Slide 2: The Problem (relatable coffee frustration, no statistics)
+   - Slide 3: Myth Busted (surprising/contrarian twist)
+   - Slide 4: The Revelation (the hidden truth revealed)
+   - Slide 5: Why It Matters (Indian consumer scenario/relevance)
+   - Slide 6: Purity Beans Difference (pure ingredients, zero chicory, how to buy)
+   - Slide 7: Branded Share/Comment Trigger (direct save/comment incentive + website URL)
+2. **Text-Only Reel Scripts**:
+   - Scene-by-scene script writing. For every scene/time-slot, write exact voiceover text, on-screen text overlays, and detailed visual directions (e.g. macro camera panning, steam rising, pouring coffee, hands grinding beans) to make it highly visual without needing to show a face or use generic stock media.
 """
 
 def get_instagram_native_rules():

@@ -24,10 +24,10 @@ _MIN_SCORE = float(os.getenv("EDITORIAL_MIN_SCORE", "6.5"))
 _ENABLED   = os.getenv("ENABLE_EDITORIAL_REVIEW", "true").lower() == "true"
 
 _PROMPT_TEMPLATE = """\
-You are a senior social media editor for Purity Beans — a premium pure instant coffee \
-brand in India (Rs 18/cup, zero chicory, 100% pure coffee).
+You are an expert social media editor and retention copywriter for Purity Beans (Rs 18/cup, zero chicory, 100% pure coffee).
 
-Evaluate the content piece below honestly and critically. Do NOT be generous.
+Your job is to audit this content with a stopwatch. Evaluate it line by line.
+Flag every moment where a viewer would lose interest, stop watching/reading, or swipe away, and identify exactly why.
 
 CONTENT:
 {content_json}
@@ -42,7 +42,7 @@ Score each dimension 0–10:
 Scoring rules:
 - Generic, safe, or forgettable content scores below 6 on shareability and saveability.
 - If the hook could apply to any coffee brand, hook_strength ≤ 5.
-- Cultural specificity to India is a plus but never required.
+- If a line causes an attention drop, penalize hook_strength and saveability.
 
 Reply ONLY with this JSON (no extra text):
 {{
@@ -53,7 +53,8 @@ Reply ONLY with this JSON (no extra text):
   "brand_clarity": <float 0-10>,
   "overall": <float 0-10>,
   "verdict": "APPROVE" or "REJECT",
-  "feedback": "<one actionable sentence if rejecting, empty string if approving>"
+  "feedback": "<actionable critique explaining attention drops and how to rewrite lines to pull the reader to the next>",
+  "retention_audit": "<line-by-line critique flagging any weak moments, otherwise empty string>"
 }}"""
 
 

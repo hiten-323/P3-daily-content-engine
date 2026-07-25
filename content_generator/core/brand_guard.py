@@ -610,13 +610,28 @@ After the still frame is generated:
 - Always include: a human in the frame (human anchor technique)
 - Exact lens instruction: close-up, shallow depth of field, 85mm portrait lens equivalent
 
-**Recommended Tool Chain (from Vaibhav Sisinty's 100M-view playbook):**
+---
+
+## POSITIONING AUTHORITY & STRATEGY (Obvious Authority Rules)
+
+Ensure every piece of copy acts as a positioning strategist that makes Purity Beans look like the obvious authority in pure coffee without any vanity metrics or guru signals:
+1. **Three Authority Modes**:
+   - *Specificity & Precision*: Rich details about coffee extraction, freeze-drying, or crop sourcing (scientific and transparent).
+   - *Confident Simplicity*: Explaining complex coffee science or industry fillers in terms a child can understand.
+   - *Strong Point of View (POV)*: Take a stand so clear and strong that disagreeing with it feels like a deliberate choice (e.g., "We refuse to bulk up our jars with chicory fillers. If you prefer wood-root in your cup, there are plenty of cheap brands for you. We are not one of them.").
+2. **Eliminate the Three Invisibility Patterns**:
+   - *Saturated Formats*: Avoid copycat memes or trends that make the brand look generic.
+   - *No Reason to Follow*: Every post must offer a distinct reason to follow the account (e.g. ongoing coffee education, pure lifestyle values) rather than just leaving a passive like.
+   - *Neutrality/Safeness*: Do not write safe, neutral copy that blends in with corporate giants.
+
+---
+
+## RECOMMENDED VISUAL TOOL CHAIN
 - Image generation: Nano Banana Pro (more photorealistic skin + product texture than GPT Image 2)
 - Image-to-video: Seedance 2.0 (most reliable for product shots + subtle motion)
 - Background + lighting replacement: OpenArt VFX (replace background without green screen)
 - Founder face insertion: OpenArt VFX → Auto-select face → Drop product world behind them
 """
-
 
 REALISM_RULES = """
 # REALISM RULES — EVERY GENERATED VISUAL MUST PASS AS REAL
