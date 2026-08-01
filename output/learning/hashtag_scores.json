@@ -1,14 +1,14 @@
 {
   "#Coffee": {
-    "uses": 36,
+    "uses": 37,
     "total_score": 15.0
   },
   "#CoffeeLover": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#CoffeeTime": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#CoffeeAddict": {
@@ -20,11 +20,11 @@
     "total_score": 0.0
   },
   "#InstantCoffee": {
-    "uses": 36,
+    "uses": 37,
     "total_score": 15.0
   },
   "#PremiumCoffee": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#PureCoffee": {
@@ -32,7 +32,7 @@
     "total_score": 12.0
   },
   "#GourmetCoffee": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#SpecialtyCoffee": {
@@ -40,15 +40,15 @@
     "total_score": 0.0
   },
   "#IndianCoffee": {
-    "uses": 36,
+    "uses": 37,
     "total_score": 15.0
   },
   "#CoffeeIndia": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#MadeInIndia": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#IndianBrands": {
@@ -60,11 +60,11 @@
     "total_score": 0.0
   },
   "#NoChicory": {
-    "uses": 36,
+    "uses": 37,
     "total_score": 15.0
   },
   "#ChicoryFree": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#ZeroChicory": {
@@ -72,7 +72,7 @@
     "total_score": 12.0
   },
   "#NoPreservatives": {
-    "uses": 37,
+    "uses": 39,
     "total_score": 15.0
   },
   "#PreservativeFree": {
@@ -80,23 +80,23 @@
     "total_score": 0.0
   },
   "#PurityBeans": {
-    "uses": 39,
+    "uses": 41,
     "total_score": 15.0
   },
   "#PurityBeansCoffee": {
-    "uses": 39,
+    "uses": 41,
     "total_score": 15.0
   },
   "#BrewPure": {
-    "uses": 39,
+    "uses": 41,
     "total_score": 15.0
   },
   "#PureCoffeeExperience": {
-    "uses": 39,
+    "uses": 41,
     "total_score": 15.0
   },
   "#PurityBeansExperience": {
-    "uses": 39,
+    "uses": 41,
     "total_score": 15.0
   },
   "#CoffeeHolic": {
@@ -212,35 +212,35 @@
     "total_score": 0.0
   },
   "#Drinks": {
-    "uses": 12,
+    "uses": 14,
     "total_score": 15.0
   },
   "#IcedCoffee": {
-    "uses": 12,
+    "uses": 14,
     "total_score": 15.0
   },
   "#IndianFoodie": {
-    "uses": 12,
+    "uses": 14,
     "total_score": 15.0
   },
   "#WhatsInYourCoffee": {
-    "uses": 12,
+    "uses": 14,
     "total_score": 15.0
   },
   "#CoffeeMug": {
-    "uses": 9,
+    "uses": 10,
     "total_score": 3.0
   },
   "#CoffeeScience": {
-    "uses": 9,
+    "uses": 10,
     "total_score": 3.0
   },
   "#ChaiVsCoffee": {
-    "uses": 9,
+    "uses": 10,
     "total_score": 3.0
   },
   "#ConsciousConsumer": {
-    "uses": 9,
+    "uses": 10,
     "total_score": 3.0
   },
   "#CoffeeSesh": {
@@ -292,18 +292,34 @@
     "total_score": 0.0
   },
   "#MorningCoffee": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#HomeBarista": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#SouthIndianCoffee": {
-    "uses": 1,
+    "uses": 2,
     "total_score": 0.0
   },
   "#CoffeeWithoutChicory": {
+    "uses": 2,
+    "total_score": 0.0
+  },
+  "#CoffeeBean": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#CoffeeEducation": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#IndianCafes": {
+    "uses": 1,
+    "total_score": 0.0
+  },
+  "#CoffeeSwitch": {
     "uses": 1,
     "total_score": 0.0
   }
