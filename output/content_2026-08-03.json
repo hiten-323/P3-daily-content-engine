@@ -1,0 +1,169 @@
+{
+  "day_number": 214,
+  "reels": [
+    {
+      "type": "reel",
+      "hook": "You’ve been drinking chicory disguised as coffee.",
+      "body": "Purity Beans delivers 100% pure instant coffee—zero chicory, zero compromise. Just Rs 18 per cup, the same taste as a Rs 180 café brew.",
+      "cta": "Comment “PURE” for a free sample link. Loop this reel to see the label in action. 👉 https://p3online.in",
+      "angle": "EXPOSE",
+      "source": "evergreen_template",
+      "caption": "Purity Beans – 100% coffee, zero chicory. Same great taste for Rs 18/cup vs Rs 180 at cafés. Grab yours at https://p3online.in",
+      "ai_image_hook_prompt": "Vertical 9:16 hyperrealistic cinematic still frame for Instagram Reel hook. Concept: A shaking hand tosses a cloud of brown chicory powder around a calm, pristine Purity Beans jar on a wooden countertop. The jar is centered, with its label clearly visible, reflecting warm amber light. In the foreground, a real Indian young professional (mid‑30s) with natural skin texture looks surprised, pointing at the swirling powder, while the Purity Beans jar remains untouched. Shot with 85mm f/1.8 portrait lens on an iPhone 15, shallow depth of field, subtle natural window light from left, soft shadow on the right, realistic fingerprints on the jar, a few coffee beans scattered, a used spoon nearby. The scene feels lived‑in, with a slight motion blur on the dust particles.",
+      "editorial_score": {
+        "overall": 0.0,
+        "verdict": "REJECT",
+        "feedback": "Brand copy validation failed: ['missing motion/scene plan', 'missing audio plan', 'missing loopable ending']"
+      },
+      "objective": "Consumer Purchase",
+      "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+      "success_metric": "link_clicks",
+      "target": 500
+    },
+    {
+      "type": "reel",
+      "hook": "Purity Beans reveals that 40% of most instant coffees is actually chicory filler.",
+      "body": "Purity Beans is 100% pure instant coffee – zero chicory, zero compromise. Enjoy the cafe‑style taste for just Rs 18 per cup.",
+      "cta": "Comment \"COFFEE\" to get the exact price per jar and tap the link to order now: https://p3online.in. Loop back to see the label reveal again.",
+      "angle": "EXPOSE",
+      "source": "evergreen_template",
+      "caption": "Purity Beans — 100% coffee, zero chicory. Order your pure jar at https://p3online.in",
+      "ai_image_hook_prompt": "Vertical 9:16 hyperrealistic cinematic still frame for Instagram Reel hook. Extreme close‑up of the exact Purity Beans jar label (as in reference image) showing only the word \"Coffee\" in bold. A human hand (visible skin texture, slight oil sheen) slowly pulls away to reveal a blurred competitor label with a long ingredient list. Then the Purity Beans label snaps back into sharp focus. Warm amber light highlights the jar, a single soft window light creates realistic shadows, shallow depth of field (85mm portrait lens equivalent), slight grain, and a faint fingerprint smudge on the glass. The background shows a lived‑in kitchen countertop with a used spoon and a faint water ring for realism.",
+      "editorial_score": {
+        "overall": 0.0,
+        "verdict": "REJECT",
+        "feedback": "Brand copy validation failed: ['missing motion/scene plan', 'missing audio plan', 'missing loopable ending']"
+      },
+      "objective": "Brand Awareness",
+      "primary_cta": "Follow for daily coffee truth",
+      "success_metric": "reach",
+      "target": 50000
+    }
+  ],
+  "carousel": {
+    "type": "carousel",
+    "hook": "You've been drinking chicory your whole life – 3 signs your coffee isn’t pure",
+    "slides": [
+      "Slide 1: Quick bitterness – if the coffee turns bitter within 2 minutes, it likely contains fillers.",
+      "Slide 2: Lingering dark sludge – a cloudy residue at the bottom means non‑coffee additives.",
+      "Slide 3: Over‑dark colour – an unnaturally black brew that darkens instantly hints at chicory.",
+      "Slide 4: Lack of aroma – a flat, burnt scent signals missing real coffee beans.",
+      "Slide 5: Purity Beans passes all 4 tests – 100% coffee, zero chicory, pure taste every time.",
+      "Slide 6: How to verify – compare the label and taste the difference yourself."
+    ],
+    "cta": "Switch to 100% pure coffee. Visit https://p3online.in – Purity Beans",
+    "source": "evergreen_template",
+    "caption": "Pure coffee lives here. Purity Beans delivers 100% coffee, zero chicory. Check the signs, choose the real thing. Shop at https://p3online.in",
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #NoChicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience #MorningCoffee #CoffeeTime #CoffeeDaily",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Brand Awareness",
+    "primary_cta": "Follow for daily coffee truth",
+    "success_metric": "reach",
+    "target": 50000
+  },
+  "instagram_post": {
+    "type": "instagram_post",
+    "hook": "Only ₹18 for a cup that’s 100% coffee – Purity Beans delivers zero chicory.",
+    "body": "That is Purity Beans. The coffee your mornings deserve – pure coffee, no filler, no chicory.",
+    "cta": "Tap the link in bio to order now. Purity Beans – premium instant coffee made in India. Shop here: https://p3online.in",
+    "source": "evergreen_template",
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #NoChicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience #MorningCoffee #CoffeeTime #CoffeeDaily #CoffeeLife #CoffeeLove",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this post before your next grocery run so you never miss pure coffee again.",
+    "editorial_score": {
+      "overall": 0.0,
+      "verdict": "REJECT",
+      "feedback": "Brand copy validation failed: ['Empty content']"
+    },
+    "objective": "Website Traffic",
+    "primary_cta": "Full article at p3online.in",
+    "success_metric": "link_clicks",
+    "target": 300
+  },
+  "linkedin_post": {
+    "type": "linkedin_post",
+    "hook": "Distributors: Purity Beans 100% pure coffee at just Rs 18 per cup – profit potential unlocked!",
+    "body": "India’s premium instant coffee market grew 34% YoY, yet truly pure coffee (zero chicory) remains scarce.\n\nWith Purity Beans you offer a Rs 18‑per‑cup, 100% coffee solution that delivers higher margins than typical commodity brands. Our limited‑edition distributor slots are open for Maharashtra, Gujarat, and Karnataka.\n\nKey advantages:\n- Zero chicory, zero fillers – pure coffee that consumers trust.\n- Competitive pricing drives rapid shelf‑turnover.\n- Dedicated support and marketing assets.\n- Exclusive territory rights for early partners.\n\nJoin a brand that’s redefining instant coffee in India.",
+    "cta": "Comment ‘INTERESTED’ or DM me for the exclusive Purity Beans distributor pack. Let’s get you selling 100% pure coffee at Rs 18 per cup. Details at https://p3online.in",
+    "source": "evergreen_distributor",
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Retailer Lead Gen",
+    "primary_cta": "WhatsApp for bulk / retail pricing",
+    "success_metric": "whatsapp_clicks",
+    "target": 25
+  },
+  "_source": "emergency_fallback_evergreen",
+  "_recycled": true,
+  "_asset_metadata": [
+    {
+      "content_id": "pb_559d942b11",
+      "day": 214,
+      "channel": "instagram",
+      "type": "reel",
+      "topic": "",
+      "hook": "Most people don't know their daily coffee has 40% chicory filler.",
+      "cta": "Try your first cup free. Link in bio.",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "B",
+      "playbook": "Playbook_brand_dd21",
+      "policy_version": "1.0",
+      "publish_time": "2026-08-03T04:19:52",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_c16cd5298c",
+      "day": 214,
+      "channel": "instagram",
+      "type": "carousel",
+      "topic": "",
+      "hook": "3 signs your coffee is not pure",
+      "cta": "Switch to pure. p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "B",
+      "playbook": "Playbook_brand_dd21",
+      "policy_version": "1.0",
+      "publish_time": "2026-08-03T04:19:52",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_10d78e44a7",
+      "day": 214,
+      "channel": "linkedin",
+      "type": "post",
+      "topic": "",
+      "hook": "Distributors: the Rs 18/cup coffee opportunity",
+      "cta": "DM for distributor pack",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "B",
+      "playbook": "Playbook_brand_dd21",
+      "policy_version": "1.0",
+      "publish_time": "2026-08-03T04:19:52",
+      "status": "scheduled"
+    }
+  ]
+}

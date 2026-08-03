@@ -1,10 +1,11 @@
 {
   "ugc_creation_rate": 1.0,
   "review_sentiment": 5.0,
-  "_last_auto_update": "2026-07-27T04:39:30",
+  "_last_auto_update": "2026-08-03T04:23:23",
   "_sources": {
-    "branded_search_index": "missing",
+    "branded_search_index": "auto",
     "ugc_creation_rate": "auto",
     "review_sentiment": "auto"
-  }
+  },
+  "branded_search_index": 0.0
 }
