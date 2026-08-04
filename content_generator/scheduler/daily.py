@@ -197,11 +197,67 @@ def run_full_pipeline(day_number: int = None) -> dict:
     return content
 
 
+def _record_quality_telemetry(content: dict, pub: dict, elapsed: float,
+                              failed: list, emergency: bool) -> None:
+    """Per-run quality metrics (scores, failure rates, latencies) for trending."""
+    from content_generator.analytics.telemetry import record_quality
+
+    pieces = [p for p in (content.get("reels") or []) if isinstance(p, dict) and p]
+    for key in ("carousel", "instagram_post", "linkedin_post", "blog_post",
+                "yt_short", "stories", "growth_reel"):
+        p = content.get(key)
+        if isinstance(p, dict) and p:
+            pieces.append(p)
+
+    scores, confs = [], []
+    for p in pieces:
+        sc = (p.get("editorial_score") or {}).get("overall")
+        if sc is not None:
+            scores.append(sc)
+        conf = (p.get("audio") or {}).get("confidence")
+        if conf is not None:
+            confs.append(conf)
+
+    valid, rejects = 0, 0
+    try:
+        from content_generator.core.editorial_engine import get_valid_assets, get_current_pass_score
+        valid = len(get_valid_assets(content))
+        threshold = get_current_pass_score()
+        rejects = sum(1 for s in scores if float(s) < threshold)
+    except Exception as e:
+        logger.debug("[telemetry] valid-asset count unavailable: %s", e)
+
+    providers = {}
+    try:
+        from content_generator.providers.llm_router import get_usage_log
+        providers = get_usage_log() or {}
+    except Exception as e:
+        logger.debug("[telemetry] provider usage unavailable: %s", e)
+
+    publish_ms = sum(int(r.get("duration_ms", 0)) for r in (pub or {}).values()
+                     if isinstance(r, dict))
+
+    record_quality(
+        day_number=content.get("day_number"),
+        generation_ms=max(0, int(elapsed * 1000) - publish_ms),
+        publish_ms=publish_ms,
+        editorial_scores=scores, confidences=confs,
+        assets_generated=len(pieces), assets_valid=valid,
+        editorial_rejections=rejects, retries=len(failed or []),
+        providers_used=providers, emergency=emergency,
+    )
+
+
 def _log_daily_summary(content: dict, publish_result: dict, elapsed: float, failed: list) -> None:
     """One compact block summarizing the run: providers, publishing, learning."""
     pub = publish_result or {}
     summary = pub.get("summary", "n/a")
     emergency = bool(content.get("_emergency")) or content.get("day_number") == 0 and "emergency" in str(content).lower()
+
+    try:
+        _record_quality_telemetry(content, pub, elapsed, failed, emergency)
+    except Exception as e:
+        logger.debug("[telemetry] quality record skipped: %s", e)
 
     # Provider usage from the usage log if present
     prov = ""
@@ -227,8 +283,13 @@ def _log_daily_summary(content: dict, publish_result: dict, elapsed: float, fail
         from content_generator.core.learning_engine import analyze
         n = analyze().get("count", 0)
         lines.append(f"Learning: {n} posts with performance data so far")
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug("[summary] learning count unavailable: %s", e)
+    try:
+        from content_generator.analytics.telemetry import format_report
+        lines.append(format_report(7))
+    except Exception as e:
+        logger.debug("[summary] ops report unavailable: %s", e)
     lines.append("================================================")
     logger.info("\n".join(lines))
 

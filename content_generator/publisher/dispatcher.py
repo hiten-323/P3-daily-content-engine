@@ -52,14 +52,39 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
     """
     results: dict = {}
 
+    # content_id / generation_id for end-to-end traceability of every attempt
+    _meta = (content.get("_asset_metadata") or [{}])[0] if isinstance(content, dict) else {}
+    _content_id = str(_meta.get("content_id", ""))
+    _generation_id = str(content.get("generation_id", "") if isinstance(content, dict) else "")
+
+    def _attempt(platform: str, fn) -> dict:
+        """Run one publisher, timing it and recording structured diagnostics."""
+        import time as _t
+        start = _t.perf_counter()
+        exc = None
+        try:
+            res = fn() or {}
+        except Exception as e:          # recoverable: one platform must not kill the rest
+            logger.error("[publisher] %s exception: %s", platform, e, exc_info=True)
+            res, exc = {"success": False, "error": str(e)}, e
+        duration_ms = int((_t.perf_counter() - start) * 1000)
+        try:
+            from content_generator.analytics.telemetry import record_publish
+            record_publish(
+                platform=platform, result=res, duration_ms=duration_ms,
+                content_id=_content_id, generation_id=_generation_id,
+                day_number=day_number, http_status=res.get("http_status"),
+                retry_count=res.get("retry_count", 0), exception=exc,
+            )
+        except Exception as e:
+            logger.debug("[publisher] telemetry skipped for %s: %s", platform, e)
+        res["duration_ms"] = duration_ms
+        return res
+
     # ── LinkedIn ──────────────────────────────────────────────────────────────
-    try:
-        from content_generator.publisher.linkedin import post_content as li_post
-        logger.info("[publisher] Posting to LinkedIn...")
-        results["linkedin"] = li_post(content, day=day_number)
-    except Exception as e:
-        logger.error("[publisher] LinkedIn exception: %s", e)
-        results["linkedin"] = {"success": False, "error": str(e)}
+    from content_generator.publisher.linkedin import post_content as li_post
+    logger.info("[publisher] Posting to LinkedIn...")
+    results["linkedin"] = _attempt("linkedin", lambda: li_post(content, day=day_number))
 
     # ── Instagram ─────────────────────────────────────────────────────────────
     # With timed slots enabled, Instagram is held for its algorithm-optimal
@@ -70,44 +95,28 @@ def publish_all(content: dict, day_number: int = 0) -> dict:
         logger.info("[publisher] Instagram held for timed slots (morning/evening runs)")
         results["instagram"] = {"success": False, "error": "held_for_timed_slot", "held": True}
     else:
-        try:
-            from content_generator.publisher.instagram import post_content as ig_post
-            logger.info("[publisher] Posting to Instagram...")
-            results["instagram"] = ig_post(content, day=day_number)
-        except Exception as e:
-            logger.error("[publisher] Instagram exception: %s", e)
-            results["instagram"] = {"success": False, "error": str(e)}
+        from content_generator.publisher.instagram import post_content as ig_post
+        logger.info("[publisher] Posting to Instagram...")
+        results["instagram"] = _attempt("instagram", lambda: ig_post(content, day=day_number))
 
     # ── Facebook (mirrors Instagram timing when slots are enabled) ───────────
     if _os.getenv("ENABLE_TIMED_SLOTS", "false").lower() == "true":
         logger.info("[publisher] Facebook held for timed slots (mirrors Instagram)")
         results["facebook"] = {"success": False, "error": "held_for_timed_slot", "held": True}
     else:
-        try:
-            from content_generator.publisher.facebook import post_content as fb_post
-            logger.info("[publisher] Posting to Facebook...")
-            results["facebook"] = fb_post(content, day=day_number)
-        except Exception as e:
-            logger.error("[publisher] Facebook exception: %s", e)
-            results["facebook"] = {"success": False, "error": str(e)}
+        from content_generator.publisher.facebook import post_content as fb_post
+        logger.info("[publisher] Posting to Facebook...")
+        results["facebook"] = _attempt("facebook", lambda: fb_post(content, day=day_number))
 
     # ── YouTube ───────────────────────────────────────────────────────────────
-    try:
-        from content_generator.publisher.youtube import post_content as yt_post
-        logger.info("[publisher] Posting to YouTube...")
-        results["youtube"] = yt_post(content, day=day_number)
-    except Exception as e:
-        logger.error("[publisher] YouTube exception: %s", e)
-        results["youtube"] = {"success": False, "error": str(e)}
+    from content_generator.publisher.youtube import post_content as yt_post
+    logger.info("[publisher] Posting to YouTube...")
+    results["youtube"] = _attempt("youtube", lambda: yt_post(content, day=day_number))
 
     # ── Blog (Shopify article — SEO / organic search) ──────────────────────────
-    try:
-        from content_generator.publisher.shopify_blog import post_content as blog_post
-        logger.info("[publisher] Posting blog to Shopify...")
-        results["blog"] = blog_post(content, day=day_number)
-    except Exception as e:
-        logger.error("[publisher] Blog exception: %s", e)
-        results["blog"] = {"success": False, "error": str(e)}
+    from content_generator.publisher.shopify_blog import post_content as blog_post
+    logger.info("[publisher] Posting blog to Shopify...")
+    results["blog"] = _attempt("blog", lambda: blog_post(content, day=day_number))
 
     # ── Summary ───────────────────────────────────────────────────────────────
     # Held (timed slots) and skipped (not configured / no content) are NOT
