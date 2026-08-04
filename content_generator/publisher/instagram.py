@@ -371,15 +371,30 @@ def post_story(content: dict, day: int = 0) -> dict:
                    or "REAL COFFEE. ZERO CHICORY.")
     sub      = str(s1.get("subtext") or "")
 
+    # Story-native engagement line (stories convert on replies, not likes)
+    if not sub:
+        sub = str(s1.get("poll_question") or "Reply and tell me how you take your coffee")
+
     image_path = None
     try:
-        from content_generator.creative.real_jar_composer import compose_post_image
-        image_path = compose_post_image(
-            headline=headline, body=sub, day=day, idx=9,
+        # Cinematic frame: white background knocked out + full-bleed 9:16 gradient.
+        # (The 1:1 post composer left a white box and dead space in stories.)
+        from content_generator.creative.cinematic_frame import compose_cinematic_frame
+        image_path = compose_cinematic_frame(
+            headline=headline, sub=sub, day=day, idx=9,
             width=1080, height=1920, label=f"story_day{day}",
         )
     except Exception as e:
-        logger.warning("[instagram] story image compose failed: %s", e)
+        logger.warning("[instagram] cinematic story compose failed: %s", e)
+    if not image_path:
+        try:
+            from content_generator.creative.real_jar_composer import compose_post_image
+            image_path = compose_post_image(
+                headline=headline, body=sub, day=day, idx=9,
+                width=1080, height=1920, label=f"story_day{day}",
+            )
+        except Exception as e:
+            logger.warning("[instagram] story image compose failed: %s", e)
     if not image_path:
         return {"success": False, "media_id": "", "error": "no_story_image"}
 

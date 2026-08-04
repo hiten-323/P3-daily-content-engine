@@ -13,21 +13,37 @@ logger = logging.getLogger(__name__)
 
 import datetime
 
-PASS_SCORE = 7.5
-
 class EditorialRejectException(Exception):
     """Raised when an asset fails the editorial threshold."""
     pass
 
+
 def get_current_pass_score() -> float:
-    """Dynamic threshold: 7.5 rollout, raises to 8.0 from July 1st, 2026."""
+    """
+    THE single source of truth for the editorial threshold.
+
+    Order of precedence:
+      1. founder policy  quality.minimum_score   (founder-editable, wins)
+      2. BRAND.minimum_editorial_score           (brand constitution default)
+
+    Never hardcode a threshold anywhere else — import this function.
+    """
     try:
-        today = datetime.date.today()
-        if today >= datetime.date(2026, 7, 1):
-            return 8.0
-    except Exception:
-        pass
-    return 7.5
+        from content_generator.core.founder_policy import policy
+        val = policy().get("minimum_score")
+        if val is not None:
+            return float(val)
+    except Exception as e:
+        logger.debug("[editorial] policy threshold unavailable (%s) — using brand default", e)
+    return float(BRAND.minimum_editorial_score)
+
+
+# Backwards-compatible alias for any caller still importing the constant.
+# Reads the live value rather than freezing a stale number at import time.
+def __getattr__(name):
+    if name == "PASS_SCORE":
+        return get_current_pass_score()
+    raise AttributeError(name)
 
 def normalize_editorial_result(result: dict) -> dict:
     """

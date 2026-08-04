@@ -31,6 +31,14 @@ def _knockout_white(img):
             ImageDraw.floodfill(img, seed, (0, 0, 0, 0), thresh=40)
         except Exception:
             pass
+    # Crop away the now-transparent margin so the jar actually FILLS the space
+    # it's given (otherwise baked-in padding makes the hero look small/floating).
+    try:
+        bbox = img.getbbox()
+        if bbox:
+            img = img.crop(bbox)
+    except Exception:
+        pass
     return img
 
 
@@ -111,9 +119,20 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
         from PIL import Image, ImageDraw
     except ImportError:
         return None
-    from content_generator.creative.real_jar_composer import pick_jar_photo
+    from content_generator.creative.real_jar_composer import pick_jar_photo, _all_jar_photos
 
-    jar_path = pick_jar_photo(day, idx, product)
+    # Prefer a FRONT-facing jar — side/variant shots show the barcode and
+    # ingredient panel, which reads as a warehouse photo, not a hero shot.
+    jar_path = None
+    try:
+        fronts = [p for p in _all_jar_photos() if "_front" in os.path.basename(p).lower()
+                  and (not product or f"_{product}_" in p)]
+        if fronts:
+            jar_path = fronts[(day * 3 + idx) % len(fronts)]
+    except Exception:
+        jar_path = None
+    if not jar_path:
+        jar_path = pick_jar_photo(day, idx, product)
     if not jar_path:
         return None
 
@@ -125,14 +144,19 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
     # Jar — knocked out, large, lower-centre
     try:
         jar = _knockout_white(Image.open(jar_path))
-        target_h = int(height * 0.46)
+        # Fill the frame: tall 9:16 stories/reels need a much larger hero so the
+        # middle isn't dead space (a small jar at the bottom reads as unfinished).
+        is_tall = height > width * 1.4
+        target_h = int(height * (0.58 if is_tall else 0.46))
         ratio = target_h / jar.height
         jar = jar.resize((int(jar.width * ratio), target_h))
         if jar.width > int(width * 0.82):
             r = int(width * 0.82) / jar.width
             jar = jar.resize((int(jar.width * r), int(jar.height * r)))
         jx = (width - jar.width) // 2
-        jy = int(height * 0.50)
+        # Sit the hero just below the copy block, ending above Instagram's
+        # bottom UI (~10% is covered by the reply bar).
+        jy = int(height * (0.36 if is_tall else 0.50))
         canvas.paste(jar, (jx, jy), jar)   # alpha mask = jar itself
     except Exception as e:
         logger.warning("[cine] jar paste failed: %s", e)
@@ -159,8 +183,8 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
     # Minimal brand mark — placed in the SAFE ZONE (upper-middle), NOT at the
     # bottom where Instagram's caption/buttons/audio UI covers it (v7: safe zone).
     ff = _font(max(24, width // 40), bold=True)
-    draw.text((width // 2, int(height * 0.43)),
-              "PURITY BEANS   ·   p3online.in", font=ff, fill=_GOLD, anchor="mm")
+    draw.text((width // 2, int(height * (0.31 if height > width * 1.4 else 0.43))),
+              "PURITY BEANS  |  p3online.in", font=ff, fill=_GOLD, anchor="mm")
 
     import datetime
     os.makedirs(_OUT_DIR, exist_ok=True)
