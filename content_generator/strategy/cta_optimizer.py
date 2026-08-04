@@ -90,8 +90,8 @@ def _get_data_driven_cta(objective: str, audience: str) -> str:
         if relevant:
             # Already sorted by conv_rate DESC in get_cta_performance
             return relevant[0]["cta_text"]
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[cta_optimizer] optional step failed: %s", _e)
     return ""
 
 

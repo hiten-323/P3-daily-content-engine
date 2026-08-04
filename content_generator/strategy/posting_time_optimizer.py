@@ -60,8 +60,8 @@ def get_best_posting_time(
         live = get_best_posting_hours(platform=platform, days=90)
         if live and len(live) >= 3:
             return live[:top_n]
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[posting_time_optimizer] optional step failed: %s", _e)
 
     defaults = _DEFAULT_WINDOWS.get(platform, _DEFAULT_WINDOWS["instagram"])
     return defaults[:top_n]

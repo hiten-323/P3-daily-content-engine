@@ -196,8 +196,8 @@ def _next_counter() -> int:
                     with open(_COUNTER_PATH, "w") as fw:
                         fw.write(f"{today},{n}")
                     return n
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[lead_capture] optional step failed: %s", _e)
     with open(_COUNTER_PATH, "w") as f:
         f.write(f"{today},1")
     return 1

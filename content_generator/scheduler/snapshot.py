@@ -93,8 +93,8 @@ def load_snapshot(date_str: str = None) -> dict:
             try:
                 with open(path, encoding="utf-8") as f:
                     result[fname.replace(".json", "")] = json.load(f)
-            except Exception:
-                pass
+            except Exception as _e:
+                logger.debug("[snapshot] optional step failed: %s", _e)
     return result
 
 

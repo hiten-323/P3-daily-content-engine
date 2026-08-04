@@ -92,8 +92,8 @@ def generate_yt_thumbnail(
             path = generate_image(prompt, width=1280, height=720, label=f"yt_thumb_day{day}")
             if path:
                 return {"file_path": path, "mode": "flux", "prompt": prompt, "spec": "1280x720"}
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[thumbnail_generator] optional step failed: %s", _e)
 
     return {"file_path": None, "mode": "prompt_only", "prompt": prompt, "spec": "1280x720"}
 

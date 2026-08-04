@@ -251,8 +251,8 @@ def get_recent_runs(limit: int = 20) -> list[dict]:
             with open(_RUN_LOG_PATH) as f:
                 log = json.load(f)
             return log[-limit:]
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[watchdog] optional step failed: %s", _e)
     return []
 
 

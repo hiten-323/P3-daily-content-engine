@@ -196,8 +196,8 @@ def _get_top_trend() -> str:
         if trends:
             t = trends[0]
             return t.get("trend") or t.get("keyword", "")
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[founder_report] optional step failed: %s", _e)
     return ""
 
 
@@ -209,8 +209,8 @@ def _get_top_hook() -> str:
             h = table[0]
             score = h.get("avg_viral_score", 0)
             return f"{h.get('hook','')} (avg viral {score:.0f})"
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[founder_report] optional step failed: %s", _e)
     return ""
 
 

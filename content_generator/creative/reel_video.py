@@ -85,8 +85,8 @@ def build_reel_video(reel: dict, day: int, label: str = "reel_video") -> str | N
             # Gentle Ken Burns zoom (defensive — fall back to static on API diff)
             try:
                 clip = clip.resized(lambda t: 1.0 + 0.05 * (t / _BEAT_SECONDS))
-            except Exception:
-                pass
+            except Exception as _e:
+                logger.debug("[reel_video] optional step failed: %s", _e)
             clips.append(clip)
         except Exception as e:
             logger.debug("[reel_video] clip build failed: %s", e)
@@ -131,5 +131,5 @@ def build_reel_video(reel: dict, day: int, label: str = "reel_video") -> str | N
     finally:
         try:
             video.close()
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[reel_video] optional step failed: %s", _e)

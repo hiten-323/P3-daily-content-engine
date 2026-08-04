@@ -119,8 +119,8 @@ def _creator_dna_line() -> str:
     try:
         from content_generator.core.founder_policy import policy
         dna = policy().domain("brand").get("creator_dna", dna)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[growth_director] optional step failed: %s", _e)
     return f"CREATOR DNA (our identity — stay in character): {dna}"
 
 
@@ -133,8 +133,8 @@ def _consistency_block() -> str:
         p = policy()
         avatar = p.domain("content").get("core_avatar", avatar)
         lane   = p.domain("content").get("core_topic_lane", lane)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[growth_director] optional step failed: %s", _e)
     return (
         "AUDIENCE MATCHING (highest-leverage algo lever — stay consistent):\n"
         f"- CORE AVATAR (every post is for exactly this person): {avatar}\n"
@@ -188,8 +188,8 @@ def get_strategy_brief(day: int) -> str:
     try:
         from content_generator.core.founder_policy import policy
         policy_line = policy().strategy_bias() + "\n\n"
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[growth_director] optional step failed: %s", _e)
 
     return f"""{policy_line}GROWTH DIRECTOR — TODAY'S STRATEGY (this overrides generic instincts):
 

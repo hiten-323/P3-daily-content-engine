@@ -95,8 +95,8 @@ def build_recommendation(day: int) -> dict:
             f"Stage {stage['name']} ({stage['viral_pct']}% viral); "
             f"today's reel objective is {objs['brand_reel'][0]}"
         )
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[decision_layer] optional step failed: %s", _e)
 
     # Expected EVPOI from the 7-day trend (honest: 0 until revenue data exists)
     expected_evpoi = 0.0
@@ -104,16 +104,16 @@ def build_recommendation(day: int) -> dict:
         from content_generator.analytics.founder_brief import compute_evpoi
         ev = compute_evpoi()
         expected_evpoi = ev.get("evpoi_per_1k", 0.0)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[decision_layer] optional step failed: %s", _e)
 
     # Confidence scales with how much performance history we have
     samples = 0
     try:
         from content_generator.core.learning_engine import analyze
         samples = analyze().get("count", 0)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[decision_layer] optional step failed: %s", _e)
     confidence = round(min(0.9, 0.3 + samples * 0.03), 2)   # 0.30 cold -> 0.90 at 20+
 
     # Reason enriched by Content DNA + viral memory
@@ -160,8 +160,8 @@ def plan_today(day: int) -> dict:
         override = p.get("active_campaign_override", "")
         if override:
             campaign = override   # founder override wins
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[decision_layer] optional step failed: %s", _e)
     return {
         "recommendation": build_recommendation(day),
         "experiment":     current_experiment(day),

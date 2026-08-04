@@ -101,8 +101,8 @@ def _top_cta() -> dict:
         ctas = get_cta_performance(min_clicks=3)
         if ctas:
             return {"cta": ctas[0]["cta_text"], "conv_rate": ctas[0].get("conv_rate", 0)}
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[weekly_summary] optional step failed: %s", _e)
     return {"cta": "No data yet", "conv_rate": 0}
 
 

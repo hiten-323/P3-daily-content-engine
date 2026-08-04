@@ -37,8 +37,8 @@ def _load() -> list[dict]:
         try:
             with open(_MEMORY_PATH, encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[semantic] optional step failed: %s", _e)
     return []
 
 

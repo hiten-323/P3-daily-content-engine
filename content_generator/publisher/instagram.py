@@ -323,8 +323,8 @@ def post_reel_video(video_url: str, caption: str) -> dict:
             tags = build_reel_product_tags(caption)
             if tags:
                 params["product_tags"] = tags
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[instagram] optional step failed: %s", _e)
         resp = requests.post(f"{_GRAPH_API}/{acct_id}/media", params=params, timeout=60)
         container_id = resp.json().get("id", "")
         if not container_id:

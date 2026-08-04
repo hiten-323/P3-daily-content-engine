@@ -74,8 +74,8 @@ class RunLock:
                 # Unreadable lock file — treat as stale
                 try:
                     os.remove(self._path)
-                except Exception:
-                    pass
+                except Exception as _e:
+                    logger.debug("[run_lock] optional step failed: %s", _e)
 
         # Write the lock
         try:

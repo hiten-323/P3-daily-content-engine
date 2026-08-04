@@ -266,8 +266,8 @@ def _log_daily_summary(content: dict, publish_result: dict, elapsed: float, fail
         used = get_usage_log() or {}
         if used:
             prov = ", ".join(f"{k}:{v}" for k, v in list(used.items())[:6])
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[daily] optional step failed: %s", _e)
 
     lines = [
         "================= DAILY SUMMARY =================",
@@ -812,8 +812,8 @@ def _do_publish(content: dict, day_number: int) -> dict:
                            "content generated and saved but NOT posted")
             return {"skipped": True, "reason": "auto_publish_disabled",
                     "published_platforms": [], "summary": "Dry run (auto_publish off)"}
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[daily] optional step failed: %s", _e)
 
     # 1. Get validated assets
     valid_assets = get_valid_assets(content)

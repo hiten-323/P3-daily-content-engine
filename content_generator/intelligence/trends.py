@@ -110,8 +110,8 @@ def get_todays_trends(force_refresh: bool = False) -> list[dict]:
             if cached:
                 logger.debug("[trends] %d cached trends", len(cached))
                 return cached
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[trends] optional step failed: %s", _e)
 
     # Live fetch
     trends: list[dict] = []

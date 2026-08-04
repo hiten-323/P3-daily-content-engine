@@ -116,8 +116,8 @@ def run_publish_slot(slot: str) -> dict:
             logger.warning("[slots] auto_publish=false — %s slot generates nothing "
                            "and posts nothing (dry run)", slot)
             return {"_skipped": True, "slot": slot, "reason": "auto_publish_disabled"}
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[slots] optional step failed: %s", _e)
 
     lock = RunLock(lock_path=os.path.join("output", f".running_{slot}"))
     lock.__enter__()

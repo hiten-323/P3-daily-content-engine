@@ -33,8 +33,8 @@ def get_audience_for_content(content_type: str, day: int) -> str:
         allocation = mix.get("allocation", {})
         if allocation:
             return _pick_audience_from_allocation(content_type, day, allocation)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[audience_optimizer] optional step failed: %s", _e)
 
     # Fallback: static content-type → audience mapping
     return _static_audience(content_type, day)

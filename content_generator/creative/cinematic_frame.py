@@ -29,16 +29,16 @@ def _knockout_white(img):
     for seed in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
         try:
             ImageDraw.floodfill(img, seed, (0, 0, 0, 0), thresh=40)
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[cinematic_frame] optional step failed: %s", _e)
     # Crop away the now-transparent margin so the jar actually FILLS the space
     # it's given (otherwise baked-in padding makes the hero look small/floating).
     try:
         bbox = img.getbbox()
         if bbox:
             img = img.crop(bbox)
-    except Exception:
-        pass
+    except Exception as _e:
+        logger.debug("[cinematic_frame] optional step failed: %s", _e)
     return img
 
 

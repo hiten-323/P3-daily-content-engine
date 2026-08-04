@@ -40,8 +40,8 @@ def compute_evpoi(days: int = 7) -> dict:
                     e.get("ig_revenue", 0) for e in json.load(f)
                     if e.get("date", "") >= cutoff
                 )
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[founder_brief] optional step failed: %s", _e)
 
     impressions = 0
     perf_path = os.path.join(_LEARNING_DIR, "performance_log.json")
@@ -52,8 +52,8 @@ def compute_evpoi(days: int = 7) -> dict:
                     if str(e.get("posted_at", ""))[:10] >= cutoff:
                         m = e.get("metrics", {})
                         impressions += m.get("views", 0) or m.get("reach", 0)
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[founder_brief] optional step failed: %s", _e)
 
     evpoi = (ig_revenue / impressions * 1000) if impressions else 0.0
     return {"ig_revenue": round(ig_revenue, 2), "impressions": impressions,
@@ -82,16 +82,16 @@ def compute_brand_equity(days: int = 30) -> dict:
             if orders:
                 # 25% repeat rate = 10/10 (SCALE-stage target in SUCCESS_METRICS)
                 repeat_score = min(10.0, (returning / orders) / 0.25 * 10)
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[founder_brief] optional step failed: %s", _e)
 
     manual = {}
     if os.path.exists(_EQUITY_INPUTS):
         try:
             with open(_EQUITY_INPUTS, "r", encoding="utf-8") as f:
                 manual = json.load(f)
-        except Exception:
-            pass
+        except Exception as _e:
+            logger.debug("[founder_brief] optional step failed: %s", _e)
 
     components = {
         "repeat_purchase_rate": round(repeat_score, 1),
