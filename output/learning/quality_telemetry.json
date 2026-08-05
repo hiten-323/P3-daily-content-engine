@@ -1,0 +1,102 @@
+[
+  {
+    "ts": "2026-08-05T03:58:16",
+    "date": "2026-08-05",
+    "day_number": 216,
+    "generation_ms": 588391,
+    "validation_ms": 0,
+    "publish_ms": 3409,
+    "assets_generated": 3,
+    "assets_valid": 1,
+    "throughput": 3,
+    "avg_editorial_score": 4.67,
+    "min_editorial_score": 0.0,
+    "max_editorial_score": 7.0,
+    "avg_confidence": null,
+    "schema_failure_rate": 0.0,
+    "brand_failure_rate": 0.0,
+    "editorial_reject_rate": 0.333,
+    "retry_count": 1,
+    "providers_used": [
+      {
+        "label": "carousel",
+        "provider": "groq",
+        "prompt_tokens": 8289,
+        "completion_tokens": 731
+      },
+      {
+        "label": "reel_1",
+        "provider": "groq",
+        "prompt_tokens": 8837,
+        "completion_tokens": 1173
+      },
+      {
+        "label": "linkedin_post",
+        "provider": "cerebras",
+        "prompt_tokens": 7825,
+        "completion_tokens": 1200
+      },
+      {
+        "label": "growth_reel",
+        "provider": "cerebras",
+        "prompt_tokens": 8297,
+        "completion_tokens": 2500
+      },
+      {
+        "label": "blog_post",
+        "provider": "cerebras",
+        "prompt_tokens": 7563,
+        "completion_tokens": 2388
+      },
+      {
+        "label": "carousel",
+        "provider": "cerebras",
+        "prompt_tokens": 8244,
+        "completion_tokens": 1875
+      },
+      {
+        "label": "reel_1",
+        "provider": "cerebras",
+        "prompt_tokens": 8789,
+        "completion_tokens": 1800
+      },
+      {
+        "label": "linkedin_post",
+        "provider": "cerebras",
+        "prompt_tokens": 7825,
+        "completion_tokens": 1200
+      },
+      {
+        "label": "reel_2",
+        "provider": "cerebras",
+        "prompt_tokens": 8786,
+        "completion_tokens": 1800
+      },
+      {
+        "label": "yt_short",
+        "provider": "cerebras",
+        "prompt_tokens": 8116,
+        "completion_tokens": 1500
+      },
+      {
+        "label": "carousel",
+        "provider": "cerebras",
+        "prompt_tokens": 8244,
+        "completion_tokens": 1997
+      },
+      {
+        "label": "linkedin_post",
+        "provider": "cerebras",
+        "prompt_tokens": 7825,
+        "completion_tokens": 1200
+      },
+      {
+        "label": "reel_2",
+        "provider": "cerebras",
+        "prompt_tokens": 8786,
+        "completion_tokens": 1800
+      }
+    ],
+    "emergency": false
+  }
+]
