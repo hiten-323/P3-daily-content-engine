@@ -344,17 +344,36 @@ def _inject_brand_into_piece(label: str, piece: dict) -> dict:
     # CTA field is mandatory on brand-track assets — create it if the LLM skipped it
     if label in ("reel_1", "reel_2", "carousel", "instagram_post") and not str(piece.get("cta", "")).strip():
         piece["cta"] = f"{_brand_tagline(str(piece))} Shop Purity Beans: https://p3online.in"
+
+    # Carousel: the schema requires the FINAL SLIDE to carry brand + website.
+    # Injection previously only touched caption/cta, so any carousel whose last
+    # slide omitted the link was rejected outright (a silent daily loss).
+    if label == "carousel":
+        slides = piece.get("slides")
+        if isinstance(slides, list) and slides and isinstance(slides[-1], dict):
+            last = slides[-1]
+            body = str(last.get("body") or "")
+            low  = body.lower()
+            if "purity beans" not in low:
+                body = (body.rstrip() + " Purity Beans.").strip()
+            if "p3online.in" not in body.lower():
+                body = (body.rstrip() + " Shop: https://p3online.in").strip()
+            last["body"] = body
     return piece
 
 
 # Rotating brand taglines — not every one mentions chicory (one-note fix).
+# Every tagline MUST contain a required brand fact (see BRAND_FACT_ALIASES) —
+# the tagline is the safety net when the LLM caption omits one, and a tagline
+# without a fact fails brand validation and gets the whole asset rejected.
+# Framing still varies, and only 2 of 6 mention chicory (no daily sermon).
 _BRAND_TAGLINES = (
     "Try Purity Beans — 100% pure coffee.",
-    "Purity Beans — real coffee, nothing added.",
-    "Purity Beans — premium instant coffee, made in India.",
+    "Purity Beans — pure coffee, nothing added.",
+    "Purity Beans — premium instant coffee with no fillers.",
     "Try Purity Beans — zero chicory, 100% coffee.",
-    "Purity Beans — coffee the way it should be.",
-    "Purity Beans — read the label, taste the difference.",
+    "Purity Beans — pure coffee, the way it should be.",
+    "Purity Beans — read the label: no chicory, no fillers.",
 )
 
 def _brand_tagline(seed_text: str) -> str:
@@ -395,15 +414,24 @@ _DEFAULT_SHARE   = "Share with someone who starts every morning with coffee."
 
 
 def _ensure_engagement_fields(piece: dict) -> None:
-    """Auto-fill mandatory engagement fields if missing."""
-    if not piece.get("hashtags"):
-        piece["hashtags"] = _DEFAULT_HASHTAGS
-    if not piece.get("comment_trigger"):
-        piece["comment_trigger"] = _DEFAULT_COMMENT
-    if not piece.get("save_trigger"):
-        piece["save_trigger"] = _DEFAULT_SAVE
-    if not piece.get("share_trigger"):
-        piece["share_trigger"] = _DEFAULT_SHARE
+    """
+    Auto-fill mandatory engagement fields.
+
+    Fields must not just EXIST — the schema enforces min_length=10, so a short
+    LLM answer like "Share it" (8 chars) fails validation and sinks the whole
+    asset. Anything present-but-too-short is replaced with the default.
+    """
+    for field, default, min_len in (
+        ("hashtags",        _DEFAULT_HASHTAGS, 10),
+        ("comment_trigger", _DEFAULT_COMMENT,  10),
+        ("save_trigger",    _DEFAULT_SAVE,     10),
+        ("share_trigger",   _DEFAULT_SHARE,    10),
+    ):
+        val = piece.get(field)
+        if not isinstance(val, str) or len(val.strip()) < min_len:
+            if val:
+                logger.debug("[brand] %s too short (%r) — using default", field, val)
+            piece[field] = default
 
 
 def _ensure_captions(content: dict) -> None:
