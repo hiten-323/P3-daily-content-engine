@@ -20,7 +20,10 @@ import re
 
 logger = logging.getLogger(__name__)
 
-PUBLISHER_VERSION = "2.3.0"      # bump when publisher behavior changes
+try:                                  # single source of truth for versions
+    from content_generator.core.versions import PUBLISHER_VERSION
+except Exception:                     # pragma: no cover - fallback if import order shifts
+    PUBLISHER_VERSION = "2.3.0"
 
 _LEARNING_DIR = lambda: os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
 _PUB_LOG      = lambda: os.path.join(_LEARNING_DIR(), "publish_diagnostics.json")

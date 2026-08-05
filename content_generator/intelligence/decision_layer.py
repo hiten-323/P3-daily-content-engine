@@ -174,6 +174,16 @@ def plan_today(day: int) -> dict:
 
 # ── Phase 1: per-asset metadata (first Company Memory record) ─────────────────
 
+def _versions() -> dict:
+    """Version stamps so any asset can be traced to the code that made it."""
+    try:
+        from content_generator.core.versions import all_versions
+        return all_versions()
+    except Exception as _e:
+        logger.debug("[decision_layer] version stamps unavailable: %s", _e)
+        return {}
+
+
 def _content_id(day: int, channel: str, ctype: str) -> str:
     raw = f"{datetime.date.today().isoformat()}|{day}|{channel}|{ctype}"
     return "pb_" + hashlib.md5(raw.encode()).hexdigest()[:10]
@@ -213,6 +223,8 @@ def attach_asset_metadata(content: dict, day: int) -> list[dict]:
             "variant":      plan["experiment"]["variant"],
             "playbook":     plan["playbook"],
             "policy_version": plan.get("policy_version", "1.0"),
+            "generation_id": str(content.get("generation_id", "")),
+            **_versions(),
             "publish_time": now,
             "status":       "scheduled",
         })

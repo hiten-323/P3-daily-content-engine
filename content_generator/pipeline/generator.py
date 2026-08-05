@@ -263,9 +263,18 @@ def generate_daily_content(
     )
 
     # ── Merge ─────────────────────────────────────────────────────────────────
+    # Version + run identity stamped on every generated set, so any published
+    # asset can be traced back to the exact run and code that produced it
+    # (and so telemetry's generation_id is populated rather than empty).
+    import uuid as _uuid
+    from content_generator.core.versions import PROMPT_VERSION, SCHEMA_VERSION
+
     output = {
         "date":           todays_date,
         "day_number":     day_number,
+        "generation_id":  f"gen_{datetime.date.today().isoformat()}_{_uuid.uuid4().hex[:8]}",
+        "prompt_version": PROMPT_VERSION,
+        "schema_version": SCHEMA_VERSION,
         "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
         "instagram_post": phase1_results["instagram_post"],
         "carousel":       phase1_results["carousel"],
