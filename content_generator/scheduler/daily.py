@@ -293,6 +293,16 @@ def _log_daily_summary(content: dict, publish_result: dict, elapsed: float, fail
     lines.append("================================================")
     logger.info("\n".join(lines))
 
+    # Engine self-audit — assurance layer that makes regressions visible
+    # immediately after any future change.
+    try:
+        from content_generator.analytics.self_audit import run_self_audit
+        run_self_audit(content, pub)
+    except Exception as e:
+        logger.debug("[summary] self-audit unavailable: %s", e)
+    return
+    logger.info("\n".join(lines))
+
 
 # ── Step implementations ──────────────────────────────────────────────────────
 

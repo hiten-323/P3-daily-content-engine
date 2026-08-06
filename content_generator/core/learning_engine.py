@@ -85,22 +85,42 @@ def record_performance(
     return entry
 
 
+# How fast old results stop mattering. A 30-day half-life means last week's
+# data dominates while a 6-month-old winner fades instead of ranking forever.
+_HALF_LIFE_DAYS = 30.0
+
+
 def _engagement_score(m: dict) -> float:
     """
-    Weighted score. Revenue outranks everything — a post that sells beats a
-    post that only entertains. Then follows and shares (they compound).
+    Reward for one post. Delegates to core/reward.py — THE single definition
+    of success, which switches weights with the founder's target KPI while
+    keeping a revenue floor (see GOAL_HIERARCHY.md).
     """
-    return (
-        m.get("revenue", 0)          * 1.0    # Rs 1 = 1 point: sales dominate
-        + m.get("orders", 0)         * 25.0
-        + m.get("follows_gained", 0) * 10.0
-        + m.get("shares", 0)         * 5.0
-        + m.get("saves", 0)          * 4.0
-        + m.get("comments", 0)       * 3.0
-        + m.get("profile_visits", 0) * 2.0
-        + m.get("likes", 0)          * 1.0
-        + m.get("views", 0)          * 0.01
-    )
+    from content_generator.core.reward import score as _reward
+    return _reward(m)
+
+
+def _recency_factor(entry: dict) -> float:
+    """
+    Exponential decay by age (half-life 30 days), so recent evidence outranks
+    stale evidence. Without this a single old outlier stays 'the pattern'
+    forever and learning quality degrades as memory grows.
+    """
+    ts = str(entry.get("posted_at") or entry.get("recorded_at") or "")[:10]
+    if not ts:
+        return 1.0
+    try:
+        age = (datetime.date.today() - datetime.date.fromisoformat(ts)).days
+    except Exception:
+        return 1.0
+    if age <= 0:
+        return 1.0
+    return float(0.5 ** (age / _HALF_LIFE_DAYS))
+
+
+def _weighted_score(entry: dict) -> float:
+    """Reward adjusted for recency — what ranking actually uses."""
+    return _engagement_score(entry.get("metrics", {})) * _recency_factor(entry)
 
 
 def analyze() -> dict:
@@ -109,7 +129,8 @@ def analyze() -> dict:
     Returns {"winners": [...], "failed": [...], "median_score": float, "count": int}
     """
     entries = _load_log()
-    scored = [(e, _engagement_score(e.get("metrics", {}))) for e in entries if e.get("metrics")]
+    # Rank by recency-weighted reward so stale outliers stop dominating.
+    scored = [(e, _weighted_score(e)) for e in entries if e.get("metrics")]
     if not scored:
         return {"winners": [], "failed": [], "median_score": 0.0, "count": 0}
 
@@ -151,9 +172,19 @@ def get_learning_block(max_items: int = 5) -> str:
     """
     entries = _load_log()
     scored = sorted(
-        ((e, _engagement_score(e.get("metrics", {}))) for e in entries if e.get("metrics")),
+        ((e, _weighted_score(e)) for e in entries if e.get("metrics")),
         key=lambda x: x[1], reverse=True,
     )
+    # De-duplicate by hook so one repeated winner cannot fill the whole memory
+    # block and crowd out genuinely distinct patterns.
+    _seen, _uniq = set(), []
+    for _e, _s in scored:
+        key = (str(_e.get("hook", "")).strip().lower(), str(_e.get("topic", "")).strip().lower())
+        if key in _seen:
+            continue
+        _seen.add(key)
+        _uniq.append((_e, _s))
+    scored = _uniq
     if len(scored) < 3:
         return ""
 
