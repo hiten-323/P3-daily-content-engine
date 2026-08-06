@@ -414,6 +414,30 @@ _STAT_PATTERNS = re.compile(
 )
 
 
+# Promotional offers the engine must never invent. A live post promised
+# "Try your first cup free" — no such campaign exists, which is a false offer
+# to customers. Offers may only come from a real campaign, never from the LLM.
+_INVENTED_OFFER = re.compile(
+    r"\b(first\s+cup\s+free|free\s+(cup|sample|trial|shipping|delivery)|"
+    r"\d+\s*%\s*off|flat\s+\d+\s*off|buy\s*\d+\s*get\s*\d+|"
+    r"limited[- ]time\s+offer|discount\s+code|coupon)\b",
+    re.I,
+)
+
+
+def _strip_invented_offers(text: str) -> str:
+    """Remove promotional promises the brand has not actually authorised."""
+    if not text:
+        return text
+    kept = []
+    for sentence in re.split(r'(?<=[.!?])\s+', text):
+        if _INVENTED_OFFER.search(sentence):
+            logger.warning("[brand] stripped invented offer: %r", sentence[:90])
+            continue
+        kept.append(sentence)
+    return " ".join(kept).strip()
+
+
 def _strip_unsupported_stats(text: str) -> str:
     """
     Remove fabricated statistics.
@@ -635,7 +659,8 @@ def _inject_brand_into_content(content: dict, day: int = 0) -> None:
             _inject_brand_into_piece(label, piece)
             for field in ("caption", "body", "introduction", "conclusion", "hook", "script"):
                 if isinstance(piece.get(field), str):
-                    piece[field] = _strip_unsupported_stats(piece[field])
+                    piece[field] = _strip_invented_offers(
+                        _strip_unsupported_stats(piece[field]))
 
 
 def _do_editorial(content: dict) -> None:

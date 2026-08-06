@@ -66,10 +66,24 @@ def record_performance(
     track    : "growth" or "brand"
     metrics  : dict with any of METRIC_FIELDS
     """
+    # Stamp the objective this post was CREATED under. After a strategic pivot
+    # (followers -> revenue), a post that succeeded at the old objective would
+    # otherwise be re-scored under the new weights and wrongly retired.
+    kpi_at_creation, policy_version = "", ""
+    try:
+        from content_generator.core.reward import get_active_kpi
+        from content_generator.core.founder_policy import policy as _policy
+        kpi_at_creation = get_active_kpi()
+        policy_version = _policy().version
+    except Exception as e:
+        logger.debug("[learning] could not stamp objective: %s", e)
+
     entries = _load_log()
     entry = {
         "asset_id":   asset_id,
         "track":      track,
+        "kpi":        kpi_at_creation,
+        "policy_version": policy_version,
         "hook":       hook,
         "topic":      topic,
         "format":     format_used,
@@ -118,9 +132,40 @@ def _recency_factor(entry: dict) -> float:
     return float(0.5 ** (age / _HALF_LIFE_DAYS))
 
 
+# How much to discount evidence collected under a DIFFERENT objective. It is
+# still information (a post that drove follows tells you something even when
+# the KPI is now revenue) but it must not outrank same-objective evidence.
+_CROSS_OBJECTIVE_DISCOUNT = 0.4
+
+
+def _objective_factor(entry: dict) -> float:
+    """
+    1.0 when the post was created under today's objective, discounted otherwise.
+
+    Without this, changing target_kpi silently re-judges the whole archive by
+    the new yardstick — content that succeeded at the old goal lands on the
+    'never repeat' list, and learning inherits a bias from a strategy you have
+    already abandoned. Legacy records (no stamp) are treated as compatible.
+    """
+    stamped = str(entry.get("kpi") or "").strip().lower()
+    if not stamped:
+        return 1.0
+    try:
+        from content_generator.core.reward import get_active_kpi
+        return 1.0 if stamped == get_active_kpi() else _CROSS_OBJECTIVE_DISCOUNT
+    except Exception as e:
+        logger.debug("[learning] objective compare unavailable: %s", e)
+        return 1.0
+
+
 def _weighted_score(entry: dict) -> float:
-    """Reward adjusted for recency — what ranking actually uses."""
-    return _engagement_score(entry.get("metrics", {})) * _recency_factor(entry)
+    """
+    Reward adjusted for recency AND objective compatibility — what ranking uses.
+    Recent evidence collected under the current objective dominates.
+    """
+    return (_engagement_score(entry.get("metrics", {}))
+            * _recency_factor(entry)
+            * _objective_factor(entry))
 
 
 def analyze() -> dict:
@@ -138,7 +183,13 @@ def analyze() -> dict:
     median = scores[len(scores) // 2]
 
     winners = [e for e, s in scored if s >= median and s > 0]
-    failed  = [e for e, s in scored if s <= median * 0.5]
+    # Only condemn a post by the yardstick it was BUILT for. Content created
+    # under a previous objective may score low under today's weights without
+    # having actually failed — retiring it would import a bias from an
+    # abandoned strategy. Cross-objective posts can inform winners (at a
+    # discount) but are never added to the never-repeat list.
+    failed = [e for e, s in scored
+              if s <= median * 0.5 and _objective_factor(e) == 1.0]
     return {"winners": winners, "failed": failed, "median_score": median, "count": len(scored)}
 
 
@@ -190,7 +241,9 @@ def get_learning_block(max_items: int = 5) -> str:
 
     n_top = max(1, len(scored) // 5)   # top 20%
     top    = scored[:n_top]
-    bottom = scored[-n_top:]
+    # Never-repeat list: same-objective evidence only (see analyze()).
+    same_obj = [(e, s) for e, s in scored if _objective_factor(e) == 1.0]
+    bottom = same_obj[-n_top:] if same_obj else []
 
     lines = [
         "VIRAL MEMORY (this account's actual results — compounds over months):",
