@@ -96,7 +96,27 @@ def _font(role: str, size: int):
         return IF.load_default()
 
 
+_SCAFFOLD = __import__("re").compile(
+    r"^\s*(slide|frame|scene|step|part|hook|headline|title)\s*(no\.?\s*)?\d*\s*[:\-–—.)]\s*",
+    __import__("re").I)
+
+
+def _sanitize_text(text: str) -> str:
+    """Last line of defence before pixels: no 'Slide 1:' labels, no tofu glyphs."""
+    t = str(text or "").strip()
+    for _ in range(3):
+        new = _SCAFFOLD.sub("", t).strip()
+        if new == t:
+            break
+        t = new
+    for bad, good in (("•", "|"), ("·", "|"), ("–", "-"),
+                      ("—", "-"), ("’", "'"), ("“", '"'), ("”", '"')):
+        t = t.replace(bad, good)
+    return t
+
+
 def _wrap(draw, text: str, font, max_w: int) -> list[str]:
+    text = _sanitize_text(text)
     words, lines, cur = text.split(), [], ""
     for w in words:
         test = f"{cur} {w}".strip()
@@ -234,7 +254,7 @@ def compose_post_image(
     
     draw.rectangle([(0, height - bar - strip_h), (width, height - bar)], fill=(20, 14, 8))
     draw.text((width // 2, height - bar - strip_h // 2),
-              "PURITY BEANS   •   100% COFFEE, ZERO CHICORY   •   p3online.in",
+              "PURITY BEANS  |  100% COFFEE, ZERO CHICORY  |  p3online.in",
               font=f_font, fill=_GOLD, anchor="mm")
 
     # Save

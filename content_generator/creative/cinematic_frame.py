@@ -100,6 +100,11 @@ def _font(size, bold=True):
 
 
 def _wrap(draw, text, font, max_w):
+    try:
+        from content_generator.creative.real_jar_composer import _sanitize_text
+        text = _sanitize_text(text)
+    except Exception:
+        text = str(text or "").strip()
     words, lines, cur = text.split(), [], ""
     for w in words:
         t = f"{cur} {w}".strip()

@@ -25,6 +25,7 @@ Environment variables:
 """
 import logging
 import os
+import re
 import time
 import datetime
 
@@ -396,18 +397,52 @@ _UNSUPPORTED_STATS = [
     "survey says", "according to studies",
 ]
 
+# Numeric claims we are ALLOWED to make (our own verifiable product facts).
+# Everything else numeric about coffee/chicory/the market is unsupported.
+_ALLOWED_NUMERIC = re.compile(
+    r"\b100\s*%\s*(pure\s+)?coffee|\b100\s*percent\s+coffee|zero\s+chicory|"
+    r"\b0\s*%\s*chicory|\b100\s*%\s*pure|\brs\.?\s*\d+\s*(/-)?\s*(per\s+cup|a\s+cup)?",
+    re.I,
+)
+# Any other numeric/statistical claim pattern — fabricated unless whitelisted.
+_STAT_PATTERNS = re.compile(
+    r"\d+\s*%|"                       # 40%, 40 %
+    r"\b\d+\s*(out of|in)\s*\d+\b|"   # 9 out of 10
+    r"\b\d+\s*(x|times)\s+(more|less|better|stronger)\b|"
+    r"\b(most|majority of|\d+)\s+(people|indians|brands|coffees)\s+(don'?t know|are|have|contain)\b",
+    re.I,
+)
+
+
 def _strip_unsupported_stats(text: str) -> str:
-    """Remove fabricated statistics from generated text."""
-    import re
+    """
+    Remove fabricated statistics.
+
+    Previously this only matched a hardcoded phrase list, so a novel invented
+    stat ("40% chicory filler") passed straight through to a live post — a
+    false claim about competitor products, which is both a policy violation
+    and a real regulatory risk for a food brand. Now any numeric/statistical
+    claim is stripped unless it is one of our own verifiable facts
+    (100% coffee, zero chicory, price per cup).
+    """
+    if not text:
+        return text
+
+    # 1. legacy exact phrases
     low = text.lower()
     for stat in _UNSUPPORTED_STATS:
         if stat in low:
-            # Remove the sentence containing the stat
-            text = re.sub(
-                r'[^.!?]*' + re.escape(stat) + r'[^.!?]*[.!?]',
-                '', text, flags=re.IGNORECASE
-            ).strip()
-    return text
+            text = re.sub(r'[^.!?]*' + re.escape(stat) + r'[^.!?]*[.!?]',
+                          '', text, flags=re.IGNORECASE).strip()
+
+    # 2. pattern-based: drop any sentence carrying a non-whitelisted number claim
+    kept = []
+    for sentence in re.split(r'(?<=[.!?])\s+', text):
+        if _STAT_PATTERNS.search(sentence) and not _ALLOWED_NUMERIC.search(sentence):
+            logger.warning("[brand] stripped unsupported statistic: %r", sentence[:90])
+            continue
+        kept.append(sentence)
+    return " ".join(kept).strip()
 
 
 _DEFAULT_HASHTAGS = (
@@ -501,8 +536,58 @@ def _inject_jar_creative_into_reels(content: dict, day: int) -> None:
             logger.warning("[creative] Could not inject jar hook into reel_%d: %s", i + 1, e)
 
 
+# The LLM sometimes echoes the prompt's scaffolding into the copy itself
+# ("Slide 1: ...", "Frame 2 -", "Hook:"). Rendered into an image it looks like
+# a leaked template. Strip these labels from anything that becomes on-screen text.
+_SCAFFOLD_PREFIX = re.compile(
+    r"^\s*(slide|frame|scene|step|part|hook|headline|caption|title)\s*"
+    r"(no\.?\s*)?\d*\s*[:\-–—.)]\s*",
+    re.I,
+)
+
+
+def _clean_scaffolding(text: str) -> str:
+    """Remove leading 'Slide 1:' / 'Frame 2 -' style labels (repeatedly)."""
+    if not isinstance(text, str):
+        return text
+    cleaned = text.strip()
+    for _ in range(3):                       # handles "Slide 1: Hook: ..."
+        new = _SCAFFOLD_PREFIX.sub("", cleaned).strip()
+        if new == cleaned:
+            break
+        cleaned = new
+    return cleaned
+
+
+def _strip_scaffolding_everywhere(content: dict) -> None:
+    """Clean every field that can end up as on-screen text or a headline."""
+    def _clean_piece(piece: dict) -> None:
+        if not isinstance(piece, dict):
+            return
+        for f in ("hook_text", "chosen_hook", "hook", "headline", "title",
+                  "hook_spoken", "alt_hook", "hook_text_overlay"):
+            if isinstance(piece.get(f), str):
+                piece[f] = _clean_scaffolding(piece[f])
+        for lst in ("frames", "script", "slides", "scenes"):
+            for item in (piece.get(lst) or []):
+                if isinstance(item, dict):
+                    for f in ("on_screen", "heading", "headline", "spoken", "body"):
+                        if isinstance(item.get(f), str):
+                            item[f] = _clean_scaffolding(item[f])
+
+    for reel in (content.get("reels") or []):
+        _clean_piece(reel)
+    for key in ("carousel", "instagram_post", "growth_reel", "yt_short", "stories"):
+        piece = content.get(key)
+        _clean_piece(piece)
+        if key == "stories" and isinstance(piece, dict):
+            for sub in piece.values():
+                _clean_piece(sub)
+
+
 def _inject_brand_into_content(content: dict, day: int = 0) -> None:
     """Run caption fill + engagement field fill + brand injection + stat scrubbing."""
+    _strip_scaffolding_everywhere(content)
     _ensure_captions(content)
     _inject_jar_creative_into_reels(content, day)
 
