@@ -83,6 +83,14 @@ env:
   # Timed publishing: generate at 06:00 IST, Instagram at 08:00 + 20:00 IST
   ENABLE_TIMED_SLOTS: "true"
 
+# Three crons plus manual dispatch can overlap, and every run rebases and
+# pushes to the same branch. A manual trigger during a scheduled run raced on
+# that push. Queue them instead — never cancel, because a cancelled generate
+# slot leaves the publish slots with nothing to post.
+concurrency:
+  group: purity-beans-daily
+  cancel-in-progress: false
+
 jobs:
   run-pipeline:
     name: Daily Content Pipeline
@@ -208,11 +216,53 @@ jobs:
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
 
         run: |
+          # Both branches used to run the identical command, so the day_number
+          # input was accepted by the UI and thrown away. --day now exists.
+          set -o pipefail
           if [ -n "$OVERRIDE_DAY_NUMBER" ]; then
-            python -m content_generator.scheduler.daily --now
+            python -m content_generator.scheduler.daily --now --day "$OVERRIDE_DAY_NUMBER" | tee run_result.json
           else
-            python -m content_generator.scheduler.daily --now
+            python -m content_generator.scheduler.daily --now | tee run_result.json
           fi
+
+      # ── 6b. A green check must mean something was published ──────────────────
+      # An expired Instagram token, an exhausted LLM quota or a dead image host
+      # all produce a run that completes and posts nothing. Without this the
+      # result is a green tick and silence — the same failure as a process
+      # reporting "online" while doing no work.
+      - name: Verify something was actually published
+        if: success()
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          python - <<'PY'
+          import json, os, re, sys, urllib.request
+          raw = open("run_result.json", encoding="utf-8", errors="ignore").read()
+          m = re.search(r"\{.*\}\s*$", raw, re.S)      # the printed result block
+          if not m:
+              print("::warning::could not parse pipeline result — skipping check")
+              sys.exit(0)
+          r = json.loads(m.group(0))
+          if r.get("_skipped") or r.get("skipped"):
+              print(f"::notice::run skipped ({r.get('reason')}) — nothing to verify")
+              sys.exit(0)
+          published = r.get("published_platforms") or []
+          print(f"published_platforms: {published}")
+          if published:
+              sys.exit(0)
+          msg = ("PURITY BEANS: pipeline completed but published to NO platform. "
+                 "Check token expiry (Instagram/Facebook), LLM quota, image host.")
+          print(f"::error::{msg}")
+          hook = os.environ.get("ALERT_WEBHOOK_URL")
+          if hook:
+              try:
+                  urllib.request.urlopen(urllib.request.Request(
+                      hook, data=json.dumps({"text": msg}).encode(),
+                      headers={"Content-Type": "application/json"}), timeout=15)
+              except Exception as e:
+                  print(f"::warning::alert webhook failed: {e}")
+          sys.exit(1)
+          PY
 
       # ── 7. Save output/ back to cache ─────────────────────────────────────────
       - name: Save output cache
@@ -256,7 +306,19 @@ jobs:
           git add -f output/.running* 2>/dev/null || true
           git pull --rebase --autostash || true
           git diff --staged --quiet || git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"
-          git push || true   # non-fatal if push fails
+          # This push is NOT optional. The 08:00 and 20:00 publish slots load
+          # today's content, images and slot locks from the repo, so a failed
+          # push means those runs find nothing and the day publishes nothing —
+          # while this job reports success. `|| true` hid exactly that. Retry
+          # once against a moved remote, then fail loudly.
+          if ! git push; then
+            echo "push rejected — rebasing on the remote and retrying"
+            git pull --rebase --autostash || true
+            git push || {
+              echo "::error::Could not push run artefacts. The 08:00/20:00 publish slots will have no content to post."
+              exit 1
+            }
+          fi
 
       # ── 10. On failure: alert ─────────────────────────────────────────────────
       - name: Alert on failure

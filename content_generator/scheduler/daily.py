@@ -1145,9 +1145,24 @@ if __name__ == "__main__":
     if "--now" in sys.argv:
         import json
         from content_generator.scheduler.slots import slots_enabled, get_current_slot, run_publish_slot
+        # --day N regenerates a specific day. run_now/run_full_pipeline have
+        # accepted day_number all along; nothing ever parsed it, so the
+        # workflow's day_number input was collected and silently discarded —
+        # the operator believed a day had been regenerated when it had not.
+        _day = None
+        if "--day" in sys.argv:
+            _i = sys.argv.index("--day")
+            if _i + 1 < len(sys.argv):
+                try:
+                    _day = int(sys.argv[_i + 1])
+                except ValueError:
+                    sys.exit(f"--day expects an integer, got {sys.argv[_i + 1]!r}")
+            else:
+                sys.exit("--day requires a number")
+
         slot = get_current_slot() if slots_enabled() else "generate"
         if slot == "generate":
-            result = run_now()
+            result = run_now(day_number=_day)
         else:
             # Publish-only slot: post this morning's content at its optimal window
             result = run_publish_slot(slot)
