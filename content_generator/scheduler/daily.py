@@ -195,6 +195,17 @@ def run_full_pipeline(day_number: int = None) -> dict:
     except Exception as e:
         logger.debug("[scheduler] daily summary failed: %s", e)
 
+    # Carry the publish outcome out with the result. CI needs to assert that
+    # something actually reached a platform — a run that generates perfectly
+    # and posts nothing is a green tick and silence. publish_result was
+    # computed and then dropped on the floor at the return.
+    try:
+        content["_publish"] = publish_result or {}
+        content["published_platforms"] = list(
+            (publish_result or {}).get("published_platforms") or [])
+    except Exception as e:                      # never let telemetry break a run
+        logger.debug("[scheduler] could not attach publish result: %s", e)
+
     return content
 
 

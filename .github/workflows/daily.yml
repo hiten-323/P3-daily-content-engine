@@ -246,6 +246,15 @@ jobs:
           if r.get("_skipped") or r.get("skipped"):
               print(f"::notice::run skipped ({r.get('reason')}) — nothing to verify")
               sys.exit(0)
+          # If the key is absent entirely the pipeline predates this contract —
+          # warn, do not fail. A verification step that fails on its own missing
+          # input becomes the outage it was written to detect. (The first cut of
+          # this checked a key that run_full_pipeline never returned, and would
+          # have failed every run from the day it shipped.)
+          if "published_platforms" not in r:
+              print("::warning::result carries no published_platforms key — "
+                    "cannot verify publishing; check the pipeline contract")
+              sys.exit(0)
           published = r.get("published_platforms") or []
           print(f"published_platforms: {published}")
           if published:
