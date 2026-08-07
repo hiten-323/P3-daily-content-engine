@@ -51,6 +51,12 @@ HOOK_ARCHETYPES = [
     ("CURIOSITY GAP",  "Start the answer but force them to watch to complete it — incomplete loops itch"),
     ("SOCIAL SHAME",   "Everyone else knows this but you — FOMO plus status anxiety in one punch"),
     ("PATTERN BREAK",  "Shatter the expected visually or verbally — novelty triggers the dopamine hit"),
+    # Psychology-backed additions for pure coffee
+    ("RITUAL",         "Frame the morning cup as the first identity decision of the day — ritual raises willingness to pay"),
+    ("SENSORY",        "Name the exact taste or smell difference after years of filler — private test the viewer can run tomorrow"),
+    ("CLEAN LABEL",    "Turn reading the ingredient panel into an act of self-respect — self-signaling drives saves"),
+    ("CERTAINTY",      "Remove the quiet daily uncertainty of not knowing what is in the cup — loss aversion closer"),
+    ("ACCESSIBLE",     "Café purity at everyday price and zero effort — resolves the price-sensitivity paradox"),
 ]
 
 SAVE_MECHANICS = [
@@ -64,6 +70,8 @@ SAVE_MECHANICS = [
     ("DATA STORY",         "Before/after numbers with narrative — save for motivation"),
     ("RANKING TIER LIST",  "Ranked options with criteria — save as decision-making reference"),
     ("INSIDER GLOSSARY",   "Terms the industry uses — save to sound smart in conversations"),
+    ("LABEL TEST",         "A 15-second test the viewer can run on the next jar they buy — high save rate"),
+    ("RITUAL SCRIPT",      "Exact morning sequence that turns autopilot into a deliberate act — save to reuse"),
 ]
 
 LINKEDIN_ANGLES = [
@@ -105,6 +113,10 @@ COMMERCIAL_EMOTIONS = [
     ("REBELLION", "refusing to be fooled by fake ingredients disguised as premium packaging"),
     ("JOY",       "the small daily luxury that costs less than a tapri chai"),
     ("FOCUS",     "clean energy that builds without the crash — real caffeine, real work"),
+    # Psychology-backed additions
+    ("CERTAINTY", "the quiet confidence of knowing exactly what is in the cup"),
+    ("RITUAL",    "the deliberate first act of the day — not autopilot caffeine"),
+    ("RESPECT",   "treating yourself as someone who deserves real ingredients"),
 ]
 
 PRODUCTS = [
@@ -147,6 +159,12 @@ VIRAL_CONTENT_IDEAS = [
     "Distributor opportunity: the only pure instant coffee brand in your city",
     "How to make barista-quality coffee at home without any equipment",
     "The Purity Beans blind taste test: what real coffee lovers say",
+    # Psychology-backed additions
+    "Your morning coffee is the first decision you make about yourself",
+    "It tastes bitter after two minutes — that is not normal",
+    "The 15-second label test that ends the guessing",
+    "Real coffee does not require a machine or a weekend",
+    "Knowing exactly what is in the cup is the real upgrade",
 ]
 
 # ── Scroll-stopping hooks bank ────────────────────────────────────────────────
@@ -173,6 +191,13 @@ VIRAL_HOOKS = [
     "Don't watch this if you're happy with your instant coffee.",
     "Real coffee is not for everyone. Scroll if that's you.",
     "If you've never read a coffee label, this will hurt.",
+    # Psychology-backed additions
+    "Your morning cup is the first decision you make about yourself.",
+    "It tastes bitter after two minutes. That is not normal.",
+    "You should not need a chemistry degree to trust your coffee.",
+    "Real coffee does not leave a muddy aftertaste.",
+    "The only claim that matters: nothing is hiding in this jar.",
+    "Premium is not the price. Premium is what is missing from the jar.",
 ]
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
