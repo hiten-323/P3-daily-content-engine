@@ -20,26 +20,14 @@ _CREAM = (245, 238, 216)
 
 
 def _knockout_white(img):
-    """Return RGBA jar with the white background made transparent (corner flood-fill)."""
-    from PIL import Image, ImageDraw
-    img = img.convert("RGBA")
-    w, h = img.size
-    # Flood-fill transparent from all four corners — only removes the connected
-    # outer white, preserving any white inside the label/cap.
-    for seed in [(0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)]:
-        try:
-            ImageDraw.floodfill(img, seed, (0, 0, 0, 0), thresh=40)
-        except Exception as _e:
-            logger.debug("[cinematic_frame] optional step failed: %s", _e)
-    # Crop away the now-transparent margin so the jar actually FILLS the space
-    # it's given (otherwise baked-in padding makes the hero look small/floating).
-    try:
-        bbox = img.getbbox()
-        if bbox:
-            img = img.crop(bbox)
-    except Exception as _e:
-        logger.debug("[cinematic_frame] optional step failed: %s", _e)
-    return img
+    """
+    Return RGBA jar with the white background made transparent (corner flood-fill).
+
+    Delegates to real_jar_composer.knockout_white — the carousel path needs the
+    identical operation, and two copies of it would drift.
+    """
+    from content_generator.creative.real_jar_composer import knockout_white
+    return knockout_white(img)
 
 
 def _gradient_bg(width, height):
@@ -124,20 +112,13 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
         from PIL import Image, ImageDraw
     except ImportError:
         return None
-    from content_generator.creative.real_jar_composer import pick_jar_photo, _all_jar_photos
+    from content_generator.creative.real_jar_composer import pick_jar_photo
 
-    # Prefer a FRONT-facing jar — side/variant shots show the barcode and
-    # ingredient panel, which reads as a warehouse photo, not a hero shot.
-    jar_path = None
-    try:
-        fronts = [p for p in _all_jar_photos() if "_front" in os.path.basename(p).lower()
-                  and (not product or f"_{product}_" in p)]
-        if fronts:
-            jar_path = fronts[(day * 3 + idx) % len(fronts)]
-    except Exception:
-        jar_path = None
-    if not jar_path:
-        jar_path = pick_jar_photo(day, idx, product)
+    # Front-facing AND overlay-safe: _knockout_white needs a white sweep, a
+    # finished creative would drag its own headline into the cut-out, and the
+    # rear label (barcode, batch number) reads as a warehouse photo.
+    # pick_jar_photo enforces all three — this used to be duplicated here.
+    jar_path = pick_jar_photo(day, idx, product, overlay_safe=True, prefer_front=True)
     if not jar_path:
         return None
 

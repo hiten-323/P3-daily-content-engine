@@ -83,3 +83,11 @@ htmlcov/
 
 # ── Node (if any frontend tooling) ───────────────────────────────────────────
 node_modules/
+
+# ── Build artifacts and tool caches (never source) ───────────────────────────
+# The delivery zips are >100MB and GitHub rejects the push outright.
+purity-beans-engine-*.zip
+*.zip
+.claude-flow/
+.swarm/
+.firecrawl/

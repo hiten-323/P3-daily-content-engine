@@ -17,6 +17,8 @@ This module guarantees the real product:
 from __future__ import annotations
 import logging
 import os
+import re
+import unicodedata
 
 logger = logging.getLogger(__name__)
 
@@ -44,75 +46,272 @@ def _all_jar_photos() -> list[str]:
     return paths
 
 
-def pick_jar_photo(day: int, idx: int = 0, product: str | None = None) -> str | None:
-    """Deterministically rotate through real jar photos so posts differ daily."""
+# ── Overlay safety ────────────────────────────────────────────────────────────
+# brand_assets/ holds two different kinds of file under the same naming scheme:
+#
+#   1. studio shots  — jar on a white sweep. The composer owns the whole canvas,
+#                      so a headline can go anywhere. Detectable with certainty.
+#   2. finished creatives — full-bleed images that ALREADY carry their own
+#                      headline, feature bullets and footer (the agency deliverables).
+#                      Drawing our headline on top collides with theirs.
+#
+# The filename says nothing about which is which — puritybeans_bold_50g_lifestyle
+# is a finished creative, puritybeans_bold_100g_lifestyle is a clean photo. So the
+# rule is safe-by-default: only provably-clean assets receive text. A full-bleed
+# photo the founder KNOWS is text-free can be opted in via brand_assets/overlay_safe.txt.
+_OVERLAY_SAFE_LIST = os.path.join(_ASSETS, "overlay_safe.txt")
+_overlay_safe_cache: dict[str, bool] = {}
+
+
+def _explicit_overlay_safe() -> set[str]:
+    """Filenames the founder has opted in (one per line, '#' comments allowed)."""
+    names: set[str] = set()
+    if not os.path.exists(_OVERLAY_SAFE_LIST):
+        return names
+    try:
+        with open(_OVERLAY_SAFE_LIST, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip()
+                if line:
+                    names.add(line)
+    except Exception as e:
+        logger.warning("[real_jar] could not read %s: %s", _OVERLAY_SAFE_LIST, e)
+    return names
+
+
+def _has_white_background(path: str) -> bool:
+    """True when all four corners are white — i.e. a studio sweep, not full-bleed."""
+    try:
+        from PIL import Image
+        im = Image.open(path).convert("RGB")
+        w, h = im.size
+        for (x, y) in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+            bx = max(0, min(x - 12, w - 24))
+            by = max(0, min(y - 12, h - 24))
+            patch = im.crop((bx, by, bx + 24, by + 24)).resize((1, 1)).getpixel((0, 0))
+            if min(patch) <= 235:
+                return False
+        return True
+    except Exception as e:
+        logger.debug("[real_jar] background probe failed for %s: %s", path, e)
+        return False
+
+
+def is_overlay_safe(path: str) -> bool:
+    """Can we draw a headline over this asset without colliding with baked-in copy?"""
+    key = os.path.basename(path)
+    if key not in _overlay_safe_cache:
+        _overlay_safe_cache[key] = key in _explicit_overlay_safe() or _has_white_background(path)
+    return _overlay_safe_cache[key]
+
+
+def pick_jar_photo(day: int, idx: int = 0, product: str | None = None,
+                   overlay_safe: bool = False, prefer_front: bool = True) -> str | None:
+    """
+    Deterministically rotate through real jar photos so posts differ daily.
+
+    overlay_safe=True restricts the pool to assets that carry no copy of their own.
+    prefer_front=False opts back into the rear label — the only slide that wants
+    it is one arguing the ingredient panel ("read the label, no chicory").
+    """
+    everything = _all_jar_photos()
+    pool = everything
     if product:
-        pool = [p for p in _all_jar_photos() if f"_{product}_" in p]
-        pool = pool or _all_jar_photos()
-    else:
-        pool = _all_jar_photos()
+        pool = [p for p in pool if f"_{product}_" in p] or everything
+
+    if overlay_safe:
+        safe = [p for p in pool if is_overlay_safe(p)]
+        if not safe:
+            # Widen before giving up: a different product still beats overlaying
+            # a headline onto a finished creative.
+            safe = [p for p in everything if is_overlay_safe(p)]
+        # Prefer the FRONT of the jar. The _side shots are the back label —
+        # barcode, batch number, directions for use — which reads as a warehouse
+        # photo rather than a hero shot. Fall back to any safe asset if needed.
+        if prefer_front:
+            fronts = [p for p in safe if "_front" in os.path.basename(p).lower()]
+            safe = fronts or safe
+        if safe:
+            pool = safe
+        else:
+            logger.warning(
+                "[real_jar] No overlay-safe asset available — falling back to %s. "
+                "Headline may collide with copy baked into the image.",
+                os.path.basename(pool[0]) if pool else "nothing")
+
     if not pool:
         logger.warning("[real_jar] No jar photos found in %s", _ASSETS)
         return None
     return pool[(day * 3 + idx) % len(pool)]
 
 
+# Windows names are what the founder previews with; the Linux names are what
+# actually exists on the ubuntu-latest runner that renders the live posts.
+# Listing only the Windows names silently downgraded every CI-rendered slide to
+# Pillow's bitmap default (missing glyphs -> tofu boxes). Keep both, per role.
+_FONT_ROLES = {
+    # elegant serif for headlines
+    "title":  (["georgiab.ttf", "georgia.ttf", "timesbd.ttf", "times.ttf", "arialbd.ttf"],
+               ["DejaVuSerif-Bold.ttf", "LiberationSerif-Bold.ttf",
+                "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"]),
+    # clean sans for body copy
+    "body":   (["segoeui.ttf", "calibri.ttf", "arial.ttf"],
+               ["DejaVuSans.ttf", "LiberationSans-Regular.ttf", "FreeSans.ttf"]),
+    # bold sans for the footer strip
+    "footer": (["segoeuib.ttf", "segoeui.ttf", "arialbd.ttf", "arial.ttf"],
+               ["DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf", "FreeSansBold.ttf"]),
+}
+_LINUX_FONT_DIRS = (
+    "/usr/share/fonts/truetype/dejavu",
+    "/usr/share/fonts/truetype/liberation",
+    "/usr/share/fonts/truetype/msttcorefonts",
+    "/usr/share/fonts/truetype/freefont",
+)
+_font_fallback_warned = False
+
+
+def _scan_for_any_ttf() -> str | None:
+    """Last resort before the bitmap default: any real TrueType file on the box."""
+    for root in ("/usr/share/fonts", "/usr/local/share/fonts"):
+        if not os.path.isdir(root):
+            continue
+        for dirpath, _dirs, files in os.walk(root):
+            for fn in sorted(files):
+                if fn.lower().endswith((".ttf", ".otf")):
+                    return os.path.join(dirpath, fn)
+    return None
+
+
+def knockout_white(img):
+    """
+    Return an RGBA jar with the white studio sweep made transparent, cropped to
+    the jar itself. Flood-fills inward from the corners so whites *inside* the
+    label and cap survive. Without this the sweep pastes as a hard white
+    rectangle on the espresso canvas.
+    """
+    from PIL import Image, ImageDraw
+    img = img.convert("RGBA")
+    w, h = img.size
+    for seed in ((0, 0), (w - 1, 0), (0, h - 1), (w - 1, h - 1)):
+        try:
+            ImageDraw.floodfill(img, seed, (0, 0, 0, 0), thresh=40)
+        except Exception as e:
+            logger.debug("[real_jar] floodfill at %s failed: %s", seed, e)
+    try:
+        bbox = img.getbbox()
+        if bbox:
+            img = img.crop(bbox)      # drop the transparent margin
+    except Exception as e:
+        logger.debug("[real_jar] bbox crop failed: %s", e)
+    return img
+
+
 def _font(role: str, size: int):
+    global _font_fallback_warned
     from PIL import ImageFont
-    if role == "title":
-        # Georgia (elegant serif) -> fallbacks
-        candidates = ["georgiab.ttf", "georgia.ttf", "timesbd.ttf", "times.ttf", "arialbd.ttf"]
-    elif role == "body":
-        # Segoe UI (clean, high legibility sans-serif) -> fallbacks
-        candidates = ["segoeui.ttf", "calibri.ttf", "arial.ttf"]
-    elif role == "footer":
-        # Segoe UI Bold -> fallbacks
-        candidates = ["segoeuib.ttf", "segoeui.ttf", "arialbd.ttf", "arial.ttf"]
+
+    win_names, nix_names = _FONT_ROLES.get(role, _FONT_ROLES["body"])
+
+    candidates: list[str] = []
+    if os.name == "nt":
+        for c in win_names:
+            candidates += [c, os.path.join("C:\\Windows\\Fonts", c)]
     else:
-        candidates = ["segoeui.ttf", "arial.ttf"]
+        for c in nix_names:
+            candidates += [os.path.join(d, c) for d in _LINUX_FONT_DIRS]
+            candidates.append(c)
+        # msttcorefonts, when present, gives the founder's intended look
+        for c in win_names:
+            candidates.append(os.path.join("/usr/share/fonts/truetype/msttcorefonts", c))
 
-    extended_candidates = []
     for c in candidates:
-        extended_candidates.append(c)
-        if os.name == "nt":
-            extended_candidates.append(os.path.join("C:\\Windows\\Fonts", c))
-        else:
-            extended_candidates.extend([
-                os.path.join("/usr/share/fonts/truetype/msttcorefonts", c),
-                os.path.join("/usr/share/fonts/truetype/dejavu", c),
-                os.path.join("/usr/share/fonts/truetype/freefont", c)
-            ])
-
-    for c in extended_candidates:
         try:
             return ImageFont.truetype(c, size=size)
         except Exception:
             continue
+
+    found = _scan_for_any_ttf()
+    if found:
+        try:
+            return ImageFont.truetype(found, size=size)
+        except Exception as e:
+            logger.debug("[real_jar] scanned font %s unusable: %s", found, e)
+
+    # Never silent: the bitmap default is what produced the tofu boxes.
+    if not _font_fallback_warned:
+        _font_fallback_warned = True
+        logger.warning(
+            "[real_jar] NO TrueType font resolved for role=%s — falling back to "
+            "Pillow's bitmap default. Rendered text will look degraded.", role)
     try:
-        from PIL import ImageFont as IF
-        return IF.load_default(size=size)
+        return ImageFont.load_default(size=size)
     except Exception:
-        from PIL import ImageFont as IF
-        return IF.load_default()
+        return ImageFont.load_default()
 
 
-_SCAFFOLD = __import__("re").compile(
-    r"^\s*(slide|frame|scene|step|part|hook|headline|title)\s*(no\.?\s*)?\d*\s*[:\-–—.)]\s*",
-    __import__("re").I)
+# ── Scaffolding labels ────────────────────────────────────────────────────────
+# The LLM echoes the prompt's own structure into the copy ("Slide 1:", "**Frame
+# 2**", "[Slide 3]", "Hook:"). Rendered into an image it reads as a leaked
+# template. Two patterns because the risk is asymmetric:
+#
+#   LOOSE — pure template words. A trailing number alone is enough to strip,
+#           because "Slide 1 It tastes bitter" is never real copy.
+#   STRICT — words that also appear in genuine headlines ("Step into real
+#           coffee"). These need an actual delimiter, so prose survives.
+_NUM = r"\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten"
+_NOISE = r"[\s*_#>\[\(\-]*"          # markdown bold, bullets, brackets, quotes
+_DELIM = r"[:\-–—.)]"
+
+_SCAFFOLD_LOOSE = re.compile(
+    rf"^{_NOISE}"
+    r"(slide|frame|scene|card|panel|hook|headline|caption|title|(?:text\s+)?overlay)"
+    rf"\s*(?:no\.?|number|#)?\s*"
+    rf"(?:(?:{_NUM})\s*[\]\)]?\s*{_DELIM}*|[\]\)]?\s*{_DELIM}+)"
+    r"\s*[*_]*\s*", re.I)
+
+_SCAFFOLD_STRICT = re.compile(
+    rf"^{_NOISE}"
+    r"(step|part|page|image|visual|body|copy|text)"
+    rf"\s*(?:no\.?|number|#)?\s*(?:{_NUM})?\s*[\]\)]?\s*{_DELIM}+"
+    r"\s*[*_]*\s*", re.I)
+
+# ── Glyph safety ──────────────────────────────────────────────────────────────
+# Fixing tofu by listing the characters that broke is whack-a-mole — the next
+# unlisted glyph ships to Instagram. Instead: map the symbols worth keeping to
+# ASCII equivalents, then drop anything still non-ASCII. On-screen brand copy is
+# English, so this is total coverage regardless of which font the runner resolves.
+_GLYPH_MAP = {
+    "•": "-", "·": "-", "‧": "-", "▪": "-", "●": "-", "‣": "-",
+    "–": "-", "—": "-", "―": "-", "‑": "-", "−": "-",
+    "'": "'", "'": "'", "‚": ",", """: '"', """: '"', "„": '"',
+    "…": "...", "→": "->", "←": "<-", "⇒": "=>", "↑": "^", "↓": "v",
+    "×": "x", "÷": "/", "±": "+/-", "≈": "~", "≠": "!=", "≤": "<=", "≥": ">=",
+    "™": "(TM)", "®": "(R)", "©": "(C)", "°": " deg",
+    "★": "*", "☆": "*", "✓": "+", "✔": "+", "✗": "x", "✘": "x",
+    "₹": "Rs ", "€": "EUR ", "£": "GBP ", "¢": "c",
+    " ": " ", "​": "", " ": " ", " ": " ",
+}
 
 
 def _sanitize_text(text: str) -> str:
-    """Last line of defence before pixels: no 'Slide 1:' labels, no tofu glyphs."""
+    """
+    Last line of defence before pixels: no 'Slide 1:' labels, no unrenderable
+    glyphs. Render path only — Instagram captions keep their emoji.
+    """
     t = str(text or "").strip()
-    for _ in range(3):
-        new = _SCAFFOLD.sub("", t).strip()
+
+    for _ in range(3):                       # handles "Slide 1: Hook: ..."
+        new = _SCAFFOLD_STRICT.sub("", _SCAFFOLD_LOOSE.sub("", t)).strip()
         if new == t:
             break
         t = new
-    for bad, good in (("•", "|"), ("·", "|"), ("–", "-"),
-                      ("—", "-"), ("’", "'"), ("“", '"'), ("”", '"')):
+
+    for bad, good in _GLYPH_MAP.items():
         t = t.replace(bad, good)
-    return t
+    # Decompose accents (é -> e + mark) so the base letter survives the drop.
+    t = unicodedata.normalize("NFKD", t)
+    t = "".join(ch for ch in t if ord(ch) < 128)
+    return re.sub(r"\s{2,}", " ", t).strip()
 
 
 def _wrap(draw, text: str, font, max_w: int) -> list[str]:
@@ -151,11 +350,16 @@ def compose_post_image(
         logger.warning("[real_jar] Pillow not installed")
         return None
 
-    jar_path = pick_jar_photo(day, idx, product)
+    # Any on-screen copy means we need a substrate with no copy of its own.
+    needs_clean_substrate = bool(str(headline or "").strip() or str(body or "").strip())
+    jar_path = pick_jar_photo(day, idx, product, overlay_safe=needs_clean_substrate)
     if not jar_path:
         return None
 
-    is_lifestyle = "lifestyle" in os.path.basename(jar_path).lower()
+    # Cover mode only applies to full-bleed photos. A white studio sweep is
+    # composited jar-on-canvas instead.
+    is_lifestyle = ("lifestyle" in os.path.basename(jar_path).lower()
+                    and not _has_white_background(jar_path))
 
     canvas = Image.new("RGB", (width, height), _BG)
 
@@ -208,6 +412,11 @@ def compose_post_image(
             except Exception as e:
                 logger.debug("[real_jar] Radial spotlight failed: %s", e)
 
+            # Cut the white sweep away before pasting, or the studio background
+            # lands as a hard white rectangle over the espresso canvas and the
+            # radial spotlight drawn above is completely hidden behind it.
+            jar = knockout_white(Image.open(jar_path))
+
             # Paste jar at bottom 55%
             target_h = int(height * 0.52)
             ratio    = target_h / jar.height
@@ -217,7 +426,7 @@ def compose_post_image(
                 jar = jar.resize((width - 80, int(jar.height * r)), resample_filter)
             jx = (width - jar.width) // 2
             jy = height - max(8, height // 90) - jar.height - int(height * 0.02)
-            canvas.paste(jar, (jx, jy))
+            canvas.paste(jar, (jx, jy), jar)       # alpha mask = the jar itself
             
     except Exception as e:
         logger.warning("[real_jar] Could not process jar photo %s: %s", jar_path, e)

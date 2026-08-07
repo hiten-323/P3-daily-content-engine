@@ -120,6 +120,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Pillow ships no fonts. Without these the composer falls back to Pillow's
+      # bitmap default, which lacks most glyphs — that is what put tofu boxes
+      # (▯) into published carousel slides. Don't rely on the runner image
+      # happening to include them.
+      - name: Install rendering fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-dejavu-core fonts-liberation
+          fc-list | grep -ci dejavu || (echo "DejaVu missing after install" && exit 1)
+
       # ── 4. Restore output/ from cache (metrics DB persists between runs) ─────
       - name: Restore output cache
         uses: actions/cache@v4
@@ -136,6 +146,16 @@ jobs:
       - name: Clear run lock (if force_run)
         if: ${{ github.event.inputs.force_run == 'true' }}
         run: python -m content_generator.scheduler.daily --unlock
+
+      # ── 5b. Pre-publish gate ─────────────────────────────────────────────────
+      # Nothing on CI verified the renderer before this existed, so a Linux-only
+      # font bug shipped tofu glyphs to the live grid for days. These checks run
+      # on the same runner that renders the posts, and block the run rather than
+      # publish a defect onto a permanent profile grid.
+      - name: Verify render safety and config drift
+        run: |
+          python tests/test_render_safety.py
+          python tests/test_config_drift.py
 
       # ── 6. Run the pipeline ───────────────────────────────────────────────────
       - name: Run autonomous pipeline

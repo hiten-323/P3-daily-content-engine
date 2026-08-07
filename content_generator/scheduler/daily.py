@@ -572,22 +572,28 @@ def _inject_jar_creative_into_reels(content: dict, day: int) -> None:
 
 
 # The LLM sometimes echoes the prompt's scaffolding into the copy itself
-# ("Slide 1: ...", "Frame 2 -", "Hook:"). Rendered into an image it looks like
+# ("Slide 1: ...", "**Frame 2**", "Hook:"). Rendered into an image it looks like
 # a leaked template. Strip these labels from anything that becomes on-screen text.
-_SCAFFOLD_PREFIX = re.compile(
-    r"^\s*(slide|frame|scene|step|part|hook|headline|caption|title)\s*"
-    r"(no\.?\s*)?\d*\s*[:\-–—.)]\s*",
-    re.I,
+#
+# The patterns live in real_jar_composer because that module is the last gate
+# before pixels. Importing them here (rather than re-declaring) means the copy
+# path and the render path can never drift out of sync — which is exactly how
+# "SLIDE 1:" reached a live post while a fix was in the tree.
+from content_generator.creative.real_jar_composer import (   # noqa: E402
+    _SCAFFOLD_LOOSE, _SCAFFOLD_STRICT,
 )
 
 
 def _clean_scaffolding(text: str) -> str:
-    """Remove leading 'Slide 1:' / 'Frame 2 -' style labels (repeatedly)."""
+    """
+    Remove leading 'Slide 1:' / '**Frame 2**' style labels (repeatedly).
+    Captions only — no glyph stripping here, emoji are wanted in captions.
+    """
     if not isinstance(text, str):
         return text
     cleaned = text.strip()
     for _ in range(3):                       # handles "Slide 1: Hook: ..."
-        new = _SCAFFOLD_PREFIX.sub("", cleaned).strip()
+        new = _SCAFFOLD_STRICT.sub("", _SCAFFOLD_LOOSE.sub("", cleaned)).strip()
         if new == cleaned:
             break
         cleaned = new

@@ -1,0 +1,15 @@
+# Full-bleed photos that are safe to draw a headline over.
+#
+# By default the composer only puts text on white-background studio shots,
+# because those provably carry no copy of their own. Most *_lifestyle.png and
+# *_variant.png files are finished agency creatives — they already have a
+# headline, feature bullets and a footer, so our headline lands on top of theirs.
+#
+# If you have a full-bleed photo that is genuinely text-free (just a scene with
+# the jar in it), list its filename here and the composer will use it in cover
+# mode: photo full-frame, dark scrim, headline over the top.
+#
+# One filename per line. Everything after '#' is ignored.
+
+# Clean kitchen scene, no copy baked in — verified 2026-08-07.
+puritybeans_bold_100g_lifestyle.png
