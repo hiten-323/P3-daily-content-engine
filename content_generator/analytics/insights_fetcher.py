@@ -124,10 +124,15 @@ def _fetch_media_insights(media_id: str) -> dict | None:
     comments = (fields or {}).get("comments_count", 0) or 0
     is_reel  = str((fields or {}).get("media_product_type", "")).upper() == "REELS"
 
-    # 2. Insight metrics — reels support 'views', feed/carousel do not
+    # 2. Insight metrics — reels support watch-time metrics, feed/carousel do not.
+    #    ig_reels_avg_watch_time is in MILLISECONDS; ig_reels_video_view_total_time
+    #    is total ms across all views. Both are reels-only and 400 on other types.
     metric_sets = (
-        (["reach", "saved", "shares", "total_interactions", "views"] if is_reel
+        (["reach", "saved", "shares", "total_interactions", "views",
+          "ig_reels_avg_watch_time", "ig_reels_video_view_total_time"] if is_reel
          else ["reach", "saved", "shares", "total_interactions"]),
+        (["reach", "saved", "shares", "views"] if is_reel
+         else ["reach", "saved", "shares"]),
         ["reach", "saved"],
         ["reach"],
     )
@@ -155,15 +160,45 @@ def _fetch_media_insights(media_id: str) -> dict | None:
             "Zeros here would be fabricated, not measured.", media_id)
         return None
 
-    return {
+    out = {
         "views":          raw.get("views", raw.get("reach", 0)),
         "reach":          raw.get("reach", 0),
         "saves":          raw.get("saved", 0),
         "shares":         raw.get("shares", 0),
         "comments":       comments,
         "likes":          likes,
-        "profile_visits": 0,
     }
+    # Watch time — reels only, reported in milliseconds. Omit the keys entirely
+    # on non-reels rather than writing 0: a carousel has no watch time, and a
+    # zero would drag the average as if it were a reel nobody watched.
+    avg_ms = raw.get("ig_reels_avg_watch_time")
+    if avg_ms:
+        out["avg_view_duration_s"] = round(float(avg_ms) / 1000.0, 2)
+    total_ms = raw.get("ig_reels_video_view_total_time")
+    if total_ms:
+        out["watch_time_s"] = round(float(total_ms) / 1000.0, 2)
+    return out
+
+
+def _fetch_account_insights() -> dict:
+    """
+    Account-level daily insights: profile views and website (bio link) clicks.
+
+    These are NOT available per media — Instagram reports them for the account
+    only. They are attributed across the day's posts the same way follows_gained
+    already is. That attribution is an approximation and is labelled as such;
+    true per-post link CTR needs a link-in-bio router handing out per-post URLs.
+    """
+    account_id = os.getenv("INSTAGRAM_ACCOUNT_ID")
+    if not account_id:
+        return {}
+    data = _graph_get(f"{account_id}/insights",
+                      {"metric": "profile_views,website_clicks", "period": "day"})
+    out = {}
+    for item in ((data or {}).get("data") or []):
+        values = item.get("values") or [{}]
+        out[item.get("name", "")] = values[0].get("value", 0) or 0
+    return out
 
 
 def _fetch_follower_count() -> int | None:
@@ -201,6 +236,7 @@ def fetch_pending_insights() -> dict:
 
     # Follower snapshot: compare with last snapshot to estimate follows gained
     follower_count = _fetch_follower_count()
+    acct = _fetch_account_insights()   # profile_views, website_clicks (account-level)
     prev_count     = None
     snap_path      = os.path.join(_LEARNING_DIR, "follower_snapshots.json")
     snapshots      = []
@@ -255,9 +291,17 @@ def fetch_pending_insights() -> dict:
             else:
                 pending += 1
             continue
-        # Attribute the day's follower gain evenly across the day's posts
-        if follows_gained_total and due:
-            metrics["follows_gained"] = follows_gained_total // len(due)
+        # Account-level signals attributed evenly across the day's posts. These
+        # are approximations by construction — Instagram reports them for the
+        # account, not the media — but an even split across the day's posts is
+        # far better than dropping three primary KPIs entirely.
+        if due:
+            if follows_gained_total:
+                metrics["follows_gained"] = follows_gained_total // len(due)
+            if acct.get("profile_views"):
+                metrics["profile_visits"] = int(acct["profile_views"]) // len(due)
+            if acct.get("website_clicks"):
+                metrics["website_clicks"] = int(acct["website_clicks"]) // len(due)
 
         record_performance(
             asset_id    = post["asset_id"],

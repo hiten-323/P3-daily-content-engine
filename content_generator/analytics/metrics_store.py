@@ -217,7 +217,13 @@ def record_metrics(
               score, hook_archetype, emotion, objective, platform))
 
     _update_hook_stats(hook_archetype, views, retention, shares, saves, score)
-    logger.info("[metrics] %s → viral_score=%.1f", content_id, score)
+    # score is None until the account has enough history to normalize against;
+    # it is stored as NULL rather than 0 so "unscored" stays distinct from "bad".
+    if score is None:
+        logger.info("[metrics] %s → viral_score unavailable (no account baseline yet)",
+                    content_id)
+    else:
+        logger.info("[metrics] %s → viral_score=%.1f", content_id, score)
     return score
 
 
@@ -225,7 +231,7 @@ def _update_hook_stats(
     archetype: str,
     views: int, retention: float,
     shares: int, saves: int,
-    score: float,
+    score: float | None,
 ) -> None:
     if not archetype:
         return
@@ -236,7 +242,17 @@ def _update_hook_stats(
         if row:
             n = row["sample_count"]
             def _avg(col, new_val):
-                return (row[col] * n + new_val) / (n + 1)
+                return ((row[col] or 0) * n + new_val) / (n + 1)
+            # An unscored post (no account baseline yet) must not be folded into
+            # the average as a zero — that would read as "this hook performs
+            # badly" when the truth is "this hook has not been scored".
+            prev = row["avg_viral_score"]
+            if score is None:
+                new_score = prev
+            elif prev is None:
+                new_score = score
+            else:
+                new_score = _avg("avg_viral_score", score)
             con.execute("""
                 UPDATE hook_performance SET
                     avg_views=?, avg_retention=?, avg_shares=?, avg_saves=?,
@@ -245,7 +261,7 @@ def _update_hook_stats(
                 WHERE archetype=?
             """, (_avg("avg_views", views), _avg("avg_retention", retention),
                   _avg("avg_shares", shares), _avg("avg_saves", saves),
-                  _avg("avg_viral_score", score), archetype))
+                  new_score, archetype))
         else:
             con.execute("""
                 INSERT INTO hook_performance

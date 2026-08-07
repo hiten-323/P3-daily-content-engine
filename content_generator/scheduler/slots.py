@@ -115,6 +115,20 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
                     "[slots] no hook found on %s piece (keys=%s) — this post "
                     "cannot be learned from", slot, sorted(piece.keys())[:12])
 
+            # Log value-vs-product so the 80/20 cap measures what actually
+            # published, not what was planned.
+            try:
+                from content_generator.core.content_balance import (
+                    classify_asset, record as record_balance, current_share,
+                )
+                kind = classify_asset(piece)
+                record_balance(f"instagram_{slot}_day{content.get('day_number', 0)}", kind)
+                share = current_share()
+                logger.info("[slots] published as %s — product share now %.0f%% of last %d",
+                            kind, share["share"] * 100, share["n"])
+            except Exception as e:
+                logger.debug("[slots] content balance logging skipped: %s", e)
+
             track_published_post(
                 media_id    = result["media_id"],
                 asset_id    = f"instagram_{slot}_day{content.get('day_number', 0)}",

@@ -181,7 +181,67 @@ def get_valid_assets(content: dict) -> list[str]:
         except Exception as e:
             logger.debug("yt_short validation failed: %s", e)
         
-    return valid
+    return _apply_growth_director_gates(content, valid)
+
+
+def _piece_for(content: dict, key: str) -> dict:
+    """Map an asset key back to the content piece it was built from."""
+    reels = content.get("reels") or []
+    if key == "reel_1":
+        return reels[0] if len(reels) > 0 and isinstance(reels[0], dict) else {}
+    if key == "reel_2":
+        return reels[1] if len(reels) > 1 and isinstance(reels[1], dict) else {}
+    piece = content.get(key)
+    return piece if isinstance(piece, dict) else {}
+
+
+def _apply_growth_director_gates(content: dict, valid: list[str]) -> list[str]:
+    """
+    The two Growth Director rules that can veto an otherwise-valid asset:
+
+      NORTH STAR  "If it is not worth sharing privately, it is not worth
+                   publishing." An asset can be schema-valid, on-brand and above
+                   the editorial threshold and still be generic filler.
+      80/20       Product promotion never exceeds 20% of published content.
+
+    Dropping assets here can take the run below MIN_REQUIRED_ASSETS and block
+    publishing outright. That is intended: "never publish content simply because
+    it fills today's schedule."
+    """
+    kept = []
+    for key in valid:
+        piece = _piece_for(content, key)
+        if not piece:
+            kept.append(key)
+            continue
+        try:
+            from content_generator.core.content_contract import shareability
+            share = shareability(piece)
+            if not share["passes"]:
+                logger.warning(
+                    "[editorial] %s REJECTED by north-star gate (%.0f/100): %s",
+                    key, share["score"], "; ".join(share["reasons"][:3]))
+                continue
+        except Exception as e:
+            logger.debug("[editorial] shareability check unavailable for %s: %s", key, e)
+
+        try:
+            from content_generator.core.content_balance import check as balance_check
+            bal = balance_check(piece, key)
+            if not bal["allowed"]:
+                logger.warning("[editorial] %s REJECTED by 80/20 cap: %s", key, bal["reason"])
+                continue
+        except Exception as e:
+            logger.debug("[editorial] balance check unavailable for %s: %s", key, e)
+
+        kept.append(key)
+
+    dropped = [k for k in valid if k not in kept]
+    if dropped:
+        logger.warning("[editorial] Growth Director gates dropped %s — quality over schedule",
+                       dropped)
+    return kept
+
 
 def pre_publish_check(content: dict) -> bool:
     """

@@ -44,11 +44,28 @@ _WEAK_OPENERS = ["hey", "hello", "welcome", "today we", "in this", "let me", "i 
 
 # 2026 (heyDominik): conversational "doesn't-sound-like-a-hook" openers slip past
 # the ad-blindness shield and outperform clever/bait hooks.
+#
+# NOTE: "did you know" and "ever wondered" were previously in this REWARDED list
+# on the strength of that external research. The founder's Growth Director spec
+# bans them outright, with the caveat "unless data proves they outperform" — and
+# this account has no data to arbitrate with. The explicit instruction wins; they
+# now sit in _BANNED_OPENERS below. Revisit only with own-account evidence.
 _CONVERSATIONAL = [
-    "did you know", "here's something", "here's what", "i noticed", "turns out",
+    "here's something", "here's what", "i noticed", "turns out",
     "nobody told me", "the other day", "so i", "i just realised", "i just realized",
-    "ever wondered", "little known", "most people don't realise", "most people don't realize",
+    "little known", "most people don't realise", "most people don't realize",
 ]
+
+# Growth Director spec — formats that read as generic content-marketing. These
+# are a hard penalty, not a nudge: a hook opening this way should lose to almost
+# any specific alternative.
+_BANNED_OPENERS = [
+    "did you know", "ever wondered", "here's why", "heres why",
+    "the reason why", "let's talk about", "lets talk about",
+]
+# "5 tips", "7 ways", "3 things to..." — listicle framing.
+_LISTICLE = re.compile(
+    r"^\s*\d+\s+(tips?|ways?|things?|reasons?|steps?|hacks?|secrets?|facts?)\b", re.I)
 # Over-used bait patterns that now read as "this is an ad, skip".
 _BAIT_PATTERNS = [
     "shocking", "you won't believe", "this one trick", "gone wrong", "!!!",
@@ -92,8 +109,34 @@ def score_hook(hook: str) -> float:
         score -= 20  # fabricated-stat risk
     if any(b in h for b in _BAIT_PATTERNS):
         score -= 18  # ad-blindness triggers — reads as bait
+    # Growth Director spec: generic openers and listicle framing. Heavier than
+    # the bait penalty because these are explicitly named as disqualifying.
+    if any(h.startswith(b) for b in _BANNED_OPENERS):
+        score -= 35
+    if _LISTICLE.match(h):
+        score -= 35
 
     return max(0.0, min(100.0, score))
+
+
+def hook_violations(hook: str) -> list[str]:
+    """
+    Named spec violations for a hook — used by the editorial gate so a rejection
+    can say WHY rather than just returning a low number.
+    """
+    h = str(hook or "").lower().strip()
+    out = []
+    for b in _BANNED_OPENERS:
+        if h.startswith(b):
+            out.append(f'opens with banned phrase "{b}"')
+    if _LISTICLE.match(h):
+        out.append("listicle framing (\"5 tips\", \"3 ways\")")
+    for b in _BAIT_PATTERNS:
+        if b in h:
+            out.append(f'bait pattern "{b}"')
+    if re.search(r"\d+%|\d+ out of \d+", h):
+        out.append("numeric claim in hook — fabricated-stat risk")
+    return out
 
 
 def select_best_hook(piece: dict) -> dict:
