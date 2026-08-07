@@ -83,18 +83,45 @@ def _find_reel_thumbnail() -> str | None:
     return None
 
 
+def _first(piece: dict, *keys: str) -> str:
+    """First non-empty value among keys — schemas drift, field names move."""
+    for k in keys:
+        v = piece.get(k)
+        if v is not None and str(v).strip():
+            return str(v).strip()
+    return ""
+
+
 def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
     """Register the published media for tomorrow's insights fetch."""
     try:
         if result.get("success") and result.get("media_id"):
             from content_generator.analytics.insights_fetcher import track_published_post
+
+            # The schema field is `hook`. This read `hook_text`/`title`, which
+            # exist on neither carousels nor reels, so all 50 tracked posts
+            # carried an empty hook and the learning engine had nothing to
+            # attribute performance to. Cascade + warn, so a future rename
+            # degrades loudly instead of silently emptying the learning log.
+            hook = _first(piece, "hook", "hook_text", "headline", "title")
+            topic = _first(piece, "objective", "angle", "save_mechanic",
+                           "hook_archetype", "type")
+            # `slot` is the time of day, not a format — it made every record say
+            # "morning"/"evening" and made format-level learning impossible.
+            fmt = _first(piece, "type") or slot
+
+            if not hook:
+                logger.warning(
+                    "[slots] no hook found on %s piece (keys=%s) — this post "
+                    "cannot be learned from", slot, sorted(piece.keys())[:12])
+
             track_published_post(
                 media_id    = result["media_id"],
                 asset_id    = f"instagram_{slot}_day{content.get('day_number', 0)}",
                 track       = "brand",
-                hook        = str(piece.get("hook_text") or piece.get("title") or "")[:120],
-                topic       = str(piece.get("save_mechanic") or piece.get("hook_archetype") or "")[:120],
-                format_used = slot,
+                hook        = hook[:120],
+                topic       = topic[:120],
+                format_used = fmt,
                 hashtags    = str(result.get("hashtags_used") or ""),
             )
     except Exception as e:

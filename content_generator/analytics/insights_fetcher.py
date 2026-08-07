@@ -32,6 +32,11 @@ _TIMEOUT       = 30
 # a post needs time to accumulate meaningful numbers.
 MIN_AGE_HOURS = 20
 
+# How many runs to keep retrying a post whose insights call fails before
+# abandoning it. Abandoning writes NO performance row — an unmeasured post must
+# leave no trace in the learning log rather than a fabricated zero one.
+MAX_FETCH_ATTEMPTS = 5
+
 # Graph API media insights metrics (v18+). 'views' replaced impressions/plays.
 _MEDIA_METRICS = "views,reach,saved,shares,comments,likes,total_interactions"
 
@@ -135,8 +140,20 @@ def _fetch_media_insights(media_id: str) -> dict | None:
                 raw[item.get("name", "")] = values[0].get("value", 0) or 0
             break
 
-    if not raw and fields is None:
-        return None   # object genuinely unreadable (deleted / permission)
+    # A failed insights call must NOT be written as measured zeros. This
+    # previously returned reach/saves/shares = 0 whenever the endpoint errored,
+    # the caller marked the post recorded, and it was never retried — so 50
+    # posts entered the learning log as "reached nobody, saved by nobody" when
+    # in truth they were never measured at all. Every downstream system (reward,
+    # viral memory, never-repeat list) then trained on that fiction.
+    #
+    # `raw` empty means the endpoint gave us nothing. A genuine zero still
+    # arrives as a present key with value 0, so real zeros are preserved.
+    if not raw:
+        logger.warning(
+            "[insights] No insight metrics returned for %s — not recording. "
+            "Zeros here would be fabricated, not measured.", media_id)
+        return None
 
     return {
         "views":          raw.get("views", raw.get("reach", 0)),
@@ -176,10 +193,11 @@ def fetch_pending_insights() -> dict:
 
     from content_generator.core.learning_engine import record_performance
 
-    posts    = _load_posts()
-    now      = datetime.datetime.now()
-    recorded = 0
-    pending  = 0
+    posts     = _load_posts()
+    now       = datetime.datetime.now()
+    recorded  = 0
+    pending   = 0
+    abandoned = 0
 
     # Follower snapshot: compare with last snapshot to estimate follows gained
     follower_count = _fetch_follower_count()
@@ -221,7 +239,21 @@ def fetch_pending_insights() -> dict:
     for post in due:
         metrics = _fetch_media_insights(post["media_id"])
         if metrics is None:
-            pending += 1
+            # Retry on a later run instead of inventing numbers. Give up after
+            # MAX_FETCH_ATTEMPTS so a deleted or permission-denied media object
+            # isn't probed forever — and abandon it WITHOUT writing a row, so
+            # the learning log contains only real measurements.
+            attempts = int(post.get("fetch_attempts", 0)) + 1
+            post["fetch_attempts"] = attempts
+            if attempts >= MAX_FETCH_ATTEMPTS:
+                post["insights_recorded"] = True
+                post["insights_failed"]   = True
+                abandoned += 1
+                logger.warning(
+                    "[insights] Giving up on %s after %d attempts — never "
+                    "measured, no row written", post.get("asset_id"), attempts)
+            else:
+                pending += 1
             continue
         # Attribute the day's follower gain evenly across the day's posts
         if follows_gained_total and due:
@@ -251,7 +283,13 @@ def fetch_pending_insights() -> dict:
 
     _save_posts(posts)
     logger.info(
-        "[insights] Done — %d recorded, %d pending, followers=%s",
-        recorded, pending, follower_count,
+        "[insights] Done — %d recorded, %d pending, %d abandoned unmeasured, followers=%s",
+        recorded, pending, abandoned, follower_count,
     )
-    return {"recorded": recorded, "pending": pending, "follower_count": follower_count}
+    if abandoned:
+        logger.warning(
+            "[insights] %d post(s) were never measured. Check that the token has "
+            "instagram_manage_insights and that the account is a Business/Creator "
+            "account — insights are unavailable on personal accounts.", abandoned)
+    return {"recorded": recorded, "pending": pending, "abandoned": abandoned,
+            "follower_count": follower_count}

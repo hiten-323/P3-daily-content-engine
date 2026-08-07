@@ -65,11 +65,28 @@ def run_self_audit(content: dict | None = None, publish_result: dict | None = No
         return bool(pub or held), f"{len(pub)} published, {len(held)} held"
     checks.append(_check("Publishing", _publish))
 
-    # 5. Learning loop is accumulating data
+    # 5. Learning loop is accumulating REAL data
     def _learning():
-        from content_generator.core.learning_engine import analyze
-        n = analyze().get("count", 0)
-        return True, f"{n} posts with metrics" + (" (cold start)" if n < 3 else "")
+        from content_generator.core.learning_engine import _load_log
+        rows = _load_log()
+        # Count measurements, not rows. Counting rows is exactly what let 50
+        # fabricated zero-reach records report as a healthy learning loop for
+        # weeks while the insights fetch was silently failing on every post.
+        measured = [e for e in rows
+                    if ((e.get("metrics") or {}).get("reach", 0)
+                        or (e.get("metrics") or {}).get("views", 0))]
+        settled = 0
+        try:
+            from content_generator.analytics.insights_fetcher import _load_posts
+            settled = len([p for p in _load_posts() if p.get("insights_recorded")])
+        except Exception as e:
+            logger.debug("[audit] tracked-post count unavailable: %s", e)
+
+        if settled >= 3 and not measured:
+            return False, (f"{settled} posts settled but 0 measured — insights "
+                           f"are not landing; the loop is training on nothing")
+        n = len(measured)
+        return True, f"{n} measured posts" + (" (cold start)" if n < 3 else "")
     checks.append(_check("Learning", _learning))
 
     # 6. Reward function resolves and matches the founder KPI

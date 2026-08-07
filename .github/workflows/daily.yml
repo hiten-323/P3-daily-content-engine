@@ -155,6 +155,7 @@ jobs:
       - name: Verify render safety and config drift
         run: |
           python tests/test_render_safety.py
+          python tests/test_measurement_integrity.py
           python tests/test_config_drift.py
 
       # ── 6. Run the pipeline ───────────────────────────────────────────────────
