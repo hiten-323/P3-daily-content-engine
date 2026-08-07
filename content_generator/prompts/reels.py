@@ -32,6 +32,11 @@ Ask: Is this something urban Indian coffee drinkers are curious about but nobody
 If yes → proceed. If no → reframe the angle until it passes.
 The best hooks cannot save a topic nobody cares about.
 
+PSYCHOLOGY REQUIREMENT:
+Pick ONE primary frame from the PSYCHOLOGY FRAMES list above.
+Put its id in "psychology_frame". The frame must drive the hook, the spoken arc, and the share/save triggers.
+Product claims (100% coffee, zero chicory, Rs 18) support the frame — they are not the frame.
+
 ABSOLUTE RULES:
 - NEVER invent statistics or percentages
 - NEVER make medical claims
@@ -39,10 +44,11 @@ ABSOLUTE RULES:
 - Caption MUST be 150-250 words
 - Brand name 'Purity Beans' MUST appear in caption
 - Website '{WEBSITE_URL}' MUST appear in caption and CTA
-- comment_trigger, save_trigger, share_trigger, ai_image_hook_prompt, ai_video_motion_prompt are MANDATORY fields
+- comment_trigger, save_trigger, share_trigger, ai_image_hook_prompt, ai_video_motion_prompt, psychology_frame are MANDATORY fields
 
 {{
   "id": "{reel_id}",
+  "psychology_frame": "one of: revelation | clean_label | ritual | sensory | social_currency | accessible_premium | certainty",
   "hook_archetype": "{arch[0]}",
   "hook_text": "4 WORDS MAX ALL CAPS — stops the scroll instantly",
   "hook_options": [
