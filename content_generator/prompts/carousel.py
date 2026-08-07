@@ -52,16 +52,22 @@ SUBJECT TEST (mandatory before writing):
 Ask: Is this something urban Indian coffee drinkers are curious about but nobody has explained simply?
 If yes → proceed. If no → reframe until it passes. The best carousel design cannot save a topic nobody cares about.
 
+PSYCHOLOGY REQUIREMENT:
+Pick ONE primary frame from the PSYCHOLOGY FRAMES list above.
+Put its id in "psychology_frame". The frame must drive the cover hook, the emotional arc, and the share/save triggers.
+Product claims (100% coffee, zero chicory, Rs 18) support the frame — they are not the frame.
+
 ABSOLUTE RULES:
 - NEVER invent statistics or percentages
 - NEVER make medical claims
 - Minimum 6 slides, maximum 8 slides
 - Final slide MUST include CTA + {WEBSITE_URL} + mention of Purity Beans
 - caption MUST be 200-300 words
-- comment_trigger, save_trigger, share_trigger, hashtags are MANDATORY
+- comment_trigger, save_trigger, share_trigger, hashtags, psychology_frame are MANDATORY
 
 {{
   "id": "carousel_1",
+  "psychology_frame": "one of: revelation | clean_label | ritual | sensory | social_currency | accessible_premium | certainty",
   "save_mechanic": "{mech[0]}",
   "title": "7 WORDS MAX — curiosity + utility that forces the save",
   "slides": [
