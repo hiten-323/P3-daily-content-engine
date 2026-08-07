@@ -1,6 +1,6 @@
 """
 Shared prompt blocks injected into every module prompt:
-- _brand_block()      — brand context + banned phrases
+- brand_block()       — brand context + psychology frames + banned phrases
 - build_avoid_block() — last-14-day repetition guard
 """
 import logging
@@ -16,6 +16,12 @@ def _get_brand_config():
 
 def brand_block() -> str:
     BRAND, POSITIONING, _ = _get_brand_config()
+    try:
+        from content_generator.core.coffee_psychology import frame_prompt_block
+        psych = frame_prompt_block()
+    except Exception:
+        psych = ""
+
     return (
         f"BRAND: {BRAND['name']} (by {BRAND.get('company', 'Pure Pantry Provisions')}) — premium pure instant coffee, India.\n"
         f"USP: {POSITIONING['usp']}\n"
@@ -29,6 +35,8 @@ def brand_block() -> str:
         f"2. The website '{WEBSITE_URL}' MUST appear in every caption and CTA.\n"
         f"3. At least one of these must appear: 'zero chicory' / '100% coffee' / 'pure coffee' / 'no chicory'.\n"
         f"4. Never use generic phrases. Every line must be specific to Purity Beans.\n"
+        f"\n"
+        f"{psych}\n"
         f"\n"
         f"BANNED PHRASES: \"transform your mornings\" / \"elevate your experience\" / "
         f"\"perfect cup\" / \"fuel your day\" / \"game changer\" / \"level up\" / "
