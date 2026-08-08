@@ -1,37 +1,23 @@
+
 """
 Coffee Marketing Psychology — single source of truth for Purity Beans content.
-
-Why this exists:
-  Generic "premium coffee" language produces advertisements. People do not share
-  advertisements. The content that travels is the thing someone sends a friend —
-  the revelation, the label test, the sensory difference after years of filler.
-
-  These frames are ranked by fit for a pure-instant brand in India. Every
-  generation prompt should pick one (or a clean combination) rather than invent
-  a new angle from scratch.
-
-Evidence base (condensed):
-  - Ritual communication raises willingness-to-pay (Intellect 2023).
-  - Revelation / cognitive dissonance is the strongest pure-coffee lever in India
-    (chicory normalised for decades; FSSAI front-of-pack rules make it timely).
-  - Clean-label self-signaling is rising among urban 25-40s who already read
-    ingredient panels on other categories.
-  - Social currency ("3 signs...", "look at the label") drives saves + shares more
-    reliably than product shots.
-  - Accessible premium (café quality at home price) resolves the price-sensitivity
-    paradox without status anxiety.
 """
 from __future__ import annotations
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
-# ── Primary frames (ordered by leverage for this brand) ───────────────────────
+PSYCHOLOGY_SCHEMA_VERSION = 2
+VALID_OBJECTIVES = {"shareability", "saves", "comments", "follows", "trust", "education", "conversion"}
+VALID_FORMATS = {"reel", "carousel", "story"}
 
 PSYCHOLOGY_FRAMES = [
     {
         "id": "revelation",
         "name": "Revelation / Cognitive Dissonance",
+        "version": 1,
+        "objective": "comments",
         "risk_level": "medium",
         "theory": {
             "core": "You have been drinking something that is not what you thought it was.",
@@ -42,46 +28,23 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "You have been drinking chicory your entire life.",
-                "Most people do not know their daily coffee has filler.",
-                "What is actually inside your coffee jar?"
+                "40% of what you drank this morning was not coffee.",
+                "The bitter truth about your sweet morning coffee.",
+                "Why your instant coffee does not smell like a café."
             ],
             "best_formats": ["reel", "carousel"],
-            "share_trigger": "Tag the person who still buys the big brand without reading the label."
+            "share_trigger": "Tag the person who buys the big cheap jars."
         },
         "governance": {
-            "allowed_claims": ["100% coffee", "zero chicory", "chicory root is a filler"],
-            "prohibited_claims": ["competitors are toxic", "chicory causes diseases", "fabricated percentages"]
+            "allowed_claims": ["chicory is a filler", "many commercial brands contain chicory", "check the ingredients"],
+            "prohibited_claims": ["chicory is toxic", "chicory causes health issues"]
         }
     },
     {
-        "id": "clean_label",
-        "name": "Clean-Label Self-Signaling",
-        "risk_level": "low",
-        "theory": {
-            "core": "Reading the label is an act of self-respect, not paranoia.",
-            "why_it_works": (
-                "Turns a low-effort behaviour (looking at the back of the pack) into "
-                "an identity signal. The person who checks becomes the informed one."
-            )
-        },
-        "creative_application": {
-            "example_hooks": [
-                "3 signs your coffee is not pure.",
-                "How to read a coffee label in 15 seconds.",
-                "The ingredient most brands hope you never notice."
-            ],
-            "best_formats": ["carousel", "reel"],
-            "share_trigger": "Save this before your next grocery run."
-        },
-        "governance": {
-            "allowed_claims": ["Purity Beans ingredients: 100% coffee", "read the back ingredient panel"],
-            "prohibited_claims": ["other food products are poisoned", "unverified FSSAI violations"]
-        }
-    },
-    {
-        "id": "ritual",
-        "name": "Ritual Elevation",
+        "id": "ritual_identity",
+        "name": "Ritual Identity",
+        "version": 1,
+        "objective": "trust",
         "risk_level": "low",
         "theory": {
             "core": "The morning cup is not caffeine delivery. It is the first decision of the day.",
@@ -93,24 +56,26 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "Your morning coffee is the first decision you make about yourself.",
-                "Start the day with something that is actually coffee.",
-                "The 2-minute ritual that changes the rest of the day."
+                "Your morning routine sets the tone for your day.",
+                "Upgrade your first decision today.",
+                "A better morning starts with a pure cup."
             ],
             "best_formats": ["reel", "story"],
-            "share_trigger": "Send this to someone who still starts the day on autopilot."
+            "share_trigger": "Share with someone who values their morning quiet time."
         },
         "governance": {
-            "allowed_claims": ["pure coffee ritual", "100% coffee ingredients", "premium morning routine"],
-            "prohibited_claims": ["instant coffee cures drowsiness forever", "medical sleep cures"]
+            "allowed_claims": ["pure coffee aroma", "freeze-dried quality", "smooth taste"],
+            "prohibited_claims": ["guarantees a productive day", "medical mood enhancement"]
         }
     },
     {
-        "id": "sensory",
+        "id": "sensory_contrast",
         "name": "Sensory Contrast",
-        "risk_level": "low",
+        "version": 1,
+        "objective": "saves",
+        "risk_level": "medium",
         "theory": {
-            "core": "Once you taste real coffee, the filler version becomes obvious.",
+            "core": "Once you notice the muddy aftertaste of chicory, you cannot un-taste it.",
             "why_it_works": (
                 "Sensory memory is sticky. Describing the exact moment the taste "
                 "changes (bitterness at minute two, muddy aftertaste, missing aroma) "
@@ -134,6 +99,8 @@ PSYCHOLOGY_FRAMES = [
     {
         "id": "social_currency",
         "name": "Social Currency / Shareable Discovery",
+        "version": 1,
+        "objective": "shareability",
         "risk_level": "medium",
         "theory": {
             "core": "This is information that makes the sharer look informed.",
@@ -160,6 +127,8 @@ PSYCHOLOGY_FRAMES = [
     {
         "id": "accessible_premium",
         "name": "Accessible Premium",
+        "version": 1,
+        "objective": "conversion",
         "risk_level": "low",
         "theory": {
             "core": "Café quality without café price or café effort.",
@@ -186,6 +155,8 @@ PSYCHOLOGY_FRAMES = [
     {
         "id": "certainty",
         "name": "Loss Aversion / Certainty",
+        "version": 1,
+        "objective": "trust",
         "risk_level": "medium",
         "theory": {
             "core": "Knowing exactly what is in the cup removes a quiet daily uncertainty.",
@@ -213,47 +184,63 @@ PSYCHOLOGY_FRAMES = [
 # Fast lookup
 FRAMES_BY_ID = {f["id"]: f for f in PSYCHOLOGY_FRAMES}
 
-
 def get_frame(frame_id: str) -> dict | None:
     return FRAMES_BY_ID.get(frame_id)
 
-
 def frame_prompt_block() -> str:
-    """
-    Compact block injected into generation prompts.
-    Forces the model to pick one primary frame instead of inventing angles.
-    """
     lines = [
         "PSYCHOLOGY FRAMES (pick ONE primary frame for this asset — do not invent a new one):",
     ]
     for f in PSYCHOLOGY_FRAMES:
-        lines.append(
-            f"  [{f['id']}] {f['name']} (Risk Level: {f['risk_level'].upper()}):"
-        )
-        lines.append(
-            f"    Core Theory: {f['theory']['core']}"
-        )
-        lines.append(
-            f"    Why it works: {f['theory']['why_it_works']}"
-        )
-        lines.append(
-            f"    Allowed Sourcing Claims: {', '.join(f['governance']['allowed_claims'])}"
-        )
-        lines.append(
-            f"    Prohibited Unverified Claims: {', '.join(f['governance']['prohibited_claims'])}"
-        )
+        lines.append(f"PSYCHOLOGY FRAME")
+        lines.append(f"Name: {f['name']}")
+        lines.append(f"Risk: {f['risk_level'].title()}")
         lines.append("")
-    lines.append(
-        "MANDATORY GOVERNANCE RULE: The chosen psychological mechanism must never override truthfulness. "
-        "Verified facts and brand policies always supersede psychological triggers. Do not fabricate "
-        "statistics or competitor claims to increase shock value. "
-        "The chosen frame must shape the hook, the emotional arc, and the share/save trigger."
-    )
+        lines.append("BEHAVIORAL PRINCIPLE")
+        lines.append(f"Core Theory: {f['theory']['core']}")
+        lines.append(f"Why it works: {f['theory']['why_it_works']}")
+        lines.append("")
+        lines.append("CREATIVE APPLICATION")
+        lines.append(f"Share Trigger: {f['creative_application']['share_trigger']}")
+        lines.append("")
+        lines.append("GOVERNANCE")
+        lines.append(f"Allowed claim categories:")
+        lines.append(f"  {', '.join(f['governance']['allowed_claims'])}")
+        lines.append(f"Prohibited:")
+        lines.append(f"  {', '.join(f['governance']['prohibited_claims'])}")
+
+        # Operational Risk - enforce stricter generation behavior
+        if f['risk_level'] == 'high':
+            lines.append("WARNING (HIGH RISK FRAME): Stricter factual adherence required. Double-check all claims.")
+
+        lines.append("-" * 40)
+        lines.append("")
+
+    lines.append("MANDATORY TRUTH RULES")
+    lines.append("HIGHEST PRIORITY")
+    lines.append("1. Verified brand/product facts")
+    lines.append("2. Brand safety policy")
+    lines.append("3. Psychology governance")
+    lines.append("4. Creative strategy")
+    lines.append("5. Virality optimization")
+    lines.append("LOWEST PRIORITY")
+    lines.append("")
+    lines.append("If a creative or psychological objective conflicts with a verified fact or safety rule, abandon the creative objective.")
+    lines.append("- Never invent statistics.")
+    lines.append("- Never infer competitor facts.")
+    lines.append("- Never convert an example into a factual claim.")
+    lines.append("- Never create an offer that is not active.")
+    lines.append("- Verified product facts must come from the product knowledge source.")
+    lines.append("")
+    lines.append("MANDATORY GOVERNANCE RULE: The chosen psychological mechanism must never override truthfulness.")
+    lines.append("Verified facts and brand policies always supersede psychological triggers. Do not fabricate")
+    lines.append("statistics or competitor claims to increase shock value.")
+    lines.append("The chosen frame must shape the hook, the emotional arc, and the share/save trigger.")
+
     return "\n".join(lines)
 
 
 def recommended_frame_for_format(fmt: str) -> list[str]:
-    """Return frame ids that historically fit a given format."""
     fmt = (fmt or "").lower()
     out = []
     for f in PSYCHOLOGY_FRAMES:
@@ -263,33 +250,39 @@ def recommended_frame_for_format(fmt: str) -> list[str]:
 
 
 def validate_registry() -> bool:
-    """
-    Validate all psychology frames against the strict schema.
-    Returns True if valid, raises ValueError on any violation.
-    """
     seen_ids = set()
     valid_risk_levels = {"low", "medium", "high"}
+    id_pattern = re.compile(r"^[a-z][a-z0-9_]*$")
     
     for f in PSYCHOLOGY_FRAMES:
-        # Check required root keys
-        for key in ("id", "name", "risk_level", "theory", "creative_application", "governance"):
+        expected_keys = {"id", "name", "version", "objective", "risk_level", "theory", "creative_application", "governance"}
+        for key in expected_keys:
             if key not in f:
                 raise ValueError(f"Psychology frame missing required root key: '{key}' in frame: {f.get('id', 'unknown')}")
+        unexpected_keys = set(f.keys()) - expected_keys
+        if unexpected_keys:
+            raise ValueError(f"Unexpected top-level fields in frame '{f.get('id', 'unknown')}': {unexpected_keys}")
         
-        # Duplicate ID check
         f_id = f["id"]
         if not isinstance(f_id, str) or not f_id:
             raise ValueError(f"Invalid frame ID: {f_id}")
+        if not id_pattern.match(f_id):
+            raise ValueError(f"Invalid frame ID format (must match ^[a-z][a-z0-9_]*$): '{f_id}'")
         if f_id in seen_ids:
             raise ValueError(f"Duplicate psychology frame ID detected: '{f_id}'")
         seen_ids.add(f_id)
         
-        # Validate risk level
+        if not isinstance(f["version"], int) or f["version"] < 1:
+            raise ValueError(f"version must be a positive integer in frame '{f_id}'")
+
+        objective = f["objective"]
+        if objective not in VALID_OBJECTIVES:
+            raise ValueError(f"Invalid objective '{objective}' in frame '{f_id}'. Must be one of {VALID_OBJECTIVES}")
+
         risk = f["risk_level"]
         if risk not in valid_risk_levels:
             raise ValueError(f"Invalid risk_level '{risk}' in frame '{f_id}'. Must be one of {valid_risk_levels}")
             
-        # Validate theory block
         theory = f["theory"]
         if not isinstance(theory, dict):
             raise ValueError(f"theory must be a dict in frame '{f_id}'")
@@ -297,7 +290,6 @@ def validate_registry() -> bool:
             if key not in theory or not isinstance(theory[key], str) or not theory[key].strip():
                 raise ValueError(f"theory block missing or has empty key '{key}' in frame '{f_id}'")
                 
-        # Validate creative application block
         creative = f["creative_application"]
         if not isinstance(creative, dict):
             raise ValueError(f"creative_application must be a dict in frame '{f_id}'")
@@ -305,16 +297,18 @@ def validate_registry() -> bool:
             if key not in creative:
                 raise ValueError(f"creative_application missing key '{key}' in frame '{f_id}'")
         
-        if not isinstance(creative["example_hooks"], list) or not all(isinstance(x, str) for x in creative["example_hooks"]):
-            raise ValueError(f"example_hooks must be a list of strings in frame '{f_id}'")
+        if not isinstance(creative["example_hooks"], list) or len(creative["example_hooks"]) == 0 or not all(isinstance(x, str) for x in creative["example_hooks"]):
+            raise ValueError(f"example_hooks must be a non-empty list of strings in frame '{f_id}'")
             
         if not isinstance(creative["share_trigger"], str) or not creative["share_trigger"].strip():
             raise ValueError(f"share_trigger must be a non-empty string in frame '{f_id}'")
             
         if not isinstance(creative["best_formats"], list) or not all(isinstance(x, str) for x in creative["best_formats"]):
             raise ValueError(f"best_formats must be a list of strings in frame '{f_id}'")
+        for fmt in creative["best_formats"]:
+            if fmt not in VALID_FORMATS:
+                raise ValueError(f"Invalid format '{fmt}' in best_formats in frame '{f_id}'. Must be one of {VALID_FORMATS}")
 
-        # Validate governance block
         gov = f["governance"]
         if not isinstance(gov, dict):
             raise ValueError(f"governance must be a dict in frame '{f_id}'")
@@ -323,10 +317,13 @@ def validate_registry() -> bool:
                 raise ValueError(f"governance missing key '{key}' in frame '{f_id}'")
             if not isinstance(gov[key], list) or not all(isinstance(x, str) for x in gov[key]):
                 raise ValueError(f"{key} must be a list of strings in frame '{f_id}'")
+
+        # Operational check: high risk requires stricter validation rules implicitly
+        if risk == "high":
+            if len(gov["prohibited_claims"]) == 0:
+                raise ValueError(f"High risk frame '{f_id}' must specify prohibited_claims")
                 
     logger.info("[psychology] All %d psychology frames verified successfully against the strict registry schema.", len(PSYCHOLOGY_FRAMES))
     return True
 
-
-# Run schema and duplicate validation at import/startup time
 validate_registry()

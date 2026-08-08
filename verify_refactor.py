@@ -485,7 +485,7 @@ try:
 
     # 4. Test invalid risk level detection
     try:
-        bad_frame = {**PSYCHOLOGY_FRAMES[0], "id": "bad-risk-frame", "risk_level": "ultra-high"}
+        bad_frame = {**PSYCHOLOGY_FRAMES[0], "id": "bad_risk_frame", "version": 1, "objective": "shareability", "risk_level": "ultra-high"}
         PSYCHOLOGY_FRAMES.append(bad_frame)
         try:
             validate_registry()
