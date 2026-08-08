@@ -140,15 +140,48 @@ def test_truth_regression():
     for hook in frame["creative_application"]["example_hooks"]:
         assert "40%" not in hook
 
-def test_no_numerical_percentage_claims_in_hooks():
+def test_no_factual_numbers_in_hooks_and_triggers():
     from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES
     import re
 
-    # Assert no numerical percentage claims like 40% are in example hooks
-    percentage_pattern = re.compile(r"\b\d+(?:\.\d+)?%\b")
+    # Assert no specific factual numbers, prices, or multipliers are embedded as claims in hooks or triggers.
+    # We want to catch \d+%, Rs, ₹, INR, \d+x, \d+ times
+    prohibited_pattern = re.compile(r"(\b\d+(?:\.\d+)?%\b|\bRs\b|₹|\bINR\b|\b\d+x\b|\b\d+\s+times\b)", re.IGNORECASE)
     for frame in PSYCHOLOGY_FRAMES:
         for hook in frame["creative_application"]["example_hooks"]:
-            assert not percentage_pattern.search(hook), f"Found numerical percentage claim in hook: '{hook}' in frame '{frame['id']}'"
+            assert not prohibited_pattern.search(hook), f"Found prohibited factual number or currency in hook: '{hook}' in frame '{frame['id']}'"
+        trigger = frame["creative_application"]["share_trigger"]
+        assert not prohibited_pattern.search(trigger), f"Found prohibited factual number or currency in share trigger: '{trigger}' in frame '{frame['id']}'"
+
+def test_get_frame_isolation():
+    from content_generator.core.coffee_psychology import get_frame
+    frame = get_frame("social_currency")
+    assert frame is not None
+
+    frame["theory"]["core"] = "tampered"
+    frame["creative_application"]["example_hooks"].append("tampered")
+
+    original = get_frame("social_currency")
+    assert original["theory"]["core"] != "tampered"
+    assert "tampered" not in original["creative_application"]["example_hooks"]
+
+def test_invalid_frame_id_raises():
+    from content_generator.core.coffee_psychology import frame_prompt_block
+    import pytest
+    with pytest.raises(ValueError, match="Invalid or missing frame_id"):
+        frame_prompt_block("does_not_exist")
+
+def test_invalid_format_raises():
+    from content_generator.core.coffee_psychology import recommended_frame_for_format
+    import pytest
+    with pytest.raises(ValueError, match="Invalid format requested"):
+        recommended_frame_for_format("youtube")
+
+def test_frame_selection_context():
+    from content_generator.core.coffee_psychology import get_frame_selection_context
+    context = get_frame_selection_context()
+    assert "PSYCHOLOGY FRAMES (Select ONE primary frame to drive the content strategy):" in context
+    assert "[social_currency]" in context
 
 def test_empty_name_fails():
     from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES, validate_registry

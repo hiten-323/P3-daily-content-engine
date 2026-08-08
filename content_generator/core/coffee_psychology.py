@@ -5,6 +5,7 @@ Coffee Marketing Psychology — single source of truth for Purity Beans content.
 from __future__ import annotations
 import logging
 import re
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ PSYCHOLOGY_FRAMES = [
         "theory": {
             "core": "The morning cup is not caffeine delivery. It is the first decision of the day.",
             "why_it_works": (
-                "Rituals increase enjoyment and willingness to pay. Framing the daily "
+                "Hypothesis: Rituals increase enjoyment and willingness to pay. Framing the daily "
                 "cup as identity ('I choose pure') makes switching feel like an upgrade "
                 "to the self, not just the product."
             )
@@ -77,7 +78,7 @@ PSYCHOLOGY_FRAMES = [
         "theory": {
             "core": "Once you notice the muddy aftertaste of chicory, you cannot un-taste it.",
             "why_it_works": (
-                "Sensory memory is sticky. Describing the exact moment the taste "
+                "Hypothesis: Sensory memory is sticky. Describing the exact moment the taste "
                 "changes (bitterness at minute two, muddy aftertaste, missing aroma) "
                 "gives the viewer a private test they can run tomorrow morning."
             )
@@ -105,7 +106,7 @@ PSYCHOLOGY_FRAMES = [
         "theory": {
             "core": "This is information that makes the sharer look informed.",
             "why_it_works": (
-                "People share content that improves their status inside their circle. "
+                "Hypothesis: People share content that improves their status inside their circle. "
                 "'3 signs...', 'look at the label', 'what the ingredient panel actually "
                 "says' are high-status discoveries. Product shots are not."
             )
@@ -131,10 +132,10 @@ PSYCHOLOGY_FRAMES = [
         "objective": "conversion",
         "risk_level": "low",
         "theory": {
-            "core": "Café quality without café price or café effort.",
+            "core": "Premium quality without the typical friction or expense.",
             "why_it_works": (
-                "Resolves the price-sensitivity paradox. Urban Indians will pay for "
-                "quality when friction is removed. Instant + pure + Rs 18/cup is the "
+                "Hypothesis: Resolves the price-sensitivity paradox. Urban Indians will pay for "
+                "quality when friction is removed. Accessible premium positioning serves as the "
                 "sweet spot — premium feeling, everyday accessible."
             )
         },
@@ -161,7 +162,7 @@ PSYCHOLOGY_FRAMES = [
         "theory": {
             "core": "Knowing exactly what is in the cup removes a quiet daily uncertainty.",
             "why_it_works": (
-                "Premium choice is often rational uncertainty management, not status. "
+                "Hypothesis: Premium choice is often rational uncertainty management, not status. "
                 "'I know what I am drinking' is a stronger closer than 'this is better'."
             )
         },
@@ -189,8 +190,8 @@ def get_frame(frame_id: str) -> dict | None:
     if not frame:
         return None
 
-    # Return a copy with operational metadata attached so it can be enforced
-    frame_copy = frame.copy()
+    # Return a deep copy with operational metadata attached so it can be enforced without mutating registry
+    frame_copy = deepcopy(frame)
     risk = frame_copy["risk_level"]
     frame_copy["governance_rules"] = {
         "risk_level": risk,
@@ -200,76 +201,97 @@ def get_frame(frame_id: str) -> dict | None:
     }
     return frame_copy
 
-def frame_prompt_block(frame_id: str = None) -> str:
-    frames_to_render = PSYCHOLOGY_FRAMES
-    if frame_id and frame_id in FRAMES_BY_ID:
-        frames_to_render = [FRAMES_BY_ID[frame_id]]
-        lines = [f"PRIMARY PSYCHOLOGY FRAME: {FRAMES_BY_ID[frame_id]['name']}"]
-    else:
-        lines = ["PSYCHOLOGY FRAMES (pick ONE primary frame for this asset — do not invent a new one):"]
+def _render_truth_rules() -> list[str]:
+    return [
+        "MANDATORY TRUTH RULES",
+        "HIGHEST PRIORITY",
+        "1. Verified brand/product facts",
+        "2. Brand safety policy",
+        "3. Psychology governance",
+        "4. Creative strategy",
+        "5. Virality optimization",
+        "LOWEST PRIORITY",
+        "",
+        "If a creative or psychological objective conflicts with a verified fact or safety rule, abandon the creative objective.",
+        "- Never invent statistics.",
+        "- Never infer competitor facts.",
+        "- Never convert an example into a factual claim.",
+        "- Never create an offer that is not active.",
+        "- Verified product facts must come from the product knowledge source.",
+        "",
+        "MANDATORY GOVERNANCE RULE: The chosen psychological mechanism must never override truthfulness.",
+        "Verified facts and brand policies always supersede psychological triggers. Do not fabricate",
+        "statistics or competitor claims to increase shock value.",
+        "The chosen frame must shape the hook, the emotional arc, and the share/save trigger."
+    ]
 
-    for f in frames_to_render:
-        lines.append(f"PSYCHOLOGY FRAME")
-        lines.append(f"Name: {f['name']}")
-        lines.append(f"Risk: {f['risk_level'].title()}")
-        lines.append("")
-        lines.append("BEHAVIORAL PRINCIPLE")
-        lines.append(f"Core Theory: {f['theory']['core']}")
-        lines.append(f"Why it works: {f['theory']['why_it_works']}")
-        lines.append("")
-        lines.append("CREATIVE APPLICATION")
-        lines.append(f"Share Trigger: {f['creative_application']['share_trigger']}")
-        lines.append(f"Example Hooks (MECHANISMS ONLY, DO NOT COPY AS FACTUAL CLAIMS):")
-        for hook in f['creative_application']['example_hooks']:
-            lines.append(f"  - {hook}")
-        lines.append(f"Best Formats: {', '.join(f['creative_application']['best_formats'])}")
-        lines.append("")
-        lines.append("GOVERNANCE")
-        lines.append(f"Allowed claim categories:")
-        lines.append(f"  {', '.join(f['governance']['allowed_claim_categories'])}")
-        lines.append(f"Prohibited:")
-        lines.append(f"  {', '.join(f['governance']['prohibited_claims'])}")
-
-        # Operational Risk - enforce stricter generation behavior
-        if f['risk_level'] in ('medium', 'high'):
-            lines.append("WARNING (MEDIUM/HIGH RISK FRAME): Explicit claim verification required. Do not imply unsupported facts.")
-        if f['risk_level'] == 'high':
-            lines.append("WARNING (HIGH RISK FRAME): Source-backed facts and strict safety validation required. Manual approval may be enforced.")
-
-        lines.append("-" * 40)
+def get_frame_selection_context() -> str:
+    """Context block exposing all psychology frames strictly for the Growth Director to select from."""
+    lines = [
+        "PSYCHOLOGY FRAMES (Select ONE primary frame to drive the content strategy):",
+        ""
+    ]
+    for f in PSYCHOLOGY_FRAMES:
+        lines.append(f"[{f['id']}] {f['name']} (Risk Level: {f['risk_level'].title()})")
+        lines.append(f"  Core Theory: {f['theory']['core']}")
+        lines.append(f"  Why it works: {f['theory']['why_it_works']}")
+        lines.append(f"  Objective: {f['objective']}")
         lines.append("")
 
-    lines.append("MANDATORY TRUTH RULES")
-    lines.append("HIGHEST PRIORITY")
-    lines.append("1. Verified brand/product facts")
-    lines.append("2. Brand safety policy")
-    lines.append("3. Psychology governance")
-    lines.append("4. Creative strategy")
-    lines.append("5. Virality optimization")
-    lines.append("LOWEST PRIORITY")
+    lines.extend(_render_truth_rules())
+    return "\n".join(lines)
+
+def frame_prompt_block(frame_id: str) -> str:
+    """Generates the content generation prompt block for ONE specific frame."""
+    if not frame_id or frame_id not in FRAMES_BY_ID:
+        raise ValueError(f"Invalid or missing frame_id: {frame_id}")
+
+    f = FRAMES_BY_ID[frame_id]
+    lines = [
+        f"PRIMARY PSYCHOLOGY FRAME: {f['name']}",
+        f"Risk: {f['risk_level'].title()}",
+        "",
+        "BEHAVIORAL PRINCIPLE",
+        f"Core Theory: {f['theory']['core']}",
+        f"Why it works: {f['theory']['why_it_works']}",
+        "",
+        "CREATIVE APPLICATION",
+        f"Share Trigger: {f['creative_application']['share_trigger']}",
+        f"Example Hooks (MECHANISMS ONLY, DO NOT COPY AS FACTUAL CLAIMS):"
+    ]
+    for hook in f['creative_application']['example_hooks']:
+        lines.append(f"  - {hook}")
+    lines.append(f"Best Formats: {', '.join(f['creative_application']['best_formats'])}")
     lines.append("")
-    lines.append("If a creative or psychological objective conflicts with a verified fact or safety rule, abandon the creative objective.")
-    lines.append("- Never invent statistics.")
-    lines.append("- Never infer competitor facts.")
-    lines.append("- Never convert an example into a factual claim.")
-    lines.append("- Never create an offer that is not active.")
-    lines.append("- Verified product facts must come from the product knowledge source.")
+    lines.append("GOVERNANCE")
+    lines.append(f"Allowed claim categories:")
+    lines.append(f"  {', '.join(f['governance']['allowed_claim_categories'])}")
+    lines.append(f"Prohibited:")
+    lines.append(f"  {', '.join(f['governance']['prohibited_claims'])}")
+
+    # Operational Risk - enforce stricter generation behavior
+    if f['risk_level'] in ('medium', 'high'):
+        lines.append("WARNING (MEDIUM/HIGH RISK FRAME): Explicit claim verification required. Do not imply unsupported facts.")
+    if f['risk_level'] == 'high':
+        lines.append("WARNING (HIGH RISK FRAME): Source-backed facts and strict safety validation required. Manual approval may be enforced.")
+
+    lines.append("-" * 40)
     lines.append("")
-    lines.append("MANDATORY GOVERNANCE RULE: The chosen psychological mechanism must never override truthfulness.")
-    lines.append("Verified facts and brand policies always supersede psychological triggers. Do not fabricate")
-    lines.append("statistics or competitor claims to increase shock value.")
-    lines.append("The chosen frame must shape the hook, the emotional arc, and the share/save trigger.")
+
+    lines.extend(_render_truth_rules())
 
     return "\n".join(lines)
 
 
 def recommended_frame_for_format(fmt: str) -> list[str]:
     fmt = (fmt or "").lower()
+    if fmt not in VALID_FORMATS:
+        raise ValueError(f"Invalid format requested: {fmt}. Must be one of {VALID_FORMATS}")
     out = []
     for f in PSYCHOLOGY_FRAMES:
         if fmt in f["creative_application"]["best_formats"]:
             out.append(f["id"])
-    return out or [f["id"] for f in PSYCHOLOGY_FRAMES]
+    return out
 
 
 def validate_registry(frames: list[dict] = None) -> bool:
