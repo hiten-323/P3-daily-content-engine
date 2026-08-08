@@ -70,6 +70,8 @@ def track_published_post(
     topic: str = "",
     format_used: str = "",
     hashtags: str = "",
+    kpi_at_creation: str = "",
+    policy_version: str = "",
 ) -> None:
     """Record a successfully published post so its insights can be fetched later."""
     if not media_id:
@@ -83,6 +85,8 @@ def track_published_post(
         "track":       track,
         "hook":        hook,
         "topic":       topic,
+        "kpi_at_creation": kpi_at_creation,
+        "policy_version": policy_version,
         "format":      format_used,
         "hashtags":    hashtags,
         "published_at": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -328,6 +332,8 @@ def fetch_pending_insights() -> dict:
             posted_at   = post.get("published_at", ""),
             metrics     = metrics,
             notes       = "auto-recorded by insights_fetcher",
+            kpi_at_creation=post.get("kpi_at_creation", ""),
+            policy_version=post.get("policy_version", "")
         )
         post["insights_recorded"] = True
         recorded += 1

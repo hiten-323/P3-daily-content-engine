@@ -223,14 +223,23 @@ def run_revenue_attribution(window_hours: int = 48) -> dict:
     new_ig_orders = [o for o in ig_orders if str(o.get("id")) not in ledger_set]
     new_ig_rev = sum(float(o.get("total_price") or 0) for o in new_ig_orders)
 
-    # Add new orders to the ledger
-    for o in new_ig_orders:
-        ledger_set.add(str(o.get("id")))
-    with open(attributed_orders_path, "w", encoding="utf-8") as f:
-        json.dump(list(ledger_set)[-5000:], f)
-
-    # Attribute Instagram revenue to posts in the window
+    # Attribute Instagram revenue to posts in the window FIRST
     attributed = _attribute_to_posts(new_ig_rev, len(new_ig_orders), since)
+
+    # If attribution succeeds, record them permanently in dict to avoid double counting
+    if attributed > 0 and new_ig_orders:
+        attributed_ledger_dict = {}
+        if isinstance(attributed_ledger, dict):
+            attributed_ledger_dict = attributed_ledger
+        elif isinstance(attributed_ledger, list):
+            for i in attributed_ledger:
+                attributed_ledger_dict[str(i)] = {"attributed_at": now.isoformat()}
+
+        for o in new_ig_orders:
+            attributed_ledger_dict[str(o.get("id"))] = {"attributed_at": now.isoformat(), "attribution_version": 2}
+
+        with open(attributed_orders_path, "w", encoding="utf-8") as f:
+            json.dump(attributed_ledger_dict, f, indent=2)
 
     logger.info(
         "[revenue] %d orders / Rs %.0f total | Instagram: %d orders / Rs %.0f "

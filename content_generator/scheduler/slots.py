@@ -132,11 +132,13 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
             track_published_post(
                 media_id    = result["media_id"],
                 asset_id    = f"instagram_{slot}_day{content.get('day_number', 0)}",
-                track       = "brand",
+                track       = piece.get("track", "brand"),
                 hook        = hook[:120],
                 topic       = topic[:120],
                 format_used = fmt,
                 hashtags    = str(result.get("hashtags_used") or ""),
+                kpi_at_creation=piece.get("target_kpi_at_creation", ""),
+                policy_version=piece.get("policy_version_at_creation", "")
             )
     except Exception as e:
         logger.warning("[slots] tracking failed: %s", e)
@@ -184,8 +186,20 @@ def run_publish_slot(slot: str) -> dict:
 
     if slot == "morning":
         # Carousel / feed post + Instagram Story — 10:00 IST (owner-chosen)
+        from content_generator.core.editorial_engine import get_valid_assets
+        valid_assets = get_valid_assets(content)
+
+        if "carousel" not in valid_assets and "instagram_post" not in valid_assets:
+            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+
+        filtered_content = content.copy()
+        if "carousel" not in valid_assets:
+            filtered_content["carousel"] = {}
+        if "instagram_post" not in valid_assets:
+            filtered_content["instagram_post"] = {}
+
         from content_generator.publisher.instagram import post_content, post_story
-        result = post_content(content, day=day)
+        result = post_content(filtered_content, day=day)
         piece = content.get("carousel") or {}
         _track(result, content, slot, piece)
         _mirror_to_facebook(content, day, slot)
@@ -201,6 +215,12 @@ def run_publish_slot(slot: str) -> dict:
 
     if slot == "evening":
         # Reel video (free motion reel) with image fallback — 22:00 IST
+        from content_generator.core.editorial_engine import get_valid_assets
+        valid_assets = get_valid_assets(content)
+
+        if "growth_reel" not in valid_assets and "reel_1" not in valid_assets:
+            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+
         from content_generator.publisher.instagram import (
             _post_single_image, _assemble_caption, is_configured, post_reel_video,
         )

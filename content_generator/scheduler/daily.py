@@ -921,29 +921,7 @@ def _do_generate_images(content: dict, day_number: int) -> dict:
     return results
 
 
-def _best_assets_by_score(content: dict, count: int) -> list[str]:
-    """Return top N assets ranked by editorial score — emergency fallback."""
-    ASSET_MAP = {
-        "reel_1":         ("reels", 0),
-        "reel_2":         ("reels", 1),
-        "carousel":       ("carousel", None),
-        "instagram_post": ("instagram_post", None),
-        "linkedin_post":  ("linkedin_post", None),
-        "blog_post":      ("blog_post", None),
-        "yt_short":       ("yt_short", None),
-    }
-    scored = []
-    for label, (key, idx) in ASSET_MAP.items():
-        if idx is not None:
-            pieces = content.get(key) or []
-            piece = pieces[idx] if len(pieces) > idx else {}
-        else:
-            piece = content.get(key) or {}
-        if isinstance(piece, dict) and piece:
-            score = float((piece.get("editorial_score") or {}).get("overall", 0))
-            scored.append((score, label))
-    scored.sort(reverse=True)
-    return [label for _, label in scored[:count]]
+
 
 
 def _do_fetch_insights() -> dict:
