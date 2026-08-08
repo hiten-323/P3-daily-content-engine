@@ -1,3 +1,4 @@
+
 """
 Facebook auto-publisher — posts to Facebook Page via Graph API.
 
@@ -22,12 +23,13 @@ Token tip:
     Meta App, you can reuse it: FACEBOOK_PAGE_ACCESS_TOKEN = same value.
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import logging
 import os
 
 logger = logging.getLogger(__name__)
 
-_GRAPH_API = "https://graph.facebook.com/v18.0"
+_GRAPH_API = META_GRAPH_BASE
 
 
 def is_configured() -> bool:

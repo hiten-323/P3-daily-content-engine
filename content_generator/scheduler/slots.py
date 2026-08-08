@@ -207,8 +207,10 @@ def run_publish_slot(slot: str) -> dict:
         if not is_configured():
             return {"slot": slot, "success": False, "error": "not_configured"}
 
-        reels = content.get("reels") or []
-        reel  = reels[0] if reels and isinstance(reels[0], dict) else {}
+        reel = content.get("growth_reel") or {}
+        if not reel:
+            reels = content.get("reels") or []
+            reel  = reels[0] if reels and isinstance(reels[0], dict) else {}
         if not reel:
             return {"slot": slot, "success": False, "error": "no_reel"}
 

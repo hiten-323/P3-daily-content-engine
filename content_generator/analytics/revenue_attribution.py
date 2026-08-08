@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 _LEARNING_DIR = os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
 _REV_PATH     = os.path.join(_LEARNING_DIR, "revenue_log.json")
-_API_VERSION  = "2024-10"
+from config.api_versions import SHOPIFY_API_VERSION as _API_VERSION
 _TIMEOUT      = 30
 
 _IG_MARKERS = ("instagram.com", "l.instagram.com", "utm_source=instagram", "utm_source=ig")
@@ -209,13 +209,33 @@ def run_revenue_attribution(window_hours: int = 48) -> dict:
     }
     _append_snapshot(snapshot)
 
+    # Deduplicate by order ID so we don't attribute the same order multiple times
+    attributed_orders_path = os.path.join(_LEARNING_DIR, "attributed_orders.json")
+    attributed_ledger = []
+    if os.path.exists(attributed_orders_path):
+        try:
+            with open(attributed_orders_path, "r", encoding="utf-8") as f:
+                attributed_ledger = json.load(f)
+        except Exception:
+            pass
+
+    ledger_set = set(attributed_ledger)
+    new_ig_orders = [o for o in ig_orders if str(o.get("id")) not in ledger_set]
+    new_ig_rev = sum(float(o.get("total_price") or 0) for o in new_ig_orders)
+
+    # Add new orders to the ledger
+    for o in new_ig_orders:
+        ledger_set.add(str(o.get("id")))
+    with open(attributed_orders_path, "w", encoding="utf-8") as f:
+        json.dump(list(ledger_set)[-5000:], f)
+
     # Attribute Instagram revenue to posts in the window
-    attributed = _attribute_to_posts(ig_rev, len(ig_orders), since)
+    attributed = _attribute_to_posts(new_ig_rev, len(new_ig_orders), since)
 
     logger.info(
         "[revenue] %d orders / Rs %.0f total | Instagram: %d orders / Rs %.0f "
         "-> attributed to %d post(s)",
-        len(orders), total_rev, len(ig_orders), ig_rev, attributed,
+        len(orders), total_rev, len(new_ig_orders), new_ig_rev, attributed,
     )
     return {**snapshot, "attributed_posts": attributed}
 

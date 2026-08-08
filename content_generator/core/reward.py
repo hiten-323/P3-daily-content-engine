@@ -101,11 +101,14 @@ def get_weights(kpi: str | None = None) -> dict[str, float]:
     return WEIGHT_PROFILES.get(kpi or get_active_kpi(), WEIGHT_PROFILES[DEFAULT_KPI])
 
 
-def score(metrics: dict, kpi: str | None = None) -> float:
+def score(metrics: dict, kpi: str | None = None) -> tuple[float, float]:
     """Reward for one post's metrics under the active KPI profile."""
     w = get_weights(kpi)
     m = metrics or {}
-    return float(sum(float(m.get(k, 0) or 0) * weight for k, weight in w.items()))
+    revenue_score = float((m.get("revenue") or 0) * w.get("revenue", 0) + (m.get("orders") or 0) * w.get("orders", 0))
+    sum_main = float(sum(float(m.get(k, 0) or 0) * weight for k, weight in w.items() if k not in ["revenue", "orders"]))
+    # Lexicographic/gated optimization: revenue strictly outranks engagement
+    return (revenue_score, sum_main)
 
 
 def explain(metrics: dict, kpi: str | None = None) -> dict:
@@ -115,7 +118,7 @@ def explain(metrics: dict, kpi: str | None = None) -> dict:
     m = metrics or {}
     parts = {k: round(float(m.get(k, 0) or 0) * weight, 2)
              for k, weight in w.items() if m.get(k)}
-    total = round(sum(parts.values()), 2)
+    total = score(metrics, kpi)
     top = sorted(parts.items(), key=lambda x: x[1], reverse=True)[:3]
     return {"kpi": kpi, "score": total, "contributions": parts,
             "top_drivers": [k for k, _ in top]}

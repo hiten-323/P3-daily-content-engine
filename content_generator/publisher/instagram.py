@@ -1,3 +1,4 @@
+
 """
 Instagram auto-publisher — posts carousels and single images via Meta Graph API.
 
@@ -29,13 +30,14 @@ API flow for carousel:
     3. POST /{ig-user-id}/media_publish with carousel_container_id → published!
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import logging
 import os
 import time
 
 logger = logging.getLogger(__name__)
 
-_GRAPH_API = "https://graph.facebook.com/v18.0"
+_GRAPH_API = META_GRAPH_BASE
 
 
 def is_configured() -> bool:

@@ -1,3 +1,4 @@
+
 """
 WhatsApp Business API integration — AiSensy primary, Meta Cloud API fallback.
 
@@ -36,6 +37,7 @@ Notes:
   - All sends are rate-limited (5 concurrent) and logged to nurture_log table
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import logging
 import os
 import time
@@ -45,7 +47,7 @@ logger = logging.getLogger(__name__)
 
 _SEMAPHORE = threading.Semaphore(5)   # max 5 concurrent sends
 
-_META_BASE_URL   = "https://graph.facebook.com/v18.0"
+_META_BASE_URL   = META_GRAPH_BASE
 _AISENSY_API_URL = "https://backend.aisensy.com/campaign/t1/api/v2"
 
 

@@ -984,13 +984,19 @@ def _do_publish(content: dict, day_number: int) -> dict:
     valid_assets = get_valid_assets(content)
     logger.info("[editorial] Valid publishable assets found: %s", valid_assets)
 
-    # 2. Emergency fallback — never miss a day
-    if len(valid_assets) < MIN_REQUIRED_ASSETS:
-        logger.warning(
-            "[publish] Only %d valid assets (need %d) — activating emergency fallback: "
-            "publishing top %d by score", len(valid_assets), MIN_REQUIRED_ASSETS, MIN_REQUIRED_ASSETS
+    # 2. Emergency block — never publish unvalidated content
+    if len(valid_assets) == 0:
+        logger.error(
+            "[publish] 0 valid assets — aborting publish! "
+            "Missing a day is preferable to publishing unsafe content."
         )
-        valid_assets = _best_assets_by_score(content, MIN_REQUIRED_ASSETS)
+        return {"skipped": True, "reason": "no_valid_assets",
+                "published_platforms": [], "summary": "Publish aborted: 0 valid assets."}
+    elif len(valid_assets) < MIN_REQUIRED_ASSETS:
+        logger.warning(
+            "[publish] Only %d valid assets (need %d) — proceeding with available validated assets.",
+            len(valid_assets), MIN_REQUIRED_ASSETS
+        )
     filtered_content = content.copy()
     
     if "reel_1" not in valid_assets:

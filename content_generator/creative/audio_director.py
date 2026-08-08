@@ -69,7 +69,7 @@ def _learned_bias() -> dict:
         for e in _load_log():
             cat = (e.get("audio_category") or "").strip()
             if cat and e.get("metrics"):
-                scores.setdefault(cat, []).append(_engagement_score(e["metrics"]))
+                scores.setdefault(cat, []).append(_engagement_score(e["metrics"])[1])
     except Exception:
         return {}
     return {c: sum(v) / len(v) for c, v in scores.items() if v}

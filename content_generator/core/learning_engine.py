@@ -106,7 +106,7 @@ def record_performance(
 _HALF_LIFE_DAYS = 30.0
 
 
-def _engagement_score(m: dict) -> float:
+def _engagement_score(m: dict) -> tuple[float, float]:
     """
     Reward for one post. Delegates to core/reward.py — THE single definition
     of success, which switches weights with the founder's target KPI while
@@ -160,14 +160,14 @@ def _objective_factor(entry: dict) -> float:
         return 1.0
 
 
-def _weighted_score(entry: dict) -> float:
+def _weighted_score(entry: dict) -> tuple[float, float]:
     """
     Reward adjusted for recency AND objective compatibility — what ranking uses.
     Recent evidence collected under the current objective dominates.
     """
-    return (_engagement_score(entry.get("metrics", {}))
-            * _recency_factor(entry)
-            * _objective_factor(entry))
+    engagement = _engagement_score(entry.get("metrics", {}))
+    factor = _recency_factor(entry) * _objective_factor(entry)
+    return (engagement[0] * factor, engagement[1] * factor)
 
 
 def analyze() -> dict:
@@ -179,19 +179,19 @@ def analyze() -> dict:
     # Rank by recency-weighted reward so stale outliers stop dominating.
     scored = [(e, _weighted_score(e)) for e in entries if e.get("metrics")]
     if not scored:
-        return {"winners": [], "failed": [], "median_score": 0.0, "count": 0}
+        return {"winners": [], "failed": [], "median_score": (0.0, 0.0), "count": 0}
 
     scores = sorted(s for _, s in scored)
     median = scores[len(scores) // 2]
 
-    winners = [e for e, s in scored if s >= median and s > 0]
+    winners = [e for e, s in scored if s >= median and s > (0, 0)]
     # Only condemn a post by the yardstick it was BUILT for. Content created
     # under a previous objective may score low under today's weights without
     # having actually failed — retiring it would import a bias from an
     # abandoned strategy. Cross-objective posts can inform winners (at a
     # discount) but are never added to the never-repeat list.
     failed = [e for e, s in scored
-              if s <= median * 0.5 and _objective_factor(e) == 1.0]
+              if s <= (median[0] * 0.5, median[1] * 0.5) and _objective_factor(e) == 1.0]
     return {"winners": winners, "failed": failed, "median_score": median, "count": len(scored)}
 
 

@@ -23,7 +23,7 @@ import urllib.request
 
 logger = logging.getLogger(__name__)
 
-_API_VERSION = "2024-10"
+from config.api_versions import SHOPIFY_API_VERSION as _API_VERSION
 _TIMEOUT     = 40
 
 

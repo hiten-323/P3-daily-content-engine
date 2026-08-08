@@ -1,3 +1,4 @@
+
 """
 Instagram product tagging — makes posts shoppable (tap product -> product page).
 
@@ -17,6 +18,7 @@ Graph API expects. Everything degrades to "no tags" on any failure so a
 mis-set catalog never blocks publishing.
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import json
 import logging
 import os
@@ -25,7 +27,7 @@ import urllib.request
 
 logger = logging.getLogger(__name__)
 
-_GRAPH_API = "https://graph.facebook.com/v18.0"
+_GRAPH_API = META_GRAPH_BASE
 _TIMEOUT   = 30
 
 # text keyword -> Purity Beans product (for catalog search)
