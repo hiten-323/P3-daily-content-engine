@@ -91,3 +91,6 @@ purity-beans-engine-*.zip
 .claude-flow/
 .swarm/
 .firecrawl/
+
+# Local MCP server config — per-machine tooling, drifts between setups.
+.mcp.json
