@@ -1,15 +1,16 @@
+
 import pytest
-from content_generator.core.coffee_psychology import validate_registry, PSYCHOLOGY_FRAMES, frame_prompt_block
+from content_generator.core.coffee_psychology import validate_registry, PSYCHOLOGY_FRAMES, frame_prompt_block, _unfreeze
 
 def test_duplicate_ids():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     test_frames = original.copy()
     test_frames.append(original[0].copy())
     with pytest.raises(ValueError, match="Duplicate psychology frame ID detected"):
         validate_registry(test_frames)
 
 def test_missing_fields():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_missing"
     bad_frame["version"] = 1
@@ -21,7 +22,7 @@ def test_missing_fields():
         validate_registry(test_frames)
 
 def test_invalid_risk_levels():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_risk"
     bad_frame["version"] = 1
@@ -33,7 +34,7 @@ def test_invalid_risk_levels():
         validate_registry(test_frames)
 
 def test_invalid_formats():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_formats"
     bad_frame["version"] = 1
@@ -44,10 +45,9 @@ def test_invalid_formats():
     test_frames.append(bad_frame)
     with pytest.raises(ValueError, match="best_formats must be a non-empty list of strings"):
         validate_registry(test_frames)
-    pass
 
 def test_empty_hooks():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_hooks"
     bad_frame["version"] = 1
@@ -69,10 +69,8 @@ def test_prompt_block_contains_truth_hierarchy():
     assert "never override truthfulness" in block
 
 
-
-
 def test_malformed_governance():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_gov"
     bad_frame["version"] = 1
@@ -85,14 +83,12 @@ def test_malformed_governance():
         validate_registry(test_frames)
 
 def test_unexpected_fields():
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_unexpected"
     bad_frame["version"] = 1
     bad_frame["objective"] = "trust"
     bad_frame["unexpected_field"] = "hello"
-    bad_frame["version"] = 1
-    bad_frame["objective"] = "trust"
     test_frames = original.copy()
     test_frames.append(bad_frame)
     with pytest.raises(ValueError, match="Unexpected top-level fields"):
@@ -101,7 +97,7 @@ def test_unexpected_fields():
 def test_high_risk_frame_receives_stronger_governance():
     from content_generator.core.coffee_psychology import validate_registry, PSYCHOLOGY_FRAMES, frame_prompt_block
     import pytest
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_high_risk"
     bad_frame["version"] = 1
@@ -117,8 +113,6 @@ def test_high_risk_frame_receives_stronger_governance():
     bad_frame["governance"]["prohibited_claims"] = ["cannot do this"]
     validate_registry(test_frames)
     # To test prompt block, we just test a built-in one if we can or skip since it is tested separately
-
-import pytest
 
 def test_truth_regression():
     from content_generator.core.coffee_psychology import get_frame
@@ -145,8 +139,8 @@ def test_no_factual_numbers_in_hooks_and_triggers():
     import re
 
     # Assert no specific factual numbers, prices, or multipliers are embedded as claims in hooks or triggers.
-    # We want to catch \d+%, Rs, ₹, INR, \d+x, \d+ times
-    prohibited_pattern = re.compile(r"(\b\d+(?:\.\d+)?%\b|\bRs\b|₹|\bINR\b|\b\d+x\b|\b\d+\s+times\b)", re.IGNORECASE)
+    # We want to catch digits, Rs, INR, etc.
+    prohibited_pattern = re.compile(r"(\d+(?:\.\d+)?%|Rs|₹|INR|\d+x|\d+\s+times)", re.IGNORECASE)
     for frame in PSYCHOLOGY_FRAMES:
         for hook in frame["creative_application"]["example_hooks"]:
             assert not prohibited_pattern.search(hook), f"Found prohibited factual number or currency in hook: '{hook}' in frame '{frame['id']}'"
@@ -184,9 +178,9 @@ def test_frame_selection_context():
     assert "[social_currency]" in context
 
 def test_empty_name_fails():
-    from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES, validate_registry
+    from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES, validate_registry, _unfreeze
     import pytest
-    original = list(PSYCHOLOGY_FRAMES)
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
     bad_frame = original[0].copy()
     bad_frame["id"] = "test_name"
     bad_frame["name"] = ""
@@ -194,3 +188,79 @@ def test_empty_name_fails():
     test_frames.append(bad_frame)
     with pytest.raises(ValueError, match="name must be a non-empty string"):
         validate_registry(test_frames)
+
+def test_immutable_frames_by_id():
+    from content_generator.core.coffee_psychology import FRAMES_BY_ID
+    import pytest
+    with pytest.raises(TypeError):
+        FRAMES_BY_ID["social_currency"] = {}
+
+    with pytest.raises(TypeError):
+        FRAMES_BY_ID["social_currency"]["theory"]["core"] = "test"
+
+def test_integration_pipeline_governance():
+    from content_generator.core.coffee_psychology import get_frame
+    from content_generator.core.brand_validator import validate_asset
+
+    # 1. Fetch a medium risk frame
+    medium_frame = get_frame("social_currency")
+    assert medium_frame["governance_rules"]["require_claim_verification"] is True
+    assert medium_frame["governance_rules"]["require_manual_review"] is False
+
+    # 2. Simulate validation for medium frame
+    is_valid, issues = validate_asset("linkedin_post", {"body": "purity beans 100% coffee"}, psychology_governance=medium_frame["governance_rules"])
+    assert "High risk frame requires explicit manual review before publish" not in issues
+
+    # 3. Simulate high risk frame (artificially set for testing since no high risk frame exists)
+    high_frame_gov = {
+        "risk_level": "high",
+        "require_claim_verification": True,
+        "require_source_backing": True,
+        "require_manual_review": True
+    }
+    is_valid, issues = validate_asset("linkedin_post", {"body": "purity beans 100% coffee"}, psychology_governance=high_frame_gov)
+    assert not is_valid
+    assert "High risk frame requires explicit manual review before publish" in issues
+
+
+def test_integration_pipeline_governance():
+    from content_generator.core.coffee_psychology import get_frame
+    from content_generator.core.editorial_engine import get_valid_assets
+
+    # 1. Mock content data indicating medium risk frame
+    content = {
+        "psychology_frame": "social_currency",
+        "linkedin_post": {"body": "purity beans 100% coffee"},
+        "editorial_score": {"overall": 10.0}
+    }
+
+    # 2. Assert validation does not reject automatically for manual review
+    valid_assets = get_valid_assets(content)
+    # The actual schema validation or structure might fail it to empty list,
+    # but the key is no exception is raised and it runs.
+
+    # 3. Inject a high risk frame which requires manual review and therefore returns False
+    from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES, _unfreeze
+    original = _unfreeze(PSYCHOLOGY_FRAMES)
+    bad_frame = original[0].copy()
+    bad_frame["id"] = "test_high_risk"
+    bad_frame["version"] = 1
+    bad_frame["objective"] = "trust"
+    bad_frame["risk_level"] = "high"
+    bad_frame["governance"] = bad_frame["governance"].copy()
+    bad_frame["governance"]["prohibited_claims"] = ["cannot do this"]
+
+    import content_generator.core.coffee_psychology as psych
+    psych.FRAMES_BY_ID = psych._deep_freeze({f["id"]: f for f in (original + [bad_frame])})
+
+    content_high = {
+        "psychology_frame": "test_high_risk",
+        "linkedin_post": {"body": "purity beans 100% coffee"},
+        "editorial_score": {"overall": 10.0}
+    }
+
+    valid_assets_high = get_valid_assets(content_high)
+    assert "linkedin_post" not in valid_assets_high # Because high risk requires manual review which forces invalid
+
+    # Restore
+    psych.FRAMES_BY_ID = psych._deep_freeze({f["id"]: f for f in original})

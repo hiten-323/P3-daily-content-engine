@@ -295,7 +295,7 @@ try:
     actual_keys = set(result.keys())
 
     missing = EXPECTED_KEYS - actual_keys
-    extra   = actual_keys - EXPECTED_KEYS - {"usage", "generation_id", "prompt_version", "schema_version"}  # usage is opt-in, allowed absent
+    extra   = actual_keys - EXPECTED_KEYS - {"usage", "generation_id", "prompt_version", "schema_version", "psychology_frame", "psychology_frame_version", "psychology_schema_version"}  # usage is opt-in, allowed absent
 
     check("All expected keys present",     not missing, f"Missing: {missing}" if missing else "")
     check("No unexpected extra keys",      not extra,   f"Extra: {extra}"     if extra   else "")
@@ -451,13 +451,13 @@ except Exception as e:
 section("CHECK 6 - Marketing Psychology Registry validation")
 
 try:
-    from content_generator.core.coffee_psychology import validate_registry, PSYCHOLOGY_FRAMES
+    from content_generator.core.coffee_psychology import validate_registry, PSYCHOLOGY_FRAMES, _unfreeze
     
     # 1. Assert standard validation passes
     check("validate_registry() passes with clean registry", validate_registry())
     
     # 2. Test duplicate ID detection
-    original_frames = list(PSYCHOLOGY_FRAMES)
+    original_frames = _unfreeze(PSYCHOLOGY_FRAMES)
     test_frames = original_frames.copy()
     test_frames.append(test_frames[0])
     try:

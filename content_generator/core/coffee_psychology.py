@@ -21,7 +21,7 @@ PSYCHOLOGY_FRAMES = [
         "objective": "comments",
         "risk_level": "medium",
         "theory": {
-            "core": "You have been drinking something that is not what you thought it was.",
+            "core": "Hypothesis: Realizing a long-held assumption is false creates engagement.",
             "why_it_works": (
                 "Creates immediate dissonance. The viewer must either defend the old "
                 "habit or update it. Either response is engagement."
@@ -48,7 +48,7 @@ PSYCHOLOGY_FRAMES = [
         "objective": "trust",
         "risk_level": "low",
         "theory": {
-            "core": "The morning cup is not caffeine delivery. It is the first decision of the day.",
+            "core": "Hypothesis: The morning cup is not caffeine delivery. It is the first decision of the day.",
             "why_it_works": (
                 "Hypothesis: Rituals increase enjoyment and willingness to pay. Framing the daily "
                 "cup as identity ('I choose pure') makes switching feel like an upgrade "
@@ -76,10 +76,10 @@ PSYCHOLOGY_FRAMES = [
         "objective": "saves",
         "risk_level": "medium",
         "theory": {
-            "core": "Once you notice the muddy aftertaste of chicory, you cannot un-taste it.",
+            "core": "Hypothesis: Once a sensory defect is pointed out, the viewer cannot un-taste it.",
             "why_it_works": (
-                "Hypothesis: Sensory memory is sticky. Describing the exact moment the taste "
-                "changes (bitterness at minute two, muddy aftertaste, missing aroma) "
+                "Hypothesis: Sensory memory is sticky. Prompting the viewer to actively notice the sensory "
+                "transition during their normal morning routine "
                 "gives the viewer a private test they can run tomorrow morning."
             )
         },
@@ -104,7 +104,7 @@ PSYCHOLOGY_FRAMES = [
         "objective": "shareability",
         "risk_level": "medium",
         "theory": {
-            "core": "This is information that makes the sharer look informed.",
+            "core": "Hypothesis: Sharing insider knowledge makes the sharer look informed.",
             "why_it_works": (
                 "Hypothesis: People share content that improves their status inside their circle. "
                 "'3 signs...', 'look at the label', 'what the ingredient panel actually "
@@ -132,7 +132,7 @@ PSYCHOLOGY_FRAMES = [
         "objective": "conversion",
         "risk_level": "low",
         "theory": {
-            "core": "Premium quality without the typical friction or expense.",
+            "core": "Hypothesis: High perceived quality can be maintained even when typical category friction or expense is removed.",
             "why_it_works": (
                 "Hypothesis: Resolves the price-sensitivity paradox. Urban Indians will pay for "
                 "quality when friction is removed. Accessible premium positioning serves as the "
@@ -160,7 +160,7 @@ PSYCHOLOGY_FRAMES = [
         "objective": "trust",
         "risk_level": "medium",
         "theory": {
-            "core": "Knowing exactly what is in the cup removes a quiet daily uncertainty.",
+            "core": "Hypothesis: Providing absolute transparency removes a quiet daily uncertainty.",
             "why_it_works": (
                 "Hypothesis: Premium choice is often rational uncertainty management, not status. "
                 "'I know what I am drinking' is a stronger closer than 'this is better'."
@@ -185,13 +185,22 @@ PSYCHOLOGY_FRAMES = [
 # Fast lookup
 FRAMES_BY_ID = {f["id"]: f for f in PSYCHOLOGY_FRAMES}
 
+
+import json
+def _unfreeze(obj):
+    if isinstance(obj, MappingProxyType):
+        return {k: _unfreeze(v) for k, v in obj.items()}
+    elif isinstance(obj, tuple):
+        return [_unfreeze(v) for v in obj]
+    return obj
+
 def get_frame(frame_id: str) -> dict | None:
     frame = FRAMES_BY_ID.get(frame_id)
     if not frame:
         return None
 
-    # Return a deep copy with operational metadata attached so it can be enforced without mutating registry
-    frame_copy = deepcopy(frame)
+    # Return a fully mutable deep copy for downstream consumers
+    frame_copy = _unfreeze(frame)
     risk = frame_copy["risk_level"]
     frame_copy["governance_rules"] = {
         "risk_level": risk,
@@ -296,6 +305,7 @@ def recommended_frame_for_format(fmt: str) -> list[str]:
 
 def validate_registry(frames: list[dict] = None) -> bool:
     frames = frames if frames is not None else PSYCHOLOGY_FRAMES
+    frames = _unfreeze(frames)
     seen_ids = set()
     valid_risk_levels = {"low", "medium", "high"}
     id_pattern = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -388,10 +398,22 @@ def validate_registry(frames: list[dict] = None) -> bool:
     logger.info("[psychology] All %d psychology frames verified successfully against the strict registry schema.", len(frames))
     return True
 
+from types import MappingProxyType
+
+def _deep_freeze(obj):
+    if isinstance(obj, dict):
+        return MappingProxyType({k: _deep_freeze(v) for k, v in obj.items()})
+    elif isinstance(obj, list):
+        return tuple(_deep_freeze(v) for v in obj)
+    return obj
+
+# Run schema and duplicate validation at import/startup time
 SUPPORTED_SCHEMA_VERSION = 2
 if PSYCHOLOGY_SCHEMA_VERSION != SUPPORTED_SCHEMA_VERSION:
     raise ValueError(f"Unsupported schema version: {PSYCHOLOGY_SCHEMA_VERSION}")
 
 validate_registry()
-# Make registry effectively immutable at runtime
-PSYCHOLOGY_FRAMES = tuple(PSYCHOLOGY_FRAMES)
+
+# Make registry fully immutable at runtime
+PSYCHOLOGY_FRAMES = _deep_freeze(PSYCHOLOGY_FRAMES)
+FRAMES_BY_ID = _deep_freeze(FRAMES_BY_ID)

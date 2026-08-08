@@ -268,6 +268,7 @@ def generate_daily_content(
     # (and so telemetry's generation_id is populated rather than empty).
     import uuid as _uuid
     from content_generator.core.versions import PROMPT_VERSION, SCHEMA_VERSION
+    from content_generator.core.coffee_psychology import PSYCHOLOGY_SCHEMA_VERSION
 
     output = {
         "date":           todays_date,
@@ -275,6 +276,9 @@ def generate_daily_content(
         "generation_id":  f"gen_{datetime.date.today().isoformat()}_{_uuid.uuid4().hex[:8]}",
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
+        "psychology_schema_version": PSYCHOLOGY_SCHEMA_VERSION,
+        "psychology_frame": research_context.get("psychology_frame_id", "default") if research_context else "default",
+        "psychology_frame_version": research_context.get("psychology_frame_version", 1) if research_context else 1,
         "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
         "instagram_post": phase1_results["instagram_post"],
         "carousel":       phase1_results["carousel"],

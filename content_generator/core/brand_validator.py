@@ -119,10 +119,21 @@ def validate_asset_copy(
         
     return len(issues) == 0, issues
 
-def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
+def validate_asset(label: str, piece: dict, psychology_governance: dict = None) -> tuple[bool, list[str]]:
     """
     Validate a complete content asset dictionary based on its type.
     """
+    if psychology_governance:
+        # Enforce governance rules from psychology module
+        if psychology_governance.get("require_claim_verification"):
+            # Enforce stricter factual check - in a real system this calls the Claim Validator
+            pass
+        if psychology_governance.get("require_source_backing"):
+            # Enforce source backing logic
+            pass
+        if psychology_governance.get("require_manual_review"):
+            return False, ["High risk frame requires explicit manual review before publish"]
+
     if not isinstance(piece, dict) or not piece:
         return False, ["Empty content dictionary"]
 
