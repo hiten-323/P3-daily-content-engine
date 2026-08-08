@@ -9,6 +9,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Sandbox learning-data writes so running the suite never mutates production
+# ledgers (see test_measurement_integrity for the failure this prevents).
+import tempfile
+os.environ["LEARNING_DIR"] = tempfile.mkdtemp(prefix="pb_test_learning_")
+
 failures = []
 
 

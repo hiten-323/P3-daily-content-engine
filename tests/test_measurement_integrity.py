@@ -7,8 +7,17 @@ learning log for 50 consecutive posts. Run: python tests/test_measurement_integr
 import json
 import os
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Redirect every learning-data write to a throwaway directory BEFORE importing
+# anything from content_generator — those modules read LEARNING_DIR at import
+# time. Without this, calling _track() below appends a fake row to the real
+# output/learning/content_balance.json, CI commits it in the persist step, and
+# the 80/20 cap starts rating the account on posts that were never published.
+_REAL_LEARNING_DIR = os.path.join("output", "learning")
+os.environ["LEARNING_DIR"] = tempfile.mkdtemp(prefix="pb_test_learning_")
 
 failures = []
 
@@ -90,7 +99,9 @@ def main():
     # 5. The live log must hold only real measurements. A row with no reach and
     #    no hook teaches nothing and drags the median it is measured against.
     print("\nLive performance log holds only real measurements:")
-    path = os.path.join("output", "learning", "performance_log.json")
+    # Deliberately the REAL path, not LEARNING_DIR — this check is about
+    # production data, while the writes above are sandboxed.
+    path = os.path.join(_REAL_LEARNING_DIR, "performance_log.json")
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             rows = json.load(f)
