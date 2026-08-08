@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 _LEARNING_DIR = os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
 _REV_PATH     = os.path.join(_LEARNING_DIR, "revenue_log.json")
-_API_VERSION  = "2024-10"
+from config.api_versions import SHOPIFY_API_VERSION as _API_VERSION
 _TIMEOUT      = 30
 
 _IG_MARKERS = ("instagram.com", "l.instagram.com", "utm_source=instagram", "utm_source=ig")
@@ -209,13 +209,55 @@ def run_revenue_attribution(window_hours: int = 48) -> dict:
     }
     _append_snapshot(snapshot)
 
-    # Attribute Instagram revenue to posts in the window
-    attributed = _attribute_to_posts(ig_rev, len(ig_orders), since)
+    # Deduplicate by order ID so we don't attribute the same order multiple times
+    attributed_orders_path = os.path.join(_LEARNING_DIR, "attributed_orders.json")
+    attributed_ledger = []
+    if os.path.exists(attributed_orders_path):
+        try:
+            with open(attributed_orders_path, "r", encoding="utf-8") as f:
+                attributed_ledger = json.load(f)
+        except Exception:
+            pass
+            
+    ledger_set = set(attributed_ledger)
+    new_ig_orders = [o for o in ig_orders if str(o.get("id")) not in ledger_set]
+    new_ig_rev = sum(float(o.get("total_price") or 0) for o in new_ig_orders)
+
+    # Attribute Instagram revenue to posts in the window FIRST. Pass the order
+    # objects, not (total, count) — the ledger must be written from the actual
+    # ids that were attributed, never inferred from a post tally.
+    result = _attribute_to_posts(new_ig_orders, since)
+    attributed_ids = result["attributed_order_ids"]
+
+    # Only orders genuinely attributed enter the ledger. Anything left in
+    # unattributed_order_ids stays pending and is retried on a later run,
+    # instead of being marked done because *some* post was updated.
+    if attributed_ids:
+        attributed_ledger_dict = {}
+        if isinstance(attributed_ledger, dict):
+            attributed_ledger_dict = attributed_ledger
+        elif isinstance(attributed_ledger, list):
+            for i in attributed_ledger:
+                attributed_ledger_dict[str(i)] = {"attributed_at": now.isoformat()}
+
+        for oid in attributed_ids:
+            attributed_ledger_dict[oid] = {"attributed_at": now.isoformat(),
+                                           "attribution_version": 3,
+                                           "basis": "day_level_split"}
+
+        with open(attributed_orders_path, "w", encoding="utf-8") as f:
+            json.dump(attributed_ledger_dict, f, indent=2)
+
+    if result["unattributed_order_ids"]:
+        logger.info("[revenue] %d order(s) left pending attribution: %s",
+                    len(result["unattributed_order_ids"]),
+                    result["unattributed_order_ids"][:5])
+    attributed = result["posts_updated"]
 
     logger.info(
         "[revenue] %d orders / Rs %.0f total | Instagram: %d orders / Rs %.0f "
         "-> attributed to %d post(s)",
-        len(orders), total_rev, len(ig_orders), ig_rev, attributed,
+        len(orders), total_rev, len(new_ig_orders), new_ig_rev, attributed,
     )
     return {**snapshot, "attributed_posts": attributed}
 
@@ -236,17 +278,38 @@ def _append_snapshot(snapshot: dict) -> None:
         json.dump(entries[-365:], f, indent=2)
 
 
-def _attribute_to_posts(ig_revenue: float, ig_orders: int, since: datetime.datetime) -> int:
+def _attribute_to_posts(orders: list[dict], since: datetime.datetime) -> dict:
     """
-    Add revenue/orders to learning-engine entries for posts published in the
-    window. Day-level attribution: revenue is split across the window's posts.
+    Spread Instagram-attributed revenue across the posts published in the window.
+
+    ATTRIBUTION IS DAY-LEVEL, NOT ORDER-TO-POST DETERMINISTIC.
+      Shopify tells us an order came from Instagram; it does not tell us which
+      post. So the window's revenue is split evenly across the window's posts.
+      A post credited with Rs 400 did not necessarily earn Rs 400 — it is one of
+      N posts that were live when Rs 400*N arrived. Directionally useful over
+      many days, never precise for a single post. True per-post attribution
+      needs distinct per-post landing URLs (a link-in-bio router).
+
+    Returns an explicit result rather than a bare count. The previous version
+    returned len(posts_updated), and the caller treated "any posts updated" as
+    "every order attributed" — two different quantities, so the ledger could be
+    written on the strength of a number that never referred to orders at all:
+
+        {"attributed_order_ids": [...],   # safe to write to the ledger
+         "unattributed_order_ids": [...], # stay pending, retried next run
+         "attributed_revenue": float,
+         "posts_updated": int}
     """
-    if ig_orders == 0:
-        return 0
+    order_ids = [str(o.get("id")) for o in (orders or []) if o.get("id")]
+    empty = {"attributed_order_ids": [], "unattributed_order_ids": order_ids,
+             "attributed_revenue": 0.0, "posts_updated": 0}
+    if not orders:
+        return {**empty, "unattributed_order_ids": []}
     try:
         from content_generator.core import learning_engine as le
-    except Exception:
-        return 0
+    except Exception as e:
+        logger.warning("[revenue] learning engine unavailable: %s", e)
+        return empty
 
     entries = le._load_log()
     in_window = []
@@ -258,17 +321,24 @@ def _attribute_to_posts(ig_revenue: float, ig_orders: int, since: datetime.datet
         if when >= since:
             in_window.append(e)
 
+    # No posts in the window means nothing to attribute TO. The orders stay
+    # pending so a later run — once those posts are recorded — can attribute
+    # them, instead of being silently marked done against nothing.
     if not in_window:
-        return 0
+        logger.info("[revenue] %d Instagram order(s) but no posts in window — "
+                    "left unattributed for a later run", len(order_ids))
+        return empty
 
-    per_post_rev    = ig_revenue / len(in_window)
-    per_post_orders = ig_orders / len(in_window)
+    revenue = sum(float(o.get("total_price") or 0) for o in orders)
+    per_post_rev    = revenue / len(in_window)
+    per_post_orders = len(orders) / len(in_window)
     for e in in_window:
         m = e.setdefault("metrics", {})
         m["revenue"] = round(m.get("revenue", 0) + per_post_rev, 2)
         m["orders"]  = round(m.get("orders", 0) + per_post_orders, 2)
     le._save_log(entries)
-    return len(in_window)
+    return {"attributed_order_ids": order_ids, "unattributed_order_ids": [],
+            "attributed_revenue": round(revenue, 2), "posts_updated": len(in_window)}
 
 
 def get_revenue_trend(days: int = 30) -> dict:

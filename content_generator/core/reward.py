@@ -102,7 +102,26 @@ def get_weights(kpi: str | None = None) -> dict[str, float]:
 
 
 def score(metrics: dict, kpi: str | None = None) -> float:
-    """Reward for one post's metrics under the active KPI profile."""
+    """
+    Reward for one post's metrics under the active KPI profile.
+
+    REVENUE IS A FLOOR, NOT A LEXICOGRAPHIC FIRST KEY.
+
+    This briefly returned (revenue_score, sum_main), so tuple comparison made
+    revenue strictly outrank everything: a post earning Rs 1 beat a post that
+    gained 10,000 followers, and because float revenue almost never ties, the
+    engagement term became unreachable rather than secondary.
+
+    GOAL_HIERARCHY.md rules that out by name — "Selling harder at 105 followers
+    would raise short-term revenue but kill reach -> blocked (L2 growth staging
+    > naive L1)" — and L1 revenue is defined there as being *driven by* L2
+    audience growth, not as outranking it.
+
+    The floor is enforced by the weights instead: revenue and orders carry
+    meaningful weight in EVERY profile, so a follower-optimising engine can
+    never learn to prefer a post that earns nothing over one that sells. What
+    changes with the KPI is how much extra credit the softer signals get.
+    """
     w = get_weights(kpi)
     m = metrics or {}
     return float(sum(float(m.get(k, 0) or 0) * weight for k, weight in w.items()))
@@ -115,7 +134,7 @@ def explain(metrics: dict, kpi: str | None = None) -> dict:
     m = metrics or {}
     parts = {k: round(float(m.get(k, 0) or 0) * weight, 2)
              for k, weight in w.items() if m.get(k)}
-    total = round(sum(parts.values()), 2)
+    total = score(metrics, kpi)
     top = sorted(parts.items(), key=lambda x: x[1], reverse=True)[:3]
     return {"kpi": kpi, "score": total, "contributions": parts,
             "top_drivers": [k for k, _ in top]}

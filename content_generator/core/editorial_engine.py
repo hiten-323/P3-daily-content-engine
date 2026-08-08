@@ -243,6 +243,34 @@ def _apply_growth_director_gates(content: dict, valid: list[str]) -> list[str]:
     return kept
 
 
+def approved_assets(content: dict) -> dict:
+    """
+    THE canonical publish gate. Returns {asset_key: piece} for assets that
+    passed EVERY mandatory layer — schema, brand, editorial threshold, the
+    north-star shareability gate and the 80/20 cap.
+
+    Schedulers must ask this and publish exactly what comes back. They must not
+    call get_valid_assets() and then decide for themselves which object to send:
+    that is how an invalid growth_reel got published while the guard was
+    checking reel_1, and how "asset invalid -> replace with {} and hope the
+    publisher skips it" became a safety boundary.
+
+    Returning the OBJECTS rather than the names removes the second lookup where
+    validation and selection could disagree.
+    """
+    out = {}
+    for key in get_valid_assets(content):
+        piece = _piece_for(content, key)
+        if piece:
+            out[key] = piece
+    return out
+
+
+def approved(content: dict, key: str) -> dict | None:
+    """One approved asset, or None. Never returns an unvalidated object."""
+    return approved_assets(content).get(key)
+
+
 def pre_publish_check(content: dict) -> bool:
     """
     Ensure a minimum number of valid assets are present before publishing.

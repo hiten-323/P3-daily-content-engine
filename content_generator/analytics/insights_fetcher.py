@@ -1,3 +1,4 @@
+
 """
 Instagram Insights Fetcher — closes the learning loop automatically.
 
@@ -14,6 +15,7 @@ Flow (runs inside the daily pipeline, zero manual work):
 No new secrets needed — reuses INSTAGRAM_ACCOUNT_ID + INSTAGRAM_ACCESS_TOKEN.
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import datetime
 import json
 import logging
@@ -23,7 +25,7 @@ import urllib.request
 
 logger = logging.getLogger(__name__)
 
-_GRAPH_API     = "https://graph.facebook.com/v18.0"
+_GRAPH_API     = META_GRAPH_BASE
 _LEARNING_DIR  = os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
 _POSTS_PATH    = os.path.join(_LEARNING_DIR, "published_posts.json")
 _TIMEOUT       = 30
@@ -68,6 +70,8 @@ def track_published_post(
     topic: str = "",
     format_used: str = "",
     hashtags: str = "",
+    kpi_at_creation: str = "",
+    policy_version: str = "",
 ) -> None:
     """Record a successfully published post so its insights can be fetched later."""
     if not media_id:
@@ -81,6 +85,8 @@ def track_published_post(
         "track":       track,
         "hook":        hook,
         "topic":       topic,
+        "kpi_at_creation": kpi_at_creation,
+        "policy_version": policy_version,
         "format":      format_used,
         "hashtags":    hashtags,
         "published_at": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -120,8 +126,8 @@ def _fetch_media_insights(media_id: str) -> dict | None:
     """
     # 1. Engagement counts via media FIELDS (valid for every media type)
     fields = _graph_get(media_id, {"fields": "like_count,comments_count,media_product_type"})
-    likes    = (fields or {}).get("like_count", 0) or 0
-    comments = (fields or {}).get("comments_count", 0) or 0
+    likes    = fields.get("like_count") if fields else None
+    comments = fields.get("comments_count") if fields else None
     is_reel  = str((fields or {}).get("media_product_type", "")).upper() == "REELS"
 
     # 2. Insight metrics — reels support watch-time metrics, feed/carousel do not.
@@ -142,7 +148,7 @@ def _fetch_media_insights(media_id: str) -> dict | None:
         if data and "data" in data:
             for item in data["data"]:
                 values = item.get("values") or [{}]
-                raw[item.get("name", "")] = values[0].get("value", 0) or 0
+                raw[item.get("name", "")] = values[0].get("value")
             break
 
     # A failed insights call must NOT be written as measured zeros. This
@@ -161,10 +167,10 @@ def _fetch_media_insights(media_id: str) -> dict | None:
         return None
 
     out = {
-        "views":          raw.get("views", raw.get("reach", 0)),
-        "reach":          raw.get("reach", 0),
-        "saves":          raw.get("saved", 0),
-        "shares":         raw.get("shares", 0),
+        "views":          raw.get("views"),
+        "reach":          raw.get("reach"),
+        "saves":          raw.get("saved"),
+        "shares":         raw.get("shares"),
         "comments":       comments,
         "likes":          likes,
     }
@@ -194,10 +200,17 @@ def _fetch_account_insights() -> dict:
         return {}
     data = _graph_get(f"{account_id}/insights",
                       {"metric": "profile_views,website_clicks", "period": "day"})
+    # `.get("value")` NOT `.get("value", 0) or 0` — the same unknown-vs-zero rule
+    # the media path already follows. A missing value means Instagram did not
+    # report it; writing 0 would claim we measured zero profile views, which then
+    # enters the learning log as fact. None stays absent, and the caller below
+    # only attributes a signal it actually received.
     out = {}
     for item in ((data or {}).get("data") or []):
         values = item.get("values") or [{}]
-        out[item.get("name", "")] = values[0].get("value", 0) or 0
+        val = values[0].get("value")
+        if val is not None:
+            out[item.get("name", "")] = val
     return out
 
 
@@ -237,6 +250,25 @@ def fetch_pending_insights() -> dict:
     # Follower snapshot: compare with last snapshot to estimate follows gained
     follower_count = _fetch_follower_count()
     acct = _fetch_account_insights()   # profile_views, website_clicks (account-level)
+    
+    # Store account daily metrics independently
+    try:
+        acct_path = os.path.join(_LEARNING_DIR, "account_metrics.json")
+        acct_log = []
+        if os.path.exists(acct_path):
+            with open(acct_path, "r", encoding="utf-8") as f:
+                acct_log = json.load(f)
+        acct_log.append({
+            "date": now.isoformat(timespec="seconds"),
+            "follower_count": follower_count,
+            "profile_views": acct.get("profile_views"),
+            "website_clicks": acct.get("website_clicks")
+        })
+        os.makedirs(_LEARNING_DIR, exist_ok=True)
+        with open(acct_path, "w", encoding="utf-8") as f:
+            json.dump(acct_log[-365:], f, indent=2)
+    except Exception as e:
+        logger.debug("[insights] Failed to write account metrics: %s", e)
     prev_count     = None
     snap_path      = os.path.join(_LEARNING_DIR, "follower_snapshots.json")
     snapshots      = []
@@ -295,13 +327,8 @@ def fetch_pending_insights() -> dict:
         # are approximations by construction — Instagram reports them for the
         # account, not the media — but an even split across the day's posts is
         # far better than dropping three primary KPIs entirely.
-        if due:
-            if follows_gained_total:
-                metrics["follows_gained"] = follows_gained_total // len(due)
-            if acct.get("profile_views"):
-                metrics["profile_visits"] = int(acct["profile_views"]) // len(due)
-            if acct.get("website_clicks"):
-                metrics["website_clicks"] = int(acct["website_clicks"]) // len(due)
+        # DO NOT divide account-level metrics and attribute them to individual posts.
+        pass
 
         record_performance(
             asset_id    = post["asset_id"],
@@ -312,6 +339,8 @@ def fetch_pending_insights() -> dict:
             posted_at   = post.get("published_at", ""),
             metrics     = metrics,
             notes       = "auto-recorded by insights_fetcher",
+            kpi_at_creation=post.get("kpi_at_creation", ""),
+            policy_version=post.get("policy_version", "")
         )
         post["insights_recorded"] = True
         recorded += 1

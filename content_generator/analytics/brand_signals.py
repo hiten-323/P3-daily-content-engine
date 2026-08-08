@@ -1,3 +1,4 @@
+
 """
 Brand Signals — automates the three Brand Equity components that were manual.
 
@@ -14,6 +15,7 @@ source preserves the previous (or manually entered) value, so automation
 degrades to the manual workflow instead of zeroing scores.
 """
 from __future__ import annotations
+from config.api_versions import META_GRAPH_BASE
 import datetime
 import json
 import logging
@@ -26,7 +28,7 @@ logger = logging.getLogger(__name__)
 _LEARNING_DIR  = os.getenv("LEARNING_DIR", os.path.join("output", "learning"))
 _EQUITY_INPUTS = os.path.join(_LEARNING_DIR, "brand_equity_inputs.json")
 _POSTS_PATH    = os.path.join(_LEARNING_DIR, "published_posts.json")
-_GRAPH_API     = "https://graph.facebook.com/v18.0"
+_GRAPH_API     = META_GRAPH_BASE
 _TIMEOUT       = 30
 
 _BRAND_TERM    = "purity beans"

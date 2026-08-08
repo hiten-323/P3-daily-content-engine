@@ -138,7 +138,7 @@ def _ranked_by_performance() -> list[str]:
         for e in _load_log():
             kw = (e.get("lead_magnet") or "").strip().upper()
             if kw and e.get("metrics"):
-                scores.setdefault(kw, []).append(_engagement_score(e["metrics"]))
+                scores.setdefault(kw, []).append(_engagement_score(e["metrics"])[1])
         avg = {k: sum(v) / len(v) for k, v in scores.items() if v}
         return [k for k, _ in sorted(avg.items(), key=lambda x: x[1], reverse=True)]
     except Exception:

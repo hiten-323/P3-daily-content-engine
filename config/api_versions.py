@@ -1,0 +1,5 @@
+META_GRAPH_API_VERSION = "v24.0"
+META_GRAPH_BASE = f"https://graph.facebook.com/{META_GRAPH_API_VERSION}"
+INSTAGRAM_GRAPH_BASE = f"https://graph.instagram.com/{META_GRAPH_API_VERSION}"
+
+SHOPIFY_API_VERSION = "2026-07"

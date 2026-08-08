@@ -60,6 +60,8 @@ def record_performance(
     metrics: dict = None,
     notes: str = "",
     audio_category: str = "",
+    kpi_at_creation: str = "",
+    policy_version: str = "",
 ) -> dict:
     """
     Record performance metrics for a published post.
@@ -71,14 +73,6 @@ def record_performance(
     # Stamp the objective this post was CREATED under. After a strategic pivot
     # (followers -> revenue), a post that succeeded at the old objective would
     # otherwise be re-scored under the new weights and wrongly retired.
-    kpi_at_creation, policy_version = "", ""
-    try:
-        from content_generator.core.reward import get_active_kpi
-        from content_generator.core.founder_policy import policy as _policy
-        kpi_at_creation = get_active_kpi()
-        policy_version = _policy().version
-    except Exception as e:
-        logger.debug("[learning] could not stamp objective: %s", e)
 
     entries = _load_log()
     entry = {

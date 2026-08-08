@@ -132,11 +132,13 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
             track_published_post(
                 media_id    = result["media_id"],
                 asset_id    = f"instagram_{slot}_day{content.get('day_number', 0)}",
-                track       = "brand",
+                track       = piece.get("track", "brand"),
                 hook        = hook[:120],
                 topic       = topic[:120],
                 format_used = fmt,
                 hashtags    = str(result.get("hashtags_used") or ""),
+                kpi_at_creation=piece.get("target_kpi_at_creation", ""),
+                policy_version=piece.get("policy_version_at_creation", "")
             )
     except Exception as e:
         logger.warning("[slots] tracking failed: %s", e)
@@ -184,9 +186,26 @@ def run_publish_slot(slot: str) -> dict:
 
     if slot == "morning":
         # Carousel / feed post + Instagram Story — 10:00 IST (owner-chosen)
+        from content_generator.core.editorial_engine import approved_assets
+        approved = approved_assets(content)
+
+        if "carousel" not in approved and "instagram_post" not in approved:
+            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+
+        # Hand the publisher ONLY gate-approved objects. Blanking a rejected key
+        # to {} and relying on post_content to interpret empty-dict as "skip"
+        # made the publisher a safety boundary enforced by convention. Assigning
+        # straight from `approved` means a rejected asset is absent by
+        # construction, not by downstream cooperation.
+        filtered_content = content.copy()
+        filtered_content["carousel"]        = approved.get("carousel", {})
+        filtered_content["instagram_post"]  = approved.get("instagram_post", {})
+
         from content_generator.publisher.instagram import post_content, post_story
-        result = post_content(content, day=day)
-        piece = content.get("carousel") or {}
+        result = post_content(filtered_content, day=day)
+        # Track the approved piece — tracking content.get("carousel") could stamp
+        # the learning log with a hook that never passed the gate.
+        piece = approved.get("carousel") or approved.get("instagram_post") or {}
         _track(result, content, slot, piece)
         _mirror_to_facebook(content, day, slot)
         # Instagram Story (image, 24h) — separate method, same slot
@@ -201,16 +220,28 @@ def run_publish_slot(slot: str) -> dict:
 
     if slot == "evening":
         # Reel video (free motion reel) with image fallback — 22:00 IST
+        from content_generator.core.editorial_engine import approved_assets
+        approved = approved_assets(content)
+
         from content_generator.publisher.instagram import (
             _post_single_image, _assemble_caption, is_configured, post_reel_video,
         )
         if not is_configured():
             return {"slot": slot, "success": False, "error": "not_configured"}
 
-        reels = content.get("reels") or []
-        reel  = reels[0] if reels and isinstance(reels[0], dict) else {}
+        # Publish the OBJECT the canonical gate approved — never look the asset
+        # up again separately. The previous form checked `growth_reel not in
+        # valid AND reel_1 not in valid`, then unconditionally took
+        # content["growth_reel"]: with an invalid growth_reel and a valid reel_1
+        # the guard passed (reel_1 was fine) and the INVALID growth_reel
+        # published. Validation and selection must read the same source.
+        reel = approved.get("growth_reel") or approved.get("reel_1")
+        chosen = "growth_reel" if "growth_reel" in approved else "reel_1"
         if not reel:
-            return {"slot": slot, "success": False, "error": "no_reel"}
+            logger.error("[slots] evening slot: no reel passed the canonical gate "
+                         "(approved=%s)", sorted(approved))
+            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+        logger.info("[slots] evening slot publishing gate-approved asset: %s", chosen)
 
         body = str(reel.get("caption") or reel.get("hook_text") or "").strip()
         cta  = str(reel.get("cta") or "").strip()
