@@ -416,12 +416,43 @@ _ALLOWED_NUMERIC = re.compile(
     re.I,
 )
 # Any other numeric/statistical claim pattern — fabricated unless whitelisted.
+# Quantities spelled as words. "40%" was caught; "50 percent" and "fifty
+# percent" were not — the pattern required the % symbol, so the exact claim
+# class that reached a live post ("40% CHICORY FILLER") still had two open doors.
+_WORD_QTY = (r"half|third|quarter|ten|fifteen|twenty|thirty|forty|fifty|"
+             r"sixty|seventy|eighty|ninety|hundred")
+
 _STAT_PATTERNS = re.compile(
-    r"\d+\s*%|"                       # 40%, 40 %
-    r"\b\d+\s*(out of|in)\s*\d+\b|"   # 9 out of 10
+    r"\d+\s*%|"                                        # 40%, 40 %
+    r"\b\d+\s*(?:per\s?cent|percent)\b|"               # 50 percent
+    rf"\b(?:{_WORD_QTY})\s*(?:per\s?cent|percent)\b|"  # fifty percent
+    rf"\b(?:up\s+to|nearly|almost|about|around|over|more\s+than|as\s+much\s+as)"
+    rf"\s+(?:{_WORD_QTY})\b|"                          # nearly half, up to fifty
+    r"\b\d+\s*(out of|in)\s*\d+\b|"                    # 9 out of 10
     r"\b\d+\s*(x|times)\s+(more|less|better|stronger)\b|"
     r"\b(most|majority of|\d+)\s+(people|indians|brands|coffees)\s+(don'?t know|are|have|contain)\b",
     re.I,
+)
+
+# Assertions about what is inside SOMEONE ELSE'S product.
+#
+# Purity Beans can state what is in its own jar — that is verifiable from its
+# own label. It cannot state what a competitor puts in theirs without a
+# citation, and the LLM has no such citation. This is the claim class that
+# published as "40% CHICORY FILLER": a specific, unverifiable, defamatory-risk
+# assertion about other manufacturers. A food brand carries real regulatory
+# exposure for these, so they are stripped whether or not they carry a number.
+_COMPETITOR_SUBJECT = re.compile(
+    r"\b(?:other|most|many|some|popular|big|leading|major|top|cheap|"
+    r"supermarket|store[-\s]?bought)\s+"
+    r"(?:brands?|companies|coffees?|manufacturers?|blends?)\b"
+    r"|\bcompetitors?\b|\brival\s+brands?\b",
+    re.I,
+)
+_COMPOSITION_VERB = re.compile(
+    r"\b(add|adds|adding|use|uses|using|contain|contains|containing|cut|cuts|"
+    r"cutting|mix|mixes|mixing|blend|blends|dilute|dilutes|fill|fills|"
+    r"pack|packs|load|loads|hide|hides|sneak|sneaks)\b", re.I,
 )
 
 
@@ -475,6 +506,13 @@ def _strip_unsupported_stats(text: str) -> str:
     for sentence in re.split(r'(?<=[.!?])\s+', text):
         if _STAT_PATTERNS.search(sentence) and not _ALLOWED_NUMERIC.search(sentence):
             logger.warning("[brand] stripped unsupported statistic: %r", sentence[:90])
+            continue
+        # 3. any claim about what a COMPETITOR puts in their product, with or
+        #    without a number. "Competitors cut their blends with chicory" is
+        #    unverifiable and carries the same regulatory risk as "40% chicory".
+        if _COMPETITOR_SUBJECT.search(sentence) and _COMPOSITION_VERB.search(sentence):
+            logger.warning("[brand] stripped unverifiable competitor claim: %r",
+                           sentence[:90])
             continue
         kept.append(sentence)
     return " ".join(kept).strip()

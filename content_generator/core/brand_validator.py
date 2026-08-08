@@ -119,10 +119,45 @@ def validate_asset_copy(
         
     return len(issues) == 0, issues
 
-def validate_asset(label: str, piece: dict) -> tuple[bool, list[str]]:
+def validate_asset(label: str, piece: dict,
+                   psychology_governance: dict = None) -> tuple[bool, list[str]]:
     """
     Validate a complete content asset dictionary based on its type.
+
+    psychology_governance carries the selected frame's risk rules. These are
+    ENFORCED here, not described:
+
+      require_claim_verification  -> every factual assertion must be backed by
+                                     the verified-fact set, or the asset fails
+      require_source_backing      -> additionally, nothing that would need a
+                                     citation may remain
+      require_manual_review       -> high-risk frames never auto-publish
+
+    The earlier form was `if require_claim_verification: pass`, so a medium-risk
+    frame promised verification and performed none.
     """
+    if psychology_governance:
+        from content_generator.core.claim_verifier import (
+            verify_piece, requires_source_backing,
+        )
+        findings = []
+        if (psychology_governance.get("require_claim_verification")
+                or psychology_governance.get("require_source_backing")):
+            findings = verify_piece(piece)
+
+        if psychology_governance.get("require_claim_verification") and findings:
+            return False, [f"unverified {f['type']}: {f['claim']} ({f['reason']})"
+                           for f in findings]
+
+        if psychology_governance.get("require_source_backing"):
+            needs_source = requires_source_backing(findings)
+            if needs_source:
+                return False, [f"claim needs source backing: {f['claim']}"
+                               for f in needs_source]
+
+        if psychology_governance.get("require_manual_review"):
+            return False, ["High risk frame requires explicit manual review before publish"]
+
     if not isinstance(piece, dict) or not piece:
         return False, ["Empty content dictionary"]
 

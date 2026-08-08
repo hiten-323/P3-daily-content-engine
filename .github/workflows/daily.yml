@@ -158,6 +158,7 @@ jobs:
           python tests/test_measurement_integrity.py
           python tests/test_growth_director_spec.py
           python tests/test_publish_gate.py
+          python tests/test_psychology_governance.py
           python tests/test_config_drift.py
 
       # ── 6. Run the pipeline ───────────────────────────────────────────────────

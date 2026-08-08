@@ -66,12 +66,63 @@ def enforce_editorial_gate(piece_name: str, score: float) -> bool:
         )
     return True
 
+def resolve_psychology_governance(content: dict) -> dict | None:
+    """
+    Governance rules for the psychology frame this content was generated under.
+
+    FAILS CLOSED. The earlier form was:
+
+        try:
+            frm = get_frame(content["psychology_frame"])
+            if frm: gov = frm.get("governance_rules")
+        except Exception:
+            pass
+
+    so an unknown frame id, a typo, or an import error silently produced
+    gov=None and the content proceeded UNGOVERNED — the risk rules vanished at
+    exactly the moment something was wrong. A missing frame is now a hard
+    rejection, because ungoverned generation is the thing governance exists to
+    prevent.
+
+    Returns the rules dict, or raises. None is returned ONLY when the content
+    carries no psychology frame at all (legacy assets predating the registry).
+    """
+    frame_id = content.get("psychology_frame")
+    if not frame_id:
+        return None
+    if str(frame_id).strip().lower() in ("default", "none", "unknown", ""):
+        raise EditorialRejectException(
+            f"psychology_frame is {frame_id!r} — there is no such frame in the "
+            "registry. A placeholder frame means governance was never selected.")
+    try:
+        from content_generator.core.coffee_psychology import get_frame
+        frm = get_frame(frame_id)
+    except Exception as e:
+        raise EditorialRejectException(
+            f"psychology registry unavailable ({e}) — refusing to publish "
+            "ungoverned content") from e
+    if not frm:
+        raise EditorialRejectException(
+            f"psychology_frame {frame_id!r} is not in the registry — refusing to "
+            "publish ungoverned content")
+    return frm.get("governance_rules") or {}
+
+
 def get_valid_assets(content: dict) -> list[str]:
     """
     Verify which of the generated assets are complete, pass schema validation,
     and meet brand guidelines.
     Returns a list of keys of valid, publishable assets.
     """
+    # Resolve governance once, up front. If the frame is missing or bogus this
+    # raises and NOTHING is publishable — the correct outcome, since every
+    # per-asset brand check below depends on these rules.
+    try:
+        _governance = resolve_psychology_governance(content)
+    except EditorialRejectException as e:
+        logger.error("[editorial] %s", e)
+        return []
+
     valid = []
     
     # 1. reel_1
@@ -81,7 +132,7 @@ def get_valid_assets(content: dict) -> list[str]:
             reel_1 = reels[0] if len(reels) > 0 else {}
             if reel_1 and isinstance(reel_1, dict) and reel_1.get("hook_text"):
                 validate_or_fail(ReelSchema, reel_1)
-                is_brand_ok, _ = validate_asset("reel_1", reel_1)
+                is_brand_ok, _ = validate_asset("reel_1", reel_1, _governance)
                 if is_brand_ok:
                     score_data = reel_1.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -97,7 +148,7 @@ def get_valid_assets(content: dict) -> list[str]:
             reel_2 = reels[1] if len(reels) > 1 else {}
             if reel_2 and isinstance(reel_2, dict) and reel_2.get("hook_text"):
                 validate_or_fail(ReelSchema, reel_2)
-                is_brand_ok, _ = validate_asset("reel_2", reel_2)
+                is_brand_ok, _ = validate_asset("reel_2", reel_2, _governance)
                 if is_brand_ok:
                     score_data = reel_2.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -112,7 +163,7 @@ def get_valid_assets(content: dict) -> list[str]:
             carousel = content.get("carousel") or {}
             if carousel and isinstance(carousel, dict) and carousel.get("title"):
                 validate_or_fail(CarouselSchema, carousel)
-                is_brand_ok, _ = validate_asset("carousel", carousel)
+                is_brand_ok, _ = validate_asset("carousel", carousel, _governance)
                 if is_brand_ok:
                     score_data = carousel.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -127,7 +178,7 @@ def get_valid_assets(content: dict) -> list[str]:
             ig = content.get("instagram_post") or {}
             if ig and isinstance(ig, dict) and ig.get("caption"):
                 validate_or_fail(InstagramSchema, ig)
-                is_brand_ok, _ = validate_asset("instagram_post", ig)
+                is_brand_ok, _ = validate_asset("instagram_post", ig, _governance)
                 if is_brand_ok:
                     score_data = ig.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -142,7 +193,7 @@ def get_valid_assets(content: dict) -> list[str]:
             li = content.get("linkedin_post") or {}
             if li and isinstance(li, dict) and li.get("body"):
                 validate_or_fail(LinkedinSchema, li)
-                is_brand_ok, _ = validate_asset("linkedin_post", li)
+                is_brand_ok, _ = validate_asset("linkedin_post", li, _governance)
                 if is_brand_ok:
                     score_data = li.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -157,7 +208,7 @@ def get_valid_assets(content: dict) -> list[str]:
             blog = content.get("blog_post") or {}
             if blog and isinstance(blog, dict) and blog.get("body"):
                 validate_or_fail(BlogSchema, blog)
-                is_brand_ok, _ = validate_asset("blog_post", blog)
+                is_brand_ok, _ = validate_asset("blog_post", blog, _governance)
                 if is_brand_ok:
                     score_data = blog.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))
@@ -172,7 +223,7 @@ def get_valid_assets(content: dict) -> list[str]:
             yt = content.get("yt_short") or {}
             if yt and isinstance(yt, dict):
                 validate_or_fail(YoutubeShortSchema, yt)
-                is_brand_ok, _ = validate_asset("yt_short", yt)
+                is_brand_ok, _ = validate_asset("yt_short", yt, _governance)
                 if is_brand_ok:
                     score_data = yt.get("editorial_score", {})
                     score = float(score_data.get("overall", 0))

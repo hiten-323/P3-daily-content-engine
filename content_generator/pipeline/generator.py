@@ -269,12 +269,53 @@ def generate_daily_content(
     import uuid as _uuid
     from content_generator.core.versions import PROMPT_VERSION, SCHEMA_VERSION
 
+    def _selected_frame_id(ctx: dict | None) -> str:
+        """
+        The psychology frame for this run, verified to exist in the registry.
+
+        Returns "" when no real frame can be selected — never a placeholder.
+        "default" was previously used here, but get_frame("default") returns
+        None, so every downstream governance lookup silently produced no rules.
+        An empty id is honest and the editorial gate rejects it; a fake id looks
+        governed and is not.
+        """
+        try:
+            from content_generator.core.coffee_psychology import (
+                get_frame, recommended_frame_for_format,
+            )
+        except Exception as e:
+            logger.warning("[psychology] registry unavailable: %s", e)
+            return ""
+        candidate = str((ctx or {}).get("psychology_frame_id") or "").strip()
+        if candidate and get_frame(candidate):
+            return candidate
+        if candidate:
+            logger.warning("[psychology] frame %r not in registry — reselecting", candidate)
+        try:
+            fallback = recommended_frame_for_format("reel")
+            fid = fallback.get("id") if isinstance(fallback, dict) else str(fallback or "")
+            if fid and get_frame(fid):
+                logger.info("[psychology] selected frame: %s", fid)
+                return fid
+        except Exception as e:
+            logger.warning("[psychology] frame recommendation failed: %s", e)
+        logger.error("[psychology] no valid frame selected — run will be rejected "
+                     "by the editorial gate rather than publish ungoverned")
+        return ""
+
     output = {
         "date":           todays_date,
         "day_number":     day_number,
         "generation_id":  f"gen_{datetime.date.today().isoformat()}_{_uuid.uuid4().hex[:8]}",
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
+        # Psychology frame this run was generated under. NEVER "default" —
+        # there is no such frame in the registry, so a placeholder id resolves
+        # to None downstream and governance silently disappears. If no frame can
+        # be selected the id stays empty and the editorial gate rejects the run,
+        # which is the correct outcome: ungoverned content must not publish.
+        "psychology_frame":         _selected_frame_id(research_context),
+        "psychology_frame_version": (research_context or {}).get("psychology_frame_version", 1),
         "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
         "instagram_post": phase1_results["instagram_post"],
         "carousel":       phase1_results["carousel"],
