@@ -28,7 +28,7 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "40% of what you drank this morning was not coffee.",
+                "Your coffee label may not tell the story you think it does.",
                 "The bitter truth about your sweet morning coffee.",
                 "Why your instant coffee does not smell like a café."
             ],
@@ -36,7 +36,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Tag the person who buys the big cheap jars."
         },
         "governance": {
-            "allowed_claims": ["chicory is a filler", "many commercial brands contain chicory", "check the ingredients"],
+            "allowed_claim_categories": ["ingredient_label_education", "chicory_vs_coffee_composition", "verified_product_composition"],
             "prohibited_claims": ["chicory is toxic", "chicory causes health issues"]
         }
     },
@@ -64,7 +64,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Share with someone who values their morning quiet time."
         },
         "governance": {
-            "allowed_claims": ["pure coffee aroma", "freeze-dried quality", "smooth taste"],
+            "allowed_claim_categories": ["product_aroma", "manufacturing_quality", "sensory_experience"],
             "prohibited_claims": ["guarantees a productive day", "medical mood enhancement"]
         }
     },
@@ -92,7 +92,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Share with the person who always says 'coffee just tastes bitter'."
         },
         "governance": {
-            "allowed_claims": ["chicory alters flavor and aroma", "pure coffee is naturally aromatic", "bitter muddy aftertaste in fillers"],
+            "allowed_claim_categories": ["taste_comparison", "aroma_differences", "aftertaste_education"],
             "prohibited_claims": ["pure coffee is sweet without sugar", "sensory preferences are absolute medical health signals"]
         }
     },
@@ -120,7 +120,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Forward this to the friend who buys coffee for the whole office."
         },
         "governance": {
-            "allowed_claims": ["shareable coffee facts", "reading ingredient lists", "identifying fillers"],
+            "allowed_claim_categories": ["ingredient_transparency", "consumer_education", "label_reading"],
             "prohibited_claims": ["anyone drinking chicory is stupid", "unverified status shaming"]
         }
     },
@@ -148,7 +148,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Send this to anyone who thinks pure coffee has to be expensive."
         },
         "governance": {
-            "allowed_claims": ["Rs 18 per cup serving cost", "cafe coffee often costs Rs 180+", "freeze-dried pure coffee quality"],
+            "allowed_claim_categories": ["serving_economics", "cafe_price_comparison", "value_proposition"],
             "prohibited_claims": ["cafe coffee is unhealthy", "unverified price calculations"]
         }
     },
@@ -175,7 +175,7 @@ PSYCHOLOGY_FRAMES = [
             "share_trigger": "Save this if you are tired of guessing what is in your cup."
         },
         "governance": {
-            "allowed_claims": ["clear labeling", "no hidden ingredients", "100% pure instant coffee"],
+            "allowed_claim_categories": ["brand_transparency", "ingredient_purity", "verified_composition"],
             "prohibited_claims": ["non-labeled foods cause cancer", "other coffee brands are illegal or toxic"]
         }
     }
@@ -202,16 +202,22 @@ def frame_prompt_block() -> str:
         lines.append("")
         lines.append("CREATIVE APPLICATION")
         lines.append(f"Share Trigger: {f['creative_application']['share_trigger']}")
+        lines.append(f"Example Hooks (MECHANISMS ONLY, DO NOT COPY AS FACTUAL CLAIMS):")
+        for hook in f['creative_application']['example_hooks']:
+            lines.append(f"  - {hook}")
+        lines.append(f"Best Formats: {', '.join(f['creative_application']['best_formats'])}")
         lines.append("")
         lines.append("GOVERNANCE")
         lines.append(f"Allowed claim categories:")
-        lines.append(f"  {', '.join(f['governance']['allowed_claims'])}")
+        lines.append(f"  {', '.join(f['governance']['allowed_claim_categories'])}")
         lines.append(f"Prohibited:")
         lines.append(f"  {', '.join(f['governance']['prohibited_claims'])}")
 
         # Operational Risk - enforce stricter generation behavior
+        if f['risk_level'] in ('medium', 'high'):
+            lines.append("WARNING (MEDIUM/HIGH RISK FRAME): Explicit claim verification required. Do not imply unsupported facts.")
         if f['risk_level'] == 'high':
-            lines.append("WARNING (HIGH RISK FRAME): Stricter factual adherence required. Double-check all claims.")
+            lines.append("WARNING (HIGH RISK FRAME): Source-backed facts and strict safety validation required. Manual approval may be enforced.")
 
         lines.append("-" * 40)
         lines.append("")
@@ -272,6 +278,10 @@ def validate_registry() -> bool:
             raise ValueError(f"Duplicate psychology frame ID detected: '{f_id}'")
         seen_ids.add(f_id)
         
+        name = f["name"]
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"name must be a non-empty string in frame '{f_id}'")
+
         if not isinstance(f["version"], int) or f["version"] < 1:
             raise ValueError(f"version must be a positive integer in frame '{f_id}'")
 
@@ -286,25 +296,33 @@ def validate_registry() -> bool:
         theory = f["theory"]
         if not isinstance(theory, dict):
             raise ValueError(f"theory must be a dict in frame '{f_id}'")
-        for key in ("core", "why_it_works"):
+        theory_expected_keys = {"core", "why_it_works"}
+        for key in theory_expected_keys:
             if key not in theory or not isinstance(theory[key], str) or not theory[key].strip():
                 raise ValueError(f"theory block missing or has empty key '{key}' in frame '{f_id}'")
+        theory_unexpected_keys = set(theory.keys()) - theory_expected_keys
+        if theory_unexpected_keys:
+            raise ValueError(f"Unexpected fields in theory block in frame '{f_id}': {theory_unexpected_keys}")
                 
         creative = f["creative_application"]
         if not isinstance(creative, dict):
             raise ValueError(f"creative_application must be a dict in frame '{f_id}'")
-        for key in ("example_hooks", "share_trigger", "best_formats"):
+        creative_expected_keys = {"example_hooks", "share_trigger", "best_formats"}
+        for key in creative_expected_keys:
             if key not in creative:
                 raise ValueError(f"creative_application missing key '{key}' in frame '{f_id}'")
+        creative_unexpected_keys = set(creative.keys()) - creative_expected_keys
+        if creative_unexpected_keys:
+            raise ValueError(f"Unexpected fields in creative_application block in frame '{f_id}': {creative_unexpected_keys}")
         
-        if not isinstance(creative["example_hooks"], list) or len(creative["example_hooks"]) == 0 or not all(isinstance(x, str) for x in creative["example_hooks"]):
-            raise ValueError(f"example_hooks must be a non-empty list of strings in frame '{f_id}'")
+        if not isinstance(creative["example_hooks"], list) or len(creative["example_hooks"]) == 0 or not all(isinstance(x, str) and x.strip() for x in creative["example_hooks"]):
+            raise ValueError(f"example_hooks must be a non-empty list of non-empty strings in frame '{f_id}'")
             
         if not isinstance(creative["share_trigger"], str) or not creative["share_trigger"].strip():
             raise ValueError(f"share_trigger must be a non-empty string in frame '{f_id}'")
             
-        if not isinstance(creative["best_formats"], list) or not all(isinstance(x, str) for x in creative["best_formats"]):
-            raise ValueError(f"best_formats must be a list of strings in frame '{f_id}'")
+        if not isinstance(creative["best_formats"], list) or len(creative["best_formats"]) == 0 or not all(isinstance(x, str) for x in creative["best_formats"]):
+            raise ValueError(f"best_formats must be a non-empty list of strings in frame '{f_id}'")
         for fmt in creative["best_formats"]:
             if fmt not in VALID_FORMATS:
                 raise ValueError(f"Invalid format '{fmt}' in best_formats in frame '{f_id}'. Must be one of {VALID_FORMATS}")
@@ -312,11 +330,15 @@ def validate_registry() -> bool:
         gov = f["governance"]
         if not isinstance(gov, dict):
             raise ValueError(f"governance must be a dict in frame '{f_id}'")
-        for key in ("allowed_claims", "prohibited_claims"):
+        gov_expected_keys = {"allowed_claim_categories", "prohibited_claims"}
+        for key in gov_expected_keys:
             if key not in gov:
                 raise ValueError(f"governance missing key '{key}' in frame '{f_id}'")
-            if not isinstance(gov[key], list) or not all(isinstance(x, str) for x in gov[key]):
-                raise ValueError(f"{key} must be a list of strings in frame '{f_id}'")
+            if not isinstance(gov[key], list) or not all(isinstance(x, str) and x.strip() for x in gov[key]):
+                raise ValueError(f"{key} must be a list of non-empty strings in frame '{f_id}'")
+        gov_unexpected_keys = set(gov.keys()) - gov_expected_keys
+        if gov_unexpected_keys:
+            raise ValueError(f"Unexpected fields in governance block in frame '{f_id}': {gov_unexpected_keys}")
 
         # Operational check: high risk requires stricter validation rules implicitly
         if risk == "high":

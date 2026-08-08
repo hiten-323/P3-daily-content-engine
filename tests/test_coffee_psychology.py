@@ -44,10 +44,10 @@ def test_invalid_formats():
     bad_frame["creative_application"] = bad_frame["creative_application"].copy()
     bad_frame["creative_application"]["best_formats"] = "not_a_list"
     PSYCHOLOGY_FRAMES.append(bad_frame)
-    with pytest.raises(ValueError, match="best_formats must be a list of strings"):
+    with pytest.raises(ValueError, match="best_formats must be a non-empty list of strings"):
         validate_registry()
-    PSYCHOLOGY_FRAMES.clear()
-    PSYCHOLOGY_FRAMES.extend(original)
+    PSYCHOLOGY_FRAMES.pop()
+    pass
 
 def test_empty_hooks():
     original = list(PSYCHOLOGY_FRAMES)
@@ -80,9 +80,9 @@ def test_malformed_governance():
     bad_frame["version"] = 1
     bad_frame["objective"] = "trust"
     bad_frame["governance"] = bad_frame["governance"].copy()
-    bad_frame["governance"]["allowed_claims"] = "not a list"
+    bad_frame["governance"]["allowed_claim_categories"] = "not a list"
     PSYCHOLOGY_FRAMES.append(bad_frame)
-    with pytest.raises(ValueError, match="allowed_claims must be a list of strings"):
+    with pytest.raises(ValueError, match="allowed_claim_categories must be a list of non-empty strings"):
         validate_registry()
     PSYCHOLOGY_FRAMES.clear()
     PSYCHOLOGY_FRAMES.extend(original)
@@ -148,3 +148,26 @@ def test_truth_regression():
     invalid_text = "purity beans is a 100% coffee brand. 40% of coffee contains chicory, which causes weight loss. visit p3online.in"
     is_valid, _ = validate_asset_copy(invalid_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=False)
     assert not is_valid
+
+def test_no_numerical_percentage_claims_in_hooks():
+    from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES
+    import re
+
+    # Assert no numerical percentage claims like 40% are in example hooks
+    percentage_pattern = re.compile(r"\b\d+(?:\.\d+)?%\b")
+    for frame in PSYCHOLOGY_FRAMES:
+        for hook in frame["creative_application"]["example_hooks"]:
+            assert not percentage_pattern.search(hook), f"Found numerical percentage claim in hook: '{hook}' in frame '{frame['id']}'"
+
+def test_empty_name_fails():
+    from content_generator.core.coffee_psychology import PSYCHOLOGY_FRAMES, validate_registry
+    import pytest
+    original = list(PSYCHOLOGY_FRAMES)
+    bad_frame = original[0].copy()
+    bad_frame["id"] = "test_name"
+    bad_frame["name"] = ""
+    PSYCHOLOGY_FRAMES.append(bad_frame)
+    with pytest.raises(ValueError, match="name must be a non-empty string"):
+        validate_registry()
+    PSYCHOLOGY_FRAMES.clear()
+    PSYCHOLOGY_FRAMES.extend(original)
