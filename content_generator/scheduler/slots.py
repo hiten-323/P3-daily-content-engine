@@ -129,6 +129,15 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
             except Exception as e:
                 logger.debug("[slots] content balance logging skipped: %s", e)
 
+            # Classify the attention mechanism at publish time so the learning
+            # record can later be grouped by it (ADR-002 Phase 1).
+            dims = {}
+            try:
+                from content_generator.core.scroller_psychology import describe
+                dims = describe(piece)
+            except Exception as e:
+                logger.debug("[slots] scroller dimensions unavailable: %s", e)
+
             track_published_post(
                 media_id    = result["media_id"],
                 asset_id    = f"instagram_{slot}_day{content.get('day_number', 0)}",
@@ -138,7 +147,10 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
                 format_used = fmt,
                 hashtags    = str(result.get("hashtags_used") or ""),
                 kpi_at_creation=piece.get("target_kpi_at_creation", ""),
-                policy_version=piece.get("policy_version_at_creation", "")
+                policy_version=piece.get("policy_version_at_creation", ""),
+                scroller_mechanism=dims.get("scroller_mechanism", ""),
+                scroller_state=dims.get("scroller_state", ""),
+                psychology_frame=str(content.get("psychology_frame") or ""),
             )
     except Exception as e:
         logger.warning("[slots] tracking failed: %s", e)

@@ -62,6 +62,9 @@ def record_performance(
     audio_category: str = "",
     kpi_at_creation: str = "",
     policy_version: str = "",
+    scroller_mechanism: str = "",
+    scroller_state: str = "",
+    psychology_frame: str = "",
 ) -> dict:
     """
     Record performance metrics for a published post.
@@ -83,6 +86,13 @@ def record_performance(
         "hook":       hook,
         "topic":      topic,
         "format":     format_used,
+        # Decision dimensions (ADR-002 Phase 1). Stored so "which attention
+        # mechanism worked" is answerable at all — previously the mechanism was
+        # never recorded, so the question could not be asked even in principle.
+        # Empty string means unknown; it is never backfilled with a guess.
+        "scroller_mechanism": scroller_mechanism,
+        "scroller_state":     scroller_state,
+        "psychology_frame":   psychology_frame,
         "audio_category": audio_category,
         "posted_at":  posted_at or datetime.date.today().isoformat(),
         "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),

@@ -285,6 +285,31 @@ def _apply_growth_director_gates(content: dict, valid: list[str]) -> list[str]:
         except Exception as e:
             logger.debug("[editorial] balance check unavailable for %s: %s", key, e)
 
+        # ADR-002 Phase 2 — payoff. A curiosity mechanism with nothing behind it
+        # is bait, and a strong hook previously passed every gate even when the
+        # viewer learned nothing.
+        try:
+            from content_generator.core.scroller_psychology import (
+                payoff_strength, check_hook_decomposition,
+            )
+            payoff = payoff_strength(piece)
+            if not payoff["passes"]:
+                logger.warning("[editorial] %s REJECTED by payoff gate: %s",
+                               key, payoff["reason"])
+                continue
+
+            # ADR-002 Phase 3 — the three hook channels must do different work.
+            # Only applies to video assets, which are the ones with a spoken
+            # channel at all.
+            if key in ("reel_1", "reel_2", "growth_reel", "yt_short"):
+                hooks = check_hook_decomposition(piece)
+                if not hooks["passes"]:
+                    logger.warning("[editorial] %s REJECTED by hook decomposition: %s",
+                                   key, hooks["reason"])
+                    continue
+        except Exception as e:
+            logger.debug("[editorial] scroller checks unavailable for %s: %s", key, e)
+
         kept.append(key)
 
     dropped = [k for k in valid if k not in kept]

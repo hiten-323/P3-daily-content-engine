@@ -72,6 +72,9 @@ def track_published_post(
     hashtags: str = "",
     kpi_at_creation: str = "",
     policy_version: str = "",
+    scroller_mechanism: str = "",
+    scroller_state: str = "",
+    psychology_frame: str = "",
 ) -> None:
     """Record a successfully published post so its insights can be fetched later."""
     if not media_id:
@@ -87,6 +90,9 @@ def track_published_post(
         "topic":       topic,
         "kpi_at_creation": kpi_at_creation,
         "policy_version": policy_version,
+        "scroller_mechanism": scroller_mechanism,
+        "scroller_state": scroller_state,
+        "psychology_frame": psychology_frame,
         "format":      format_used,
         "hashtags":    hashtags,
         "published_at": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -340,7 +346,10 @@ def fetch_pending_insights() -> dict:
             metrics     = metrics,
             notes       = "auto-recorded by insights_fetcher",
             kpi_at_creation=post.get("kpi_at_creation", ""),
-            policy_version=post.get("policy_version", "")
+            policy_version=post.get("policy_version", ""),
+            scroller_mechanism=post.get("scroller_mechanism", ""),
+            scroller_state=post.get("scroller_state", ""),
+            psychology_frame=post.get("psychology_frame", "")
         )
         post["insights_recorded"] = True
         recorded += 1

@@ -58,7 +58,8 @@ ABSOLUTE RULES:
     "7-9. Exact Feeling (names a specific person's exact feeling, e.g. 'You're tired of starting your day with a bitter, muddy-tasting cup.')",
     "10-12. Open Loop (opens a curiosity loop, e.g. 'We read the back label of India's biggest instant coffee, and found a quiet compromise.')"
   ],
-  "hook_spoken": "First 3 spoken words — mid-action, never Hey guys",
+  "hook_spoken": "First 3 spoken words — mid-action, never Hey guys. MUST NOT repeat hook_text word-for-word: the on-screen line and the spoken line do different jobs. On-screen is what they READ in silence; spoken is what they HEAR. Together they should say more than either alone.",
+  "hook_text_overlay": "The on-screen hook — 4-6 words, different wording from hook_spoken",
   "frames": [
     {{"on_screen": "4 WORDS MAX ALL CAPS", "spoken": "8-12 words expanding the hook with a real Indian detail"}},
     {{"on_screen": "THE PROBLEM", "spoken": "What most Indians drink without knowing — specific, not statistical"}},
