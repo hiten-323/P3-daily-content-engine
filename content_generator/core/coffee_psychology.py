@@ -64,7 +64,7 @@ PSYCHOLOGY_FRAMES = [
         "core": "The morning cup is not caffeine delivery. It is the first decision of the day.",
         "why_it_works": (
             "Rituals increase enjoyment and willingness to pay. Framing the daily "
-            "cup as identity ("I choose pure") makes switching feel like an upgrade "
+            "cup as identity ('I choose pure') makes switching feel like an upgrade "
             "to the self, not just the product."
         ),
         "example_hooks": [
@@ -90,7 +90,7 @@ PSYCHOLOGY_FRAMES = [
             "The first sip that finally tastes like coffee.",
         ],
         "best_formats": ["reel", "carousel"],
-        "share_trigger": "Share with the person who always says "coffee just tastes bitter".",
+        "share_trigger": "Share with the person who always says 'coffee just tastes bitter'.",
     },
     {
         "id": "social_currency",
@@ -98,8 +98,8 @@ PSYCHOLOGY_FRAMES = [
         "core": "This is information that makes the sharer look informed.",
         "why_it_works": (
             "People share content that improves their status inside their circle. "
-            ""3 signs…", "look at the label", "what the ingredient panel actually "
-            "says" are high-status discoveries. Product shots are not."
+            "'3 signs...', 'look at the label', 'what the ingredient panel actually "
+            "says' are high-status discoveries. Product shots are not."
         ),
         "example_hooks": [
             "Show this to anyone who still buys the big jar without checking.",
@@ -132,7 +132,7 @@ PSYCHOLOGY_FRAMES = [
         "core": "Knowing exactly what is in the cup removes a quiet daily uncertainty.",
         "why_it_works": (
             "Premium choice is often rational uncertainty management, not status. "
-            ""I know what I am drinking" is a stronger closer than "this is better"."
+            "'I know what I am drinking' is a stronger closer than 'this is better'."
         ),
         "example_hooks": [
             "The only claim that matters: nothing is hiding in this jar.",

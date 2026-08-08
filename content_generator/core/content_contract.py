@@ -58,8 +58,24 @@ def shareability(piece: dict) -> dict:
     Deterministic heuristic over the piece's own copy — no model call, no
     network, same answer every run.
     """
-    text = " ".join(str(piece.get(k) or "") for k in
-                    ("hook", "hook_text", "headline", "title", "caption", "body")).lower()
+    text_parts = [str(piece.get(k) or "") for k in ("hook", "hook_text", "headline", "title", "caption", "body")]
+    
+    # Also extract copy from scenes list if present (e.g. for yt_short or reels)
+    if "scenes" in piece and isinstance(piece["scenes"], list):
+        for s in piece["scenes"]:
+            if isinstance(s, dict):
+                text_parts.append(str(s.get("on_screen") or ""))
+                text_parts.append(str(s.get("spoken") or ""))
+                
+    # Also extract from script list if present
+    if "script" in piece and isinstance(piece["script"], list):
+        for s in piece["script"]:
+            if isinstance(s, dict):
+                text_parts.append(str(s.get("on_screen") or ""))
+                text_parts.append(str(s.get("voiceover") or ""))
+                text_parts.append(str(s.get("spoken") or ""))
+
+    text = " ".join(text_parts).lower()
     if not text.strip():
         return {"score": 0.0, "passes": False, "reasons": ["no copy to judge"]}
 
