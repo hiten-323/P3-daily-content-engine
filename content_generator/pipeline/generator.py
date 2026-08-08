@@ -269,6 +269,23 @@ def generate_daily_content(
     import uuid as _uuid
     from content_generator.core.versions import PROMPT_VERSION, SCHEMA_VERSION
 
+    def _kpi_at_creation() -> str:
+        """The founder's target KPI right now. Empty if unavailable — never guessed."""
+        try:
+            from content_generator.core.reward import get_active_kpi
+            return get_active_kpi()
+        except Exception as e:
+            logger.warning("[decision] target KPI unavailable at creation: %s", e)
+            return ""
+
+    def _policy_version_at_creation() -> str:
+        try:
+            from content_generator.core.founder_policy import policy
+            return str(policy().version)
+        except Exception as e:
+            logger.debug("[decision] policy version unavailable: %s", e)
+            return ""
+
     def _selected_frame_id(ctx: dict | None) -> str:
         """
         The psychology frame for this run, verified to exist in the registry.
@@ -316,6 +333,12 @@ def generate_daily_content(
         # which is the correct outcome: ungoverned content must not publish.
         "psychology_frame":         _selected_frame_id(research_context),
         "psychology_frame_version": (research_context or {}).get("psychology_frame_version", 1),
+        # The KPI this content was CREATED under. slots.py already read
+        # target_kpi_at_creation when tracking a publish, but nothing ever wrote
+        # it — so every record carried "". Stamped here, at the only moment the
+        # creation-time objective is actually known.
+        "target_kpi_at_creation":   _kpi_at_creation(),
+        "policy_version_at_creation": _policy_version_at_creation(),
         "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
         "instagram_post": phase1_results["instagram_post"],
         "carousel":       phase1_results["carousel"],

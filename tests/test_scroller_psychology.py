@@ -46,12 +46,16 @@ def main():
     check("classified state is a real id",
           classify_state(teaching) in STATES_BY_ID)
     # Unknown must stay unknown rather than becoming a placeholder.
-    check("empty copy -> empty mechanism, not a guess", classify_mechanism({}) == "")
-    check("empty copy -> empty state, not a guess", classify_state({}) == "")
+    check("empty copy -> None mechanism, not a guess", classify_mechanism({}) is None)
+    check("empty copy -> None state, not a guess", classify_state({}) is None)
 
     dims = describe(teaching)
-    for field in ("scroller_mechanism", "scroller_state", "payoff_kinds",
-                  "payoff_score", "opens_loop", "hook_layers_distinct"):
+    for field in ("scroller_state", "attention_mechanism", "psychology_frame",
+                  "hook_strategy", "payoff_type", "hook_promise",
+                  "payoff_present", "payoff_validation_status",
+                  "platform", "format", "funnel_stage",
+                  "business_objective", "target_kpi_at_creation",
+                  "decision_version"):
         check(f"describe() emits {field}", field in dims)
     check("describe states its basis", "Phase 4" in dims.get("basis", ""))
 
@@ -61,9 +65,9 @@ def main():
     entry = record_performance(
         asset_id="test_asset", track="brand", hook="h",
         metrics={"reach": 10},
-        scroller_mechanism="curiosity_gap", scroller_state="curious",
+        attention_mechanism="curiosity_gap", scroller_state="curious",
         psychology_frame="revelation")
-    check("scroller_mechanism persisted", entry.get("scroller_mechanism") == "curiosity_gap")
+    check("attention_mechanism persisted", entry.get("attention_mechanism") == "curiosity_gap")
     check("scroller_state persisted", entry.get("scroller_state") == "curious")
     check("psychology_frame persisted", entry.get("psychology_frame") == "revelation")
     check("record is on disk", any(e.get("asset_id") == "test_asset" for e in _load_log()))
@@ -116,6 +120,70 @@ def main():
         check("teaching reel survives the gate chain", kept == ["reel_1"], str(kept))
     finally:
         ee.get_valid_assets = real
+
+    # ── Contract: unavailable data is null, never invented ────────────────
+    print("\nMissing decision data is not fabricated:")
+    empty = describe({}, {})
+    for f in ("attention_mechanism", "scroller_state", "psychology_frame",
+              "hook_strategy", "payoff_type", "platform", "format",
+              "funnel_stage", "business_objective", "target_kpi_at_creation"):
+        check(f"{f} is None when unavailable", empty.get(f) is None, repr(empty.get(f)))
+    check("no field is the string 'default'",
+          "default" not in [str(v).lower() for v in empty.values()])
+    # An undetermined boolean must be None, not False: False is a finding.
+    for f in ("payoff_present", "hook_layers_distinct"):
+        check(f"{f} is None when undetermined, not False",
+              empty.get(f) is None, repr(empty.get(f)))
+    check("no unknown is coerced to 0 or False",
+          not any(v == 0 or v is False for v in empty.values()))
+    check("decision_version always stamped", bool(empty.get("decision_version")))
+    check("payoff_gate_version stamped", bool(payoff_strength({})["payoff_gate_version"]))
+
+    # ── Contract: target KPI preserved from creation time ─────────────────
+    print("\nTarget KPI is preserved from creation time:")
+    from content_generator.core.reward import get_active_kpi
+    rec = describe({}, {"target_kpi_at_creation": "followers"})
+    check("KPI read from the content record", rec["target_kpi_at_creation"] == "followers")
+    e = record_performance(asset_id="kpi_test", track="brand",
+                           metrics={"reach": 5}, kpi_at_creation="followers")
+    check("KPI stamped on the learning record", e.get("kpi") == "followers")
+    check("get_active_kpi still resolves", bool(get_active_kpi()))
+
+    # ── Contract: Phase 1 is OBSERVATIONAL — no behaviour change ──────────
+    print("\nPhase 1 is observational only:")
+    import inspect
+    from content_generator.core import scroller_psychology as sp
+    src = inspect.getsource(sp)
+    for forbidden, why in (
+        ("WEIGHT_PROFILES", "must not touch the reward function"),
+        ("def score(",      "must not define a second reward"),
+        ("def approved_assets", "must not define a second publish gate"),
+    ):
+        check(f"scroller layer {why}", forbidden not in src)
+    # It must not select frames — Phase 4 is not active.
+    check("no mechanism selection is active",
+          not any(n.startswith("select_") for n in dir(sp)), str(dir(sp))[:60])
+
+    # ── Contract: existing behaviour unchanged except payoff rejection ────
+    print("\nExisting subsystems unchanged:")
+    from content_generator.core.reward import score as reward_score
+    check("reward returns a scalar", isinstance(reward_score({"follows_gained": 1}), float))
+    check("reward still ranks audience over Rs 1",
+          reward_score({"follows_gained": 10000}) > reward_score({"revenue": 1.0}))
+    from content_generator.core.editorial_engine import (
+        approved_assets, resolve_psychology_governance, EditorialRejectException,
+    )
+    check("canonical gate still exported", callable(approved_assets))
+    try:
+        resolve_psychology_governance({"psychology_frame": "default"})
+        check("psychology governance still fails closed", False, "did not raise")
+    except EditorialRejectException:
+        check("psychology governance still fails closed", True)
+    from content_generator.core.claim_verifier import verify_claims
+    check("fact verification still active",
+          len(verify_claims("Most big brands add 50 percent chicory.")) > 0)
+    from content_generator.core.content_balance import MAX_PRODUCT_SHARE
+    check("content balance still 20%", abs(MAX_PRODUCT_SHARE - 0.20) < 1e-9)
 
     print(f"\n{'SCROLLER LAYER BROKEN' if failures else 'scroller psychology enforced'} "
           f"({len(failures)} failure(s))")

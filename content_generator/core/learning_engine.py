@@ -62,9 +62,12 @@ def record_performance(
     audio_category: str = "",
     kpi_at_creation: str = "",
     policy_version: str = "",
-    scroller_mechanism: str = "",
+    attention_mechanism: str = "",
     scroller_state: str = "",
     psychology_frame: str = "",
+    hook_strategy: str = "",
+    payoff_type: str = "",
+    decision_version: str = "",
 ) -> dict:
     """
     Record performance metrics for a published post.
@@ -90,9 +93,12 @@ def record_performance(
         # mechanism worked" is answerable at all — previously the mechanism was
         # never recorded, so the question could not be asked even in principle.
         # Empty string means unknown; it is never backfilled with a guess.
-        "scroller_mechanism": scroller_mechanism,
-        "scroller_state":     scroller_state,
-        "psychology_frame":   psychology_frame,
+        "attention_mechanism": attention_mechanism or None,
+        "scroller_state":      scroller_state or None,
+        "psychology_frame":    psychology_frame or None,
+        "hook_strategy":       hook_strategy or None,
+        "payoff_type":         payoff_type or None,
+        "decision_version":    decision_version or None,
         "audio_category": audio_category,
         "posted_at":  posted_at or datetime.date.today().isoformat(),
         "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),

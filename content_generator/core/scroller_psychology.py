@@ -126,23 +126,46 @@ def _copy_of(piece: dict) -> str:
     return " ".join(parts).lower()
 
 
-def classify_mechanism(piece: dict) -> str:
+def classify_mechanism(piece: dict) -> str | None:
     """
     Which attention mechanism this copy actually uses.
-    Returns "" when it cannot tell — never a placeholder id.
+    Returns None when it cannot tell — never a placeholder id, never "default".
     """
     text = _copy_of(piece)
     if not text.strip():
-        return ""
+        return None
     scores = {m["id"]: sum(1 for s in m["signals"] if s in text) for m in MECHANISMS}
     best = max(scores, key=scores.get)
-    return best if scores[best] > 0 else ""
+    return best if scores[best] > 0 else None
 
 
-def classify_state(piece: dict) -> str:
+def classify_state(piece: dict) -> str | None:
     """The viewer state the copy is written for, derived from its mechanism."""
     mech = classify_mechanism(piece)
-    return _STATE_FOR_MECHANISM.get(mech, "")
+    return _STATE_FOR_MECHANISM.get(mech) if mech else None
+
+
+# How the hook is constructed, independent of which mechanism it serves.
+_HOOK_STRATEGIES = {
+    "question":       re.compile(r"\?\s*$|^\s*(what|why|how|when|which|who)\b", re.I),
+    "negation":       re.compile(r"\b(isn'?t|is not|don'?t|do not|never|stop|not really)\b", re.I),
+    "second_person":  re.compile(r"\b(you|your|you'?re)\b", re.I),
+    "contrarian":     re.compile(r"\b(actually|myth|wrong|opposite|contrary|but)\b", re.I),
+    "demonstration":  re.compile(r"\b(watch|see|look at|here'?s what|side by side)\b", re.I),
+    "instruction":    re.compile(r"^\s*(read|check|try|swap|compare|look for)\b", re.I),
+}
+
+
+def classify_hook_strategy(piece: dict) -> str | None:
+    """How the hook is built. None when there is no hook to classify."""
+    hook = " ".join(str(piece.get(k) or "") for k in
+                    ("hook", "hook_text", "hook_spoken", "headline", "title")).strip()
+    if not hook:
+        return None
+    for name, rx in _HOOK_STRATEGIES.items():
+        if rx.search(hook):
+            return name
+    return None
 
 
 # ── Payoff (ADR-002 Phase 2) ─────────────────────────────────────────────────
@@ -172,39 +195,125 @@ _OPENS_LOOP = re.compile(
     r"before you|until you|don'?t know)\b", re.I)
 
 
+def _hook_text_of(piece: dict) -> str:
+    return " ".join(str(piece.get(k) or "") for k in
+                    ("hook", "hook_text", "hook_spoken", "hook_text_overlay",
+                     "headline", "title")).strip()
+
+
+def _body_text_of(piece: dict) -> str:
+    """Everything that is NOT the hook — where a payoff would have to live."""
+    hook = _hook_text_of(piece).lower()
+    body = _copy_of(piece)
+    for token in hook.split("."):
+        token = token.strip()
+        if token and len(token) > 8:
+            body = body.replace(token, " ")
+    return body.strip()
+
+
+def hook_promise(piece: dict) -> str | None:
+    """
+    What expectation does the hook create?
+
+    Structural, not an LLM opinion: the promise is read from the hook's own
+    grammar. None when the hook makes no promise that needs settling.
+    """
+    hook = _hook_text_of(piece).lower()
+    if not hook:
+        return None
+    if re.search(r"\b(most people|nobody|no one|don'?t know|secret|hidden)\b", hook):
+        return "undisclosed_fact"
+    if re.search(r"\b(why|the reason|because)\b", hook):
+        return "explanation"
+    if re.search(r"\b(how|what to|which)\b", hook):
+        return "method"
+    if re.search(r"\b(stop|avoid|never|don'?t)\b", hook):
+        return "alternative"
+    if re.search(r"\b(isn'?t|is not|wrong|myth|actually)\b", hook):
+        return "correction"
+    if re.search(r"\?\s*$", hook):
+        return "answer"
+    return None
+
+
+# Which payoff kinds can legitimately settle each promise. A promise of an
+# undisclosed fact is not settled by an emotional beat; a promise of an
+# alternative is not settled by a comparison alone.
+_PROMISE_SATISFIED_BY = {
+    "undisclosed_fact": {"new_knowledge", "verified_discovery", "comparison"},
+    "explanation":      {"new_knowledge", "verified_discovery", "comparison",
+                         "decision_framework"},
+    "method":           {"useful_test", "practical_action", "decision_framework"},
+    "alternative":      {"practical_action", "useful_test", "decision_framework"},
+    "correction":       {"new_knowledge", "verified_discovery", "comparison"},
+    "answer":           {"new_knowledge", "verified_discovery", "comparison",
+                         "decision_framework", "useful_test", "practical_action"},
+}
+
+
 def payoff_strength(piece: dict) -> dict:
     """
-    Does the viewer actually receive something?
+    Does the viewer receive what the hook made them expect?
 
-    Returns {"score": 0-100, "kinds": [...], "opens_loop": bool,
-             "passes": bool, "reason": str}
+    Structural chain, per the approved contract:
+        hook promise -> payoff kinds that could settle it -> what the body
+        actually contains -> is the promise settled?
 
-    The rule is proportional, not absolute: content that opens a loop must pay
-    it off. Content that never opened one (a straight demonstration, say) is
-    not penalised for having no reveal.
+    Deliberately NOT "every post needs a dramatic reveal". A demonstration, an
+    explanation, a comparison or an actionable insight all satisfy the gate. A
+    post that never opened a loop is judged only on whether it delivers
+    something, not on whether it surprises.
     """
-    text = _copy_of(piece)
-    if not text.strip():
-        return {"score": 0.0, "kinds": [], "opens_loop": False, "passes": False,
-                "reason": "no copy to judge"}
+    from content_generator.core.versions import PAYOFF_GATE_VERSION
 
-    kinds = [k for k, sigs in _PAYOFF_KINDS.items() if any(s in text for s in sigs)]
+    text = _copy_of(piece)
+    base = {"payoff_gate_version": PAYOFF_GATE_VERSION}
+    if not text.strip():
+        # payoff_present is None, not False: with no copy we did not DETERMINE
+        # that a payoff is absent, we were unable to look. A False here would
+        # enter the learning log as a measured finding.
+        return {**base, "score": None, "kinds": [], "payoff_type": None,
+                "hook_promise": None, "payoff_present": None,
+                "opens_loop": None, "passes": False,
+                "payoff_validation_status": "no_copy", "reason": "no copy to judge"}
+
+    promise = hook_promise(piece)
+    body = _body_text_of(piece)
+    # Payoff must live in the BODY. A hook that contains its own payoff keyword
+    # is still just a hook.
+    kinds = [k for k, sigs in _PAYOFF_KINDS.items() if any(s in body for s in sigs)]
     opens = bool(_OPENS_LOOP.search(text))
 
     score = min(100.0, len(kinds) * 28.0)
-    # Length is a weak proxy for whether anything was actually explained.
-    if len(text.split()) < 12:
+    if len(body.split()) < 12:
         score -= 20
-
     score = max(0.0, score)
-    if opens and not kinds:
-        return {"score": score, "kinds": kinds, "opens_loop": True, "passes": False,
-                "reason": "opens a curiosity loop and never closes it — the viewer "
-                          "learns nothing, which is the definition of bait"}
-    if not kinds and not opens:
-        return {"score": score, "kinds": kinds, "opens_loop": False, "passes": False,
-                "reason": "delivers no knowledge, test, comparison or action"}
-    return {"score": score, "kinds": kinds, "opens_loop": opens, "passes": True,
+
+    primary = kinds[0] if kinds else None
+    out = {**base, "score": score, "kinds": kinds, "payoff_type": primary,
+           "hook_promise": promise, "payoff_present": bool(kinds),
+           "opens_loop": opens}
+
+    if not kinds:
+        return {**out, "passes": False,
+                "payoff_validation_status": "missing",
+                "reason": ("opens a curiosity loop and never closes it — the viewer "
+                           "learns nothing, which is the definition of bait")
+                          if opens or promise else
+                          "delivers no knowledge, test, comparison or action"}
+
+    # A promise was made: check it is settled by a payoff of the right kind,
+    # not merely by any payoff at all.
+    if promise:
+        acceptable = _PROMISE_SATISFIED_BY.get(promise, set())
+        if acceptable and not (set(kinds) & acceptable):
+            return {**out, "passes": False,
+                    "payoff_validation_status": "mismatched",
+                    "reason": (f"hook promises {promise!r} but the content delivers "
+                               f"{', '.join(kinds)} — the promise is never settled")}
+
+    return {**out, "passes": True, "payoff_validation_status": "satisfied",
             "reason": f"pays off with: {', '.join(kinds)}"}
 
 
@@ -221,7 +330,11 @@ def hook_layers(piece: dict) -> dict:
     visual    = _norm(piece.get("hook_visual_concept") or piece.get("visual_hook"))
     present   = {k: v for k, v in
                  (("on_screen", on_screen), ("spoken", spoken), ("visual", visual)) if v}
-    distinct  = len({v for v in present.values()}) == len(present)
+    # Distinctness is undefined with fewer than two channels — None, not True.
+    # Reporting True for an asset that has no hooks at all would record a
+    # quality property we never actually checked.
+    distinct = (len({v for v in present.values()}) == len(present)
+                if len(present) >= 2 else None)
     return {"layers": present, "distinct": distinct}
 
 
@@ -246,18 +359,50 @@ def check_hook_decomposition(piece: dict) -> dict:
     return {"passes": True, "reason": "hook channels are distinct"}
 
 
-def describe(piece: dict) -> dict:
+def describe(piece: dict, content: dict = None, platform: str = None,
+             fmt: str = None) -> dict:
     """
-    The full scroller decision record for one asset (ADR-002 Phase 1).
-    Recorded on every asset so Phase 5 can eventually learn from it.
+    The versioned decision record for one asset (ADR-002 Phase 1).
+
+    OBSERVATIONAL ONLY. Nothing here influences frame selection, publishing
+    frequency, reward, content mix or any publish decision. It exists so that
+    "which attention mechanism worked" becomes answerable once real outcomes
+    land — today it records a hypothesis, never a finding.
+
+    Unavailable fields are None. They are never "default", never "" and never
+    0: an unknown that looks like a value is worse than an obvious gap,
+    because only the obvious gap gets fixed.
     """
+    from content_generator.core.versions import DECISION_VERSION
+
+    content = content or {}
     payoff = payoff_strength(piece)
+
+    def _or_none(v):
+        v = str(v or "").strip()
+        return v or None
+
     return {
-        "scroller_mechanism": classify_mechanism(piece),
-        "scroller_state":     classify_state(piece),
-        "payoff_kinds":       payoff["kinds"],
-        "payoff_score":       payoff["score"],
-        "opens_loop":         payoff["opens_loop"],
-        "hook_layers_distinct": hook_layers(piece)["distinct"],
-        "basis": "classified from copy; selection is ADR-002 Phase 4",
+        "scroller_state":         classify_state(piece),
+        "attention_mechanism":    classify_mechanism(piece),
+        "psychology_frame":       _or_none(content.get("psychology_frame")),
+        "psychology_frame_version": content.get("psychology_frame_version"),
+        "hook_strategy":          classify_hook_strategy(piece),
+        "payoff_type":            payoff["payoff_type"],
+        "hook_promise":           payoff["hook_promise"],
+        "payoff_present":         payoff["payoff_present"],
+        "payoff_validation_status": payoff["payoff_validation_status"],
+        "payoff_gate_version":    payoff["payoff_gate_version"],
+        "platform":               _or_none(platform),
+        "format":                 _or_none(fmt or piece.get("type")),
+        "funnel_stage":           _or_none(piece.get("funnel_stage")
+                                           or piece.get("objective")),
+        "business_objective":     _or_none(piece.get("business_objective")
+                                           or piece.get("primary_cta")),
+        "target_kpi_at_creation": _or_none(piece.get("target_kpi_at_creation")
+                                           or content.get("target_kpi_at_creation")),
+        "hook_layers_distinct":   hook_layers(piece)["distinct"],
+        "decision_version":       DECISION_VERSION,
+        "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 "
+                 "and is not active",
     }

@@ -189,14 +189,15 @@ def _content_id(day: int, channel: str, ctype: str) -> str:
     return "pb_" + hashlib.md5(raw.encode()).hexdigest()[:10]
 
 
-def _scroller_dimensions(piece: dict) -> dict:
+def _scroller_dimensions(piece: dict, content: dict = None,
+                        platform: str = None, fmt: str = None) -> dict:
     """
     Attention-side dimensions for one asset. Never raises — metadata enrichment
     must not be able to fail a generation run.
     """
     try:
         from content_generator.core.scroller_psychology import describe
-        return describe(piece)
+        return describe(piece, content, platform, fmt)
     except Exception as e:
         logger.debug("[decision] scroller dimensions unavailable: %s", e)
         return {}
@@ -240,8 +241,7 @@ def attach_asset_metadata(content: dict, day: int) -> list[dict]:
             # Scroller decision dimensions (ADR-002 Phase 1). Recorded on every
             # asset so mechanism-level learning is possible later; today they
             # are classified from the copy, not selected before it.
-            **_scroller_dimensions(piece),
-            "psychology_frame": str(content.get("psychology_frame") or ""),
+            **_scroller_dimensions(piece, content, channel, ctype),
             **_versions(),
             "publish_time": now,
             "status":       "scheduled",

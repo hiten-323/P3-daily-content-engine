@@ -134,7 +134,7 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
             dims = {}
             try:
                 from content_generator.core.scroller_psychology import describe
-                dims = describe(piece)
+                dims = describe(piece, content, platform='instagram', fmt=fmt)
             except Exception as e:
                 logger.debug("[slots] scroller dimensions unavailable: %s", e)
 
@@ -148,9 +148,12 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
                 hashtags    = str(result.get("hashtags_used") or ""),
                 kpi_at_creation=piece.get("target_kpi_at_creation", ""),
                 policy_version=piece.get("policy_version_at_creation", ""),
-                scroller_mechanism=dims.get("scroller_mechanism", ""),
-                scroller_state=dims.get("scroller_state", ""),
-                psychology_frame=str(content.get("psychology_frame") or ""),
+                attention_mechanism=dims.get("attention_mechanism") or "",
+                scroller_state=dims.get("scroller_state") or "",
+                psychology_frame=dims.get("psychology_frame") or "",
+                hook_strategy=dims.get("hook_strategy") or "",
+                payoff_type=dims.get("payoff_type") or "",
+                decision_version=dims.get("decision_version") or "",
             )
     except Exception as e:
         logger.warning("[slots] tracking failed: %s", e)

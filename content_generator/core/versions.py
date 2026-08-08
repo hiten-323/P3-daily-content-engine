@@ -15,10 +15,17 @@ because the founder owns it (see founder_policy.py).
 """
 from __future__ import annotations
 
-PROMPT_VERSION    = "2.6.0"   # growth director + social SEO + creator DNA + anti-bait hooks
+PROMPT_VERSION    = "2.7.0"   # + distinct visual/spoken/on-screen video hooks
 SCHEMA_VERSION    = "1.4.0"   # engagement fields, ai prompts, thumbnails, hook_options
 PUBLISHER_VERSION = "2.3.0"   # timed slots, reel video, product tags, telemetry
 ASSET_FORMAT      = "3.1.0"   # cinematic frames, white-knockout, safe-zone text
+
+# ADR-002. Bump DECISION_VERSION when the SHAPE of the decision record changes,
+# so records written under different definitions are never silently compared.
+# Bump PAYOFF_GATE_VERSION when the payoff rule changes, so a rejection can be
+# traced to the rule that produced it.
+DECISION_VERSION    = "1.0.0"   # scroller state/mechanism, hook strategy, payoff type
+PAYOFF_GATE_VERSION = "1.0.0"   # structural hook-promise -> payoff-present check
 
 
 def all_versions() -> dict:
