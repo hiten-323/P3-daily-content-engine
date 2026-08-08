@@ -49,6 +49,7 @@ class ReelSchema(BaseModel):
     objective: Optional[str] = None
     success_metric: Optional[str] = None
     target: Optional[int] = None
+    psychology_frame: Optional[str] = None
 
 class CarouselSlide(BaseModel):
     slide: int
@@ -73,6 +74,7 @@ class CarouselSchema(BaseModel):
     primary_cta: Optional[str] = None
     success_metric: Optional[str] = None
     target: Optional[int] = None
+    psychology_frame: Optional[str] = None
 
     @model_validator(mode="after")
     def validate_final_slide(self) -> 'CarouselSchema':
