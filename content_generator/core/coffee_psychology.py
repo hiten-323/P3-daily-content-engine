@@ -29,11 +29,11 @@ PSYCHOLOGY_FRAMES = [
         "creative_application": {
             "example_hooks": [
                 "Your coffee label may not tell the story you think it does.",
-                "The bitter truth about your sweet morning coffee.",
-                "Why your instant coffee does not smell like a café."
+                "Check this one line before you buy your next coffee.",
+                "What is actually in your instant coffee?"
             ],
             "best_formats": ["reel", "carousel"],
-            "share_trigger": "Tag the person who buys the big cheap jars."
+            "share_trigger": "Share with someone who always assumes instant coffee is exactly the same as café coffee."
         },
         "governance": {
             "allowed_claim_categories": ["ingredient_label_education", "chicory_vs_coffee_composition", "verified_product_composition"],
@@ -84,9 +84,9 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "It tastes bitter after two minutes. That is not normal.",
-                "Real coffee does not leave a muddy aftertaste.",
-                "The first sip that finally tastes like coffee."
+                "Notice what happens to the taste after your first few sips.",
+                "Pay attention to the aftertaste of your regular cup.",
+                "Compare the aroma of your current jar to a fresh café pour."
             ],
             "best_formats": ["reel", "carousel"],
             "share_trigger": "Share with the person who always says 'coffee just tastes bitter'."
@@ -140,9 +140,9 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "Rs 18. Same purity the café charges Rs 180 for.",
-                "Real coffee does not require a machine or a weekend.",
-                "Premium is not the price. Premium is what is missing from the jar."
+                "What if premium coffee didn't require a café?",
+                "Consider the actual cost of your daily café habit.",
+                "You don't need a machine to upgrade your morning."
             ],
             "best_formats": ["reel", "carousel", "story"],
             "share_trigger": "Send this to anyone who thinks pure coffee has to be expensive."
@@ -167,9 +167,9 @@ PSYCHOLOGY_FRAMES = [
         },
         "creative_application": {
             "example_hooks": [
-                "The only claim that matters: nothing is hiding in this jar.",
-                "You should not need a chemistry degree to trust your coffee.",
-                "100% coffee. Zero chicory. Written so you can verify it."
+                "Read the ingredient line before you decide.",
+                "You shouldn't have to guess what's in your cup.",
+                "Transparency is the only label that matters."
             ],
             "best_formats": ["carousel", "reel"],
             "share_trigger": "Save this if you are tired of guessing what is in your cup."
@@ -185,13 +185,30 @@ PSYCHOLOGY_FRAMES = [
 FRAMES_BY_ID = {f["id"]: f for f in PSYCHOLOGY_FRAMES}
 
 def get_frame(frame_id: str) -> dict | None:
-    return FRAMES_BY_ID.get(frame_id)
+    frame = FRAMES_BY_ID.get(frame_id)
+    if not frame:
+        return None
 
-def frame_prompt_block() -> str:
-    lines = [
-        "PSYCHOLOGY FRAMES (pick ONE primary frame for this asset — do not invent a new one):",
-    ]
-    for f in PSYCHOLOGY_FRAMES:
+    # Return a copy with operational metadata attached so it can be enforced
+    frame_copy = frame.copy()
+    risk = frame_copy["risk_level"]
+    frame_copy["governance_rules"] = {
+        "risk_level": risk,
+        "require_claim_verification": risk in ("medium", "high"),
+        "require_source_backing": risk == "high",
+        "require_manual_review": risk == "high"
+    }
+    return frame_copy
+
+def frame_prompt_block(frame_id: str = None) -> str:
+    frames_to_render = PSYCHOLOGY_FRAMES
+    if frame_id and frame_id in FRAMES_BY_ID:
+        frames_to_render = [FRAMES_BY_ID[frame_id]]
+        lines = [f"PRIMARY PSYCHOLOGY FRAME: {FRAMES_BY_ID[frame_id]['name']}"]
+    else:
+        lines = ["PSYCHOLOGY FRAMES (pick ONE primary frame for this asset — do not invent a new one):"]
+
+    for f in frames_to_render:
         lines.append(f"PSYCHOLOGY FRAME")
         lines.append(f"Name: {f['name']}")
         lines.append(f"Risk: {f['risk_level'].title()}")
@@ -255,12 +272,13 @@ def recommended_frame_for_format(fmt: str) -> list[str]:
     return out or [f["id"] for f in PSYCHOLOGY_FRAMES]
 
 
-def validate_registry() -> bool:
+def validate_registry(frames: list[dict] = None) -> bool:
+    frames = frames if frames is not None else PSYCHOLOGY_FRAMES
     seen_ids = set()
     valid_risk_levels = {"low", "medium", "high"}
     id_pattern = re.compile(r"^[a-z][a-z0-9_]*$")
     
-    for f in PSYCHOLOGY_FRAMES:
+    for f in frames:
         expected_keys = {"id", "name", "version", "objective", "risk_level", "theory", "creative_application", "governance"}
         for key in expected_keys:
             if key not in f:
@@ -345,7 +363,13 @@ def validate_registry() -> bool:
             if len(gov["prohibited_claims"]) == 0:
                 raise ValueError(f"High risk frame '{f_id}' must specify prohibited_claims")
                 
-    logger.info("[psychology] All %d psychology frames verified successfully against the strict registry schema.", len(PSYCHOLOGY_FRAMES))
+    logger.info("[psychology] All %d psychology frames verified successfully against the strict registry schema.", len(frames))
     return True
 
+SUPPORTED_SCHEMA_VERSION = 2
+if PSYCHOLOGY_SCHEMA_VERSION != SUPPORTED_SCHEMA_VERSION:
+    raise ValueError(f"Unsupported schema version: {PSYCHOLOGY_SCHEMA_VERSION}")
+
 validate_registry()
+# Make registry effectively immutable at runtime
+PSYCHOLOGY_FRAMES = tuple(PSYCHOLOGY_FRAMES)

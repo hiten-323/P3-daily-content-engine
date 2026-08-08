@@ -458,47 +458,40 @@ try:
     
     # 2. Test duplicate ID detection
     original_frames = list(PSYCHOLOGY_FRAMES)
+    test_frames = original_frames.copy()
+    test_frames.append(test_frames[0])
     try:
-        PSYCHOLOGY_FRAMES.append(PSYCHOLOGY_FRAMES[0])  # duplicate
-        try:
-            validate_registry()
-            duplicate_detected = False
-        except ValueError as ve:
-            duplicate_detected = "Duplicate psychology frame ID detected" in str(ve)
-        check("validate_registry() catches duplicate frame IDs", duplicate_detected)
-    finally:
-        PSYCHOLOGY_FRAMES[:] = original_frames  # restore
+        validate_registry(test_frames)
+        duplicate_detected = False
+    except ValueError as ve:
+        duplicate_detected = "Duplicate psychology frame ID detected" in str(ve)
+    check("validate_registry() catches duplicate frame IDs", duplicate_detected)
         
     # 3. Test missing key detection
+    test_frames = original_frames.copy()
+    bad_frame = {k: v for k, v in test_frames[0].items() if k != "theory"}
+    bad_frame["id"] = "bad-theory-frame"
+    test_frames.append(bad_frame)
     try:
-        bad_frame = {k: v for k, v in PSYCHOLOGY_FRAMES[0].items() if k != "theory"}
-        bad_frame["id"] = "bad-theory-frame"
-        PSYCHOLOGY_FRAMES.append(bad_frame)
-        try:
-            validate_registry()
-            missing_detected = False
-        except ValueError as ve:
-            missing_detected = "missing required root key: 'theory'" in str(ve)
-        check("validate_registry() catches missing required schema keys", missing_detected)
-    finally:
-        PSYCHOLOGY_FRAMES[:] = original_frames  # restore
+        validate_registry(test_frames)
+        missing_detected = False
+    except ValueError as ve:
+        missing_detected = "missing required root key: 'theory'" in str(ve)
+    check("validate_registry() catches missing required schema keys", missing_detected)
 
     # 4. Test invalid risk level detection
+    test_frames = original_frames.copy()
+    bad_frame = {**test_frames[0], "id": "bad_risk_frame", "version": 1, "objective": "shareability", "risk_level": "ultra-high"}
+    test_frames.append(bad_frame)
     try:
-        bad_frame = {**PSYCHOLOGY_FRAMES[0], "id": "bad-risk-frame", "risk_level": "ultra-high"}
-        PSYCHOLOGY_FRAMES.append(bad_frame)
-        try:
-            validate_registry()
-            risk_detected = False
-        except ValueError as ve:
-            risk_detected = "Invalid risk_level" in str(ve)
-        check("validate_registry() catches invalid risk levels", risk_detected)
-    finally:
-        PSYCHOLOGY_FRAMES[:] = original_frames  # restore
+        validate_registry(test_frames)
+        risk_detected = False
+    except ValueError as ve:
+        risk_detected = "Invalid risk_level" in str(ve)
+    check("validate_registry() catches invalid risk levels", risk_detected)
 
 except Exception as e:
     check("Psychology registry validation tests", False, str(e))
-
 
 # -----------------------------------------------------------------------------
 #  Summary
