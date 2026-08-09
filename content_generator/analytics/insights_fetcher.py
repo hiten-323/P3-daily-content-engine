@@ -316,24 +316,18 @@ def fetch_pending_insights() -> dict:
             continue
         due.append(post)
 
+    # A per-media retry budget only makes sense for a per-media failure — a
+    # deleted post, a bad id. When EVERY post fails, the cause is account-wide
+    # (a missing insights permission, a token scope change), and spending the
+    # budget punishes the archive for an outage it did not cause. Observed for
+    # real: 55 posts reached 4/5 attempts during a permission outage and were
+    # one run away from being abandoned permanently, which would have discarded
+    # a month of recoverable history to fix nothing.
+    failed_this_run = []
     for post in due:
         metrics = _fetch_media_insights(post["media_id"])
         if metrics is None:
-            # Retry on a later run instead of inventing numbers. Give up after
-            # MAX_FETCH_ATTEMPTS so a deleted or permission-denied media object
-            # isn't probed forever — and abandon it WITHOUT writing a row, so
-            # the learning log contains only real measurements.
-            attempts = int(post.get("fetch_attempts", 0)) + 1
-            post["fetch_attempts"] = attempts
-            if attempts >= MAX_FETCH_ATTEMPTS:
-                post["insights_recorded"] = True
-                post["insights_failed"]   = True
-                abandoned += 1
-                logger.warning(
-                    "[insights] Giving up on %s after %d attempts — never "
-                    "measured, no row written", post.get("asset_id"), attempts)
-            else:
-                pending += 1
+            failed_this_run.append(post)
             continue
         # Account-level signals attributed evenly across the day's posts. These
         # are approximations by construction — Instagram reports them for the
@@ -371,6 +365,33 @@ def fetch_pending_insights() -> dict:
                 record_post_hashtags(post["hashtags"], metrics)
         except Exception as e:
             logger.debug("[insights] hashtag attribution skipped: %s", e)
+
+    # Charge the retry budget only when the failure is media-specific. If
+    # nothing at all succeeded, treat it as an account-wide outage: keep the
+    # posts pending and say so plainly, rather than quietly eroding the archive.
+    systemic = bool(failed_this_run) and recorded == 0
+    if systemic:
+        pending += len(failed_this_run)
+        logger.error(
+            "[insights] ALL %d media insight fetches failed and none succeeded — "
+            "treating as an account-wide outage, retry budget NOT charged. "
+            "followers_count reads fine (%s), so the token works but /insights "
+            "returns nothing: check that the token carries "
+            "instagram_manage_insights and the account is Business/Creator.",
+            len(failed_this_run), follower_count)
+    else:
+        for post in failed_this_run:
+            attempts = int(post.get("fetch_attempts", 0)) + 1
+            post["fetch_attempts"] = attempts
+            if attempts >= MAX_FETCH_ATTEMPTS:
+                post["insights_recorded"] = True
+                post["insights_failed"]   = True
+                abandoned += 1
+                logger.warning(
+                    "[insights] Giving up on %s after %d attempts — never "
+                    "measured, no row written", post.get("asset_id"), attempts)
+            else:
+                pending += 1
 
     _save_posts(posts)
     logger.info(
