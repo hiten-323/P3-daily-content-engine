@@ -170,6 +170,36 @@ def _objective_factor(entry: dict) -> float:
         return 1.0
 
 
+def is_teachable(entry: dict) -> bool:
+    """
+    May this post influence future generation?
+
+    A post that carried an unverifiable claim must never become a pattern to
+    repeat, however well it performed. 19 published posts carried the
+    fabricated "40% chicory filler" statistic — if any of them measures well
+    once insights are restored, an unguarded learning loop would conclude the
+    fabrication was the thing that worked and write more of it.
+
+    The record is kept: it is real history and the metrics are real. It is
+    simply barred from teaching. Learning from a claim we should never have
+    made is how a one-off incident becomes a house style.
+    """
+    hook = str(entry.get("hook") or "")
+    if not hook:
+        return True
+    try:
+        from content_generator.core.claim_verifier import verify_claims
+        findings = verify_claims(hook)
+    except Exception as e:
+        logger.debug("[learning] claim check unavailable: %s", e)
+        return True
+    if findings:
+        logger.debug("[learning] %s excluded from learning — hook carries %s",
+                     entry.get("asset_id"), [f["type"] for f in findings])
+        return False
+    return True
+
+
 def _weighted_score(entry: dict) -> float:
     """
     Reward adjusted for recency AND objective compatibility — what ranking uses.
@@ -194,7 +224,9 @@ def analyze() -> dict:
     scores = sorted(s for _, s in scored)
     median = scores[len(scores) // 2]
 
-    winners = [e for e, s in scored if s >= median and s > 0]
+    # Winners become patterns to repeat, so an unverifiable claim is barred
+    # from the list however well it scored.
+    winners = [e for e, s in scored if s >= median and s > 0 and is_teachable(e)]
     # Only condemn a post by the yardstick it was BUILT for. Content created
     # under a previous objective may score low under today's weights without
     # having actually failed — retiring it would import a bias from an
@@ -251,6 +283,11 @@ def get_learning_block(max_items: int = 5) -> str:
     if len(scored) < 3:
         return ""
 
+    # Barred hooks must not reach the prompt at all — the TOP block is
+    # copied into every future generation.
+    scored = [(e, sc) for e, sc in scored if is_teachable(e)] or scored[:0]
+    if len(scored) < 3:
+        return ""
     n_top = max(1, len(scored) // 5)   # top 20%
     top    = scored[:n_top]
     # Never-repeat list: same-objective evidence only (see analyze()).
