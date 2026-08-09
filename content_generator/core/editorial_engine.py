@@ -66,6 +66,64 @@ def enforce_editorial_gate(piece_name: str, score: float) -> bool:
         )
     return True
 
+_PREVETTED_SOURCES = ("evergreen_template", "evergreen_distributor")
+
+
+def _editorial_ok(label: str, piece: dict) -> bool:
+    """
+    Apply the editorial threshold, exempting hand-written fallback templates.
+
+    The threshold scores LLM output. Fallback templates are written by hand and
+    never receive an editorial_score, so they scored 0 and were rejected — which
+    made the fallback dead code: on the days generation fails, the engine had
+    nothing publishable at all and went silent while reporting success.
+
+    The exemption is narrow and auditable: it applies ONLY to the curated
+    sources, and only to this one gate. Schema, brand, claim verification,
+    psychology governance, the north-star gate, the 80/20 cap and the payoff
+    gate all still apply. tests/test_fallback_safety.py asserts every template
+    passes all of them, so the exemption rests on an enforced guarantee rather
+    than on trust.
+
+    A fabricated passing score was the alternative, and inventing a number to
+    clear a gate is the habit this engine has spent its whole history removing.
+    """
+    if str(piece.get("source") or "") in _PREVETTED_SOURCES:
+        logger.info("[editorial] %s is a pre-vetted %s — editorial score not "
+                    "applicable; all other gates still enforced",
+                    label, piece.get("source"))
+        return True
+    score = float((piece.get("editorial_score") or {}).get("overall", 0))
+    enforce_editorial_gate(label, score)
+    return True
+
+
+def has_copy(piece: dict, *keys: str) -> bool:
+    """
+    Does this asset carry any of the fields that mean "there is content here"?
+
+    Each asset used to be gated on ONE hardcoded field, and every one of them
+    was wrong for the current schema:
+
+        reel     gated on hook_text  -> the schema field is `hook`
+        carousel gated on title      -> the schema fields are `hook` + `slides`
+        instagram gated on caption   -> the schema field is `body`
+
+    A missing field is falsy, so all three assets failed the entry condition
+    silently and were never validated at all — get_valid_assets returned
+    ['linkedin_post'] alone and Instagram published nothing, while the run
+    reported success. This is the same hook_text/title defect already fixed in
+    slots._track; it was living in the canonical gate too.
+
+    A cascade rather than a single key, so one schema rename cannot silently
+    empty the publish set again.
+    """
+    if not isinstance(piece, dict) or not piece:
+        return False
+    return any(str(piece.get(k) or "").strip() or piece.get(k) for k in keys
+               if piece.get(k) not in (None, "", [], {}))
+
+
 def resolve_psychology_governance(content: dict) -> dict | None:
     """
     Governance rules for the psychology frame this content was generated under.
@@ -130,14 +188,14 @@ def get_valid_assets(content: dict) -> list[str]:
         try:
             reels = content.get("reels") or []
             reel_1 = reels[0] if len(reels) > 0 else {}
-            if reel_1 and isinstance(reel_1, dict) and reel_1.get("hook_text"):
+            if has_copy(reel_1, "hook", "hook_text", "headline", "title"):
                 validate_or_fail(ReelSchema, reel_1)
-                is_brand_ok, _ = validate_asset("reel_1", reel_1, _governance)
+                is_brand_ok, _brand_errs = validate_asset("reel_1", reel_1, _governance)
                 if is_brand_ok:
-                    score_data = reel_1.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("reel_1", score)
+                    _editorial_ok("reel_1", reel_1)
                     valid.append("reel_1")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "reel_1", _brand_errs)
         except Exception as e:
             logger.debug("reel_1 validation failed: %s", e)
         
@@ -146,14 +204,14 @@ def get_valid_assets(content: dict) -> list[str]:
         try:
             reels = content.get("reels") or []
             reel_2 = reels[1] if len(reels) > 1 else {}
-            if reel_2 and isinstance(reel_2, dict) and reel_2.get("hook_text"):
+            if has_copy(reel_2, "hook", "hook_text", "headline", "title"):
                 validate_or_fail(ReelSchema, reel_2)
-                is_brand_ok, _ = validate_asset("reel_2", reel_2, _governance)
+                is_brand_ok, _brand_errs = validate_asset("reel_2", reel_2, _governance)
                 if is_brand_ok:
-                    score_data = reel_2.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("reel_2", score)
+                    _editorial_ok("reel_2", reel_2)
                     valid.append("reel_2")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "reel_2", _brand_errs)
         except Exception as e:
             logger.debug("reel_2 validation failed: %s", e)
 
@@ -161,14 +219,14 @@ def get_valid_assets(content: dict) -> list[str]:
     if "carousel" in REQUIRED_DAILY_ASSETS:
         try:
             carousel = content.get("carousel") or {}
-            if carousel and isinstance(carousel, dict) and carousel.get("title"):
+            if has_copy(carousel, "hook", "title", "headline", "slides"):
                 validate_or_fail(CarouselSchema, carousel)
-                is_brand_ok, _ = validate_asset("carousel", carousel, _governance)
+                is_brand_ok, _brand_errs = validate_asset("carousel", carousel, _governance)
                 if is_brand_ok:
-                    score_data = carousel.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("carousel", score)
+                    _editorial_ok("carousel", carousel)
                     valid.append("carousel")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "carousel", _brand_errs)
         except Exception as e:
             logger.debug("carousel validation failed: %s", e)
 
@@ -176,14 +234,14 @@ def get_valid_assets(content: dict) -> list[str]:
     if "instagram_post" in REQUIRED_DAILY_ASSETS:
         try:
             ig = content.get("instagram_post") or {}
-            if ig and isinstance(ig, dict) and ig.get("caption"):
+            if has_copy(ig, "caption", "body", "hook"):
                 validate_or_fail(InstagramSchema, ig)
-                is_brand_ok, _ = validate_asset("instagram_post", ig, _governance)
+                is_brand_ok, _brand_errs = validate_asset("instagram_post", ig, _governance)
                 if is_brand_ok:
-                    score_data = ig.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("instagram_post", score)
+                    _editorial_ok("instagram_post", ig)
                     valid.append("instagram_post")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "instagram_post", _brand_errs)
         except Exception as e:
             logger.debug("instagram_post validation failed: %s", e)
 
@@ -191,14 +249,14 @@ def get_valid_assets(content: dict) -> list[str]:
     if "linkedin_post" in REQUIRED_DAILY_ASSETS:
         try:
             li = content.get("linkedin_post") or {}
-            if li and isinstance(li, dict) and li.get("body"):
+            if has_copy(li, "body", "caption", "hook"):
                 validate_or_fail(LinkedinSchema, li)
-                is_brand_ok, _ = validate_asset("linkedin_post", li, _governance)
+                is_brand_ok, _brand_errs = validate_asset("linkedin_post", li, _governance)
                 if is_brand_ok:
-                    score_data = li.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("linkedin_post", score)
+                    _editorial_ok("linkedin_post", li)
                     valid.append("linkedin_post")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "linkedin_post", _brand_errs)
         except Exception as e:
             logger.debug("linkedin_post validation failed: %s", e)
 
@@ -206,14 +264,14 @@ def get_valid_assets(content: dict) -> list[str]:
     if "blog_post" in REQUIRED_DAILY_ASSETS:
         try:
             blog = content.get("blog_post") or {}
-            if blog and isinstance(blog, dict) and blog.get("body"):
+            if has_copy(blog, "body", "caption", "title"):
                 validate_or_fail(BlogSchema, blog)
-                is_brand_ok, _ = validate_asset("blog_post", blog, _governance)
+                is_brand_ok, _brand_errs = validate_asset("blog_post", blog, _governance)
                 if is_brand_ok:
-                    score_data = blog.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("blog_post", score)
+                    _editorial_ok("blog_post", blog)
                     valid.append("blog_post")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "blog_post", _brand_errs)
         except Exception as e:
             logger.debug("blog_post validation failed: %s", e)
 
@@ -223,12 +281,12 @@ def get_valid_assets(content: dict) -> list[str]:
             yt = content.get("yt_short") or {}
             if yt and isinstance(yt, dict):
                 validate_or_fail(YoutubeShortSchema, yt)
-                is_brand_ok, _ = validate_asset("yt_short", yt, _governance)
+                is_brand_ok, _brand_errs = validate_asset("yt_short", yt, _governance)
                 if is_brand_ok:
-                    score_data = yt.get("editorial_score", {})
-                    score = float(score_data.get("overall", 0))
-                    enforce_editorial_gate("yt_short", score)
+                    _editorial_ok("yt_short", yt)
                     valid.append("yt_short")
+                else:
+                    logger.warning("[editorial] %s REJECTED by brand validation: %s", "yt_short", _brand_errs)
         except Exception as e:
             logger.debug("yt_short validation failed: %s", e)
         

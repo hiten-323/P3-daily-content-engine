@@ -30,62 +30,150 @@ logger = logging.getLogger(__name__)
 # ── Evergreen templates — always available, never stale ──────────────────────
 # These are proven Purity Beans content patterns that work any day of the year.
 
+# EVERY live truthfulness incident traced back to this file.
+#
+# The previous templates hardcoded, verbatim:
+#   "Most people don't know their daily coffee has 40% chicory filler."
+#       -> the fabricated statistic that published to the grid
+#   "Try your first cup free. Link in bio."
+#       -> an offer that has never existed
+#   "Slide 1: It tastes bitter after 2 minutes"
+#       -> the scaffolding leak that rendered into carousel images
+#   "India spends Rs 6,000 crore...", "grew 34% YoY", "India's first"
+#       -> unsourced market statistics and an unsubstantiated superlative
+#
+# None of it came from the LLM. The engine falls back here whenever generation
+# fails, so the scrubbers, claim verifier and gates built downstream were all
+# catching a defect that shipped with the fallback itself. Fallback content is
+# published unattended on the worst days — it must be the SAFEST content in the
+# repo, not the least reviewed.
+#
+# Rules for anything added here:
+#   - only facts verifiable from our own label (see claim_verifier.VERIFIED_FACTS)
+#   - no claims about what any other brand contains
+#   - no market statistics, no superlatives, no offers
+#   - no "Slide N:" / "Frame N:" scaffolding in viewer-facing copy
+#   - must satisfy the schema, or the publish gate silently drops it
+# tests/test_fallback_safety.py enforces all of the above.
+
 _EVERGREEN: list[dict] = [
     {
-        "type":   "reel",
-        "hook":   "Most people don't know their daily coffee has 40% chicory filler.",
-        "body":   "Purity Beans is 100% pure instant coffee. Zero chicory. Zero compromise. Same Rs 18/cup.",
-        "cta":    "Try your first cup free. Link in bio.",
-        "angle":  "EXPOSE",
-        "source": "evergreen_template",
-    },
-    {
-        "type":   "carousel",
-        "hook":   "3 signs your coffee is not pure",
-        "slides": [
-            "Slide 1: It tastes bitter after 2 minutes",
-            "Slide 2: It leaves a dark residue",
-            "Slide 3: The colour is too dark too fast",
-            "Slide 4: Purity Beans passes all 3 tests",
+        "type":      "reel",
+        "hook":      "Turn the jar around before you buy it.",
+        "hook_text": "Turn the jar around before you buy it.",
+        "hook_spoken": "The front of the pack is marketing. The back is the recipe.",
+        "hook_text_overlay": "READ THE BACK",
+        "frames": [
+            {"on_screen": "READ THE BACK",
+             "spoken": "The front of the pack is marketing. The back is the recipe."},
+            {"on_screen": "INGREDIENTS",
+             "spoken": "Find the ingredient list. Read every line, not just the first."},
+            {"on_screen": "WHAT'S IN OURS",
+             "spoken": "Purity Beans lists one thing: coffee. Zero chicory, nothing added."},
+            {"on_screen": "ONE LINE",
+             "spoken": "Coffee needs one ingredient. Anything else is worth knowing about."},
+            {"on_screen": "YOUR TURN",
+             "spoken": "Check the jar in your kitchen tonight and see what it says."},
         ],
-        "cta":    "Switch to pure. p3online.in",
-        "source": "evergreen_template",
+        "body":    "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+        "caption": ("The front of a coffee pack is marketing. The back is the recipe.\n\n"
+                    "Purity Beans lists one ingredient: coffee. Zero chicory, nothing added.\n\n"
+                    "Check the jar in your kitchen tonight.\n\np3online.in"),
+        "cta":     "Read the label, then shop at p3online.in",
+        "comment_trigger": "What does the label on your jar actually say?",
+        "save_trigger":    "Save this for your next grocery run.",
+        "share_trigger":   "Send this to whoever buys the coffee in your house.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "audio":   "Quiet kitchen ambience, no music bed — the spoken line carries it.",
+        "loop_ending": "Ends on the jar being turned around, which is where it opens — the last frame reads as the first.",
+        "angle":   "EXPOSE",
+        "source":  "evergreen_template",
     },
     {
-        "type":   "instagram_post",
-        "hook":   "18 rupees. 100% pure. Zero chicory.",
-        "body":   "That is Purity Beans. The coffee your mornings deserve.",
-        "cta":    "Order now. Link in bio.",
-        "source": "evergreen_template",
+        "type":  "carousel",
+        "hook":  "Three things to check on a coffee label",
+        "title": "Three things to check on a coffee label",
+        "slides": [
+            {"slide": 1, "heading": "Read the ingredient list",
+             "body": "It is on the back, usually in the smallest type on the pack.",
+             "visual": "Close-up of an ingredient panel, jar turned to camera"},
+            {"slide": 2, "heading": "Count the ingredients",
+             "body": "Coffee needs one. Anything else is there for a reason worth knowing.",
+             "visual": "Finger tracing down a short ingredient list"},
+            {"slide": 3, "heading": "Look for chicory by name",
+             "body": "It is a root, not a bean, and it is listed when present.",
+             "visual": "Ingredient panel with the word chicory in frame"},
+            {"slide": 4, "heading": "Check the order",
+             "body": "Ingredients are listed by weight, so the first one is the bulk of it.",
+             "visual": "Ingredient panel with the first line highlighted"},
+            {"slide": 5, "heading": "What ours says",
+             "body": "Purity Beans lists coffee. Zero chicory, no additives.",
+             "visual": "Purity Beans jar, label facing camera"},
+            # The schema requires the website on the final slide — the carousel
+            # is the one format where the CTA lives in the image, not the caption.
+            {"slide": 6, "heading": "Do it tonight",
+             "body": "Turn around the jar in your kitchen and read the list. "
+                     "Purity Beans — p3online.in",
+             "visual": "Hand turning a jar on a kitchen counter"},
+        ],
+        "caption": ("Three things worth checking on any coffee label.\n\n"
+                    "Purity Beans lists one ingredient: coffee.\n\n"
+                    "Zero chicory, no additives.\n\np3online.in"),
+        "cta":     "Shop pure coffee at p3online.in",
+        "comment_trigger": "Which of the three surprised you?",
+        "save_trigger":    "Save this for your next grocery run.",
+        "share_trigger":   "Share with someone who drinks instant daily.",
+        "hashtags": "#PurityBeans #PureCoffee #ZeroChicory #CoffeeIndia #ReadTheLabel",
+        "source":  "evergreen_template",
     },
     {
-        "type":   "linkedin_post",
-        "hook":   "Why we built a coffee brand for Rs 18/cup",
-        "body":   (
-            "India spends Rs 6,000 crore on instant coffee every year.\n"
-            "Most of it is not coffee. It is chicory with coffee flavouring.\n\n"
-            "Purity Beans is India's first 100% pure instant coffee at an accessible price.\n"
-            "No chicory. No compromise. Rs 18/cup.\n\n"
-            "For distributors and retailers looking to stock a differentiated product "
-            "in the fastest-growing beverage category — DM me."
+        "type":    "instagram_post",
+        "hook":    "One ingredient. That is the whole list.",
+        "body":    "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+        "caption": ("One ingredient. That is the whole list.\n\n"
+                    "Purity Beans is 100% coffee — zero chicory, no additives, "
+                    "no preservatives.\n\nTurn your jar around and compare.\n\np3online.in"),
+        "cta":     "Shop at p3online.in",
+        "comment_trigger": "How many ingredients are on your jar?",
+        "save_trigger":    "Save this for your next grocery run.",
+        "share_trigger":   "Send this to a fellow coffee drinker.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeLover",
+        "source":  "evergreen_template",
+    },
+    {
+        "type": "linkedin_post",
+        "hook": "We built a coffee brand around a shorter ingredient list",
+        "body": (
+            "Instant coffee in India is a category where the ingredient list is "
+            "the most informative thing on the pack, and the least read.\n\n"
+            "We built Purity Beans around a simple constraint: one ingredient. "
+            "Coffee. Zero chicory, no additives, no preservatives.\n\n"
+            "That constraint decides sourcing, cost and shelf positioning — it is "
+            "a harder product to make and an easier one to explain.\n\n"
+            "For distributors and retailers interested in stocking it, my DMs are open.\n\n"
+            "p3online.in"
         ),
-        "cta":    "Distributor/retailer inquiries welcome in DMs",
+        "cta": "Distributor and retailer enquiries welcome in DMs",
+        "hashtags": "#Coffee #FMCG #IndianBrands #Distribution #PurityBeans",
         "source": "evergreen_template",
     },
 ]
 
 _DISTRIBUTOR_TEMPLATES: list[dict] = [
     {
-        "type":   "linkedin_post",
-        "hook":   "Distributors: the Rs 18/cup coffee opportunity",
-        "body":   (
-            "The premium instant coffee segment grew 34% YoY.\n"
-            "Pure coffee (zero chicory) is still underserved.\n\n"
-            "Purity Beans: Rs 18/cup, 100% pure, expanding distributor network.\n"
-            "Margins better than commodity brands. Territory availability limited.\n\n"
-            "If you distribute FMCG in Maharashtra, Gujarat, or Karnataka — let's talk."
+        "type": "linkedin_post",
+        "hook": "What our distributors ask about first",
+        "body": (
+            "The first question is always the ingredient list, because it is what "
+            "the customer asks them about at the counter.\n\n"
+            "Purity Beans is 100% coffee — zero chicory, no additives, no "
+            "preservatives — which makes it a straightforward product to stand "
+            "behind on a shelf full of blends.\n\n"
+            "We are expanding our distributor network. If you distribute FMCG and "
+            "want the details, message me.\n\np3online.in"
         ),
-        "cta":    "DM for distributor pack",
+        "cta": "DM for the distributor pack",
+        "hashtags": "#FMCG #Distribution #Coffee #IndianBrands #PurityBeans",
         "source": "evergreen_distributor",
     },
 ]

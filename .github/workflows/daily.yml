@@ -160,6 +160,7 @@ jobs:
           python tests/test_publish_gate.py
           python tests/test_psychology_governance.py
           python tests/test_scroller_psychology.py
+          python tests/test_fallback_safety.py
           python tests/test_config_drift.py
 
       # ── 6. Run the pipeline ───────────────────────────────────────────────────
