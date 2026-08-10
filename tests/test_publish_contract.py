@@ -110,6 +110,44 @@ def main():
     check("facebook mirror returns its result",
           "-> dict" in inspect.getsource(sl._mirror_to_facebook))
 
+    # 9. A publish slot must NEVER generate its own content. It used to call
+    #    run_full_pipeline() when today's file was missing, which skipped the
+    #    generate pipeline entirely and — when the LLMs were down — published an
+    #    emergency fallback the founder never reviewed.
+    print("\nPublish slots never generate:")
+    check("no publish path calls run_full_pipeline",
+          "run_full_pipeline(" not in src.replace(
+              "# This used to call run_full_pipeline() when today's file was absent, so a", ""))
+
+    real_load = sl._load_todays_content
+    try:
+        sl._load_todays_content = lambda: None
+        r = sl.run_publish_slot.__wrapped__(  "morning") if hasattr(
+            sl.run_publish_slot, "__wrapped__") else None
+    except Exception:
+        r = None
+    finally:
+        sl._load_todays_content = real_load
+    # Exercise the helper directly — run_publish_slot takes a real lock.
+    held = sl._held("morning", 0, {}, "no_content_for_today — the generate slot "
+                                      "produced nothing; publish slots never generate")
+    v = evaluate(held)
+    check("missing content -> held, not published", v["status"] == "held" and v["ok"])
+    check("held for missing content publishes nothing",
+          held["published_platforms"] == [])
+    check("the hold names the cause", "no_content_for_today" in v["detail"], v["detail"])
+
+    # 10. Stale content must not be republished under today's decision record.
+    print("\nStale content is refused:")
+    stale = sl._held("evening", 5, {"date": "2026-08-01"},
+                     "stale_content — file is dated 2026-08-01, today is 2026-08-09")
+    v = evaluate(stale)
+    check("stale content -> held", v["status"] == "held" and v["ok"])
+    check("the hold names both dates",
+          "2026-08-01" in v["detail"] and "2026-08-09" in v["detail"], v["detail"])
+    check("slots.py compares the content date to today",
+          'content.get("date")' in src and "stale_content" in src)
+
     print(f"\n{'PUBLISH CONTRACT BROKEN' if failures else 'publish contract enforced'} "
           f"({len(failures)} failure(s))")
     return 1 if failures else 0

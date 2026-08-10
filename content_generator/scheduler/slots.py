@@ -199,19 +199,30 @@ def run_publish_slot(slot: str) -> dict:
         logger.info("[slots] %s slot already ran today — skipping", slot)
         return {"_skipped": True, "slot": slot, "reason": "already_ran"}
 
+    # MISSING CONTENT IS A HOLD, NEVER A GENERATION.
+    #
+    # This used to call run_full_pipeline() when today's file was absent, so a
+    # publish slot could generate its own content and post it minutes later —
+    # skipping the whole generate-slot pipeline (research, editorial review,
+    # image composition) and, when the LLMs were down, publishing an emergency
+    # fallback the founder never saw. It also broke correlation: the asset
+    # published at 22:00 was not the asset the 06:00 run produced and recorded.
+    #
+    # A publish slot publishes what generation already produced and validated.
+    # If that does not exist, the honest outcome is to publish nothing.
     content = _load_todays_content()
     if not content:
-        logger.info("[slots] Content file not found. Triggering daily pipeline to generate content first...")
-        try:
-            from content_generator.scheduler.daily import run_full_pipeline
-            content = run_full_pipeline()
-        except Exception as e:
-            logger.error("[slots] Failed to generate content via daily pipeline: %s", e)
-            return {"slot": slot, "success": False, "error": f"generation_failed: {e}"}
+        return _held(slot, 0, {}, "no_content_for_today — the generate slot "
+                                  "produced nothing; publish slots never generate")
 
-        if not content or not isinstance(content, dict) or content.get("_skipped"):
-            logger.error("[slots] Content generation returned empty or skipped status")
-            return {"slot": slot, "success": False, "error": "generation_skipped_or_failed"}
+    # Correlation: the loaded file must actually be today's work. A stale file
+    # left in the working tree would otherwise republish yesterday's asset under
+    # today's decision record.
+    today = datetime.date.today().isoformat()
+    content_date = str(content.get("date") or "")[:10]
+    if content_date and content_date != today:
+        return _held(slot, content.get("day_number", 0), content,
+                     f"stale_content — file is dated {content_date}, today is {today}")
 
     day = content.get("day_number", 0)
 
