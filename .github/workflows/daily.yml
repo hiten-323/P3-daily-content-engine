@@ -58,12 +58,18 @@ name: Purity Beans Daily Pipeline
 
 on:
   schedule:
+    # These MUST match the table in scheduler/slots.py and the FORCE_SLOT
+    # mapping below. They disagreed: the workflow fired at 08:00/20:00 IST
+    # while slots.py documented — and the founder chose — 10:00/22:00. Both
+    # called it "owner-chosen time"; the workflow is the one that actually runs,
+    # so every Instagram post went out two hours before its chosen window.
+    #
     # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, IG/FB held
     - cron: '30 0 * * *'
-    # 02:30 UTC = 08:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
-    - cron: '30 2 * * *'
-    # 14:30 UTC = 20:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
-    - cron: '30 14 * * *'
+    # 04:30 UTC = 10:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
+    - cron: '30 4 * * *'
+    # 16:30 UTC = 22:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
+    - cron: '30 16 * * *'
 
   # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
@@ -228,7 +234,10 @@ jobs:
           SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SHOPIFY_BLOG_ID:      ${{ secrets.SHOPIFY_BLOG_ID }}
 
-          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 2 * * *' && 'morning' || (github.event.schedule == '30 14 * * *' && 'evening' || '')) }}
+          # Must stay in step with the cron list above — a stale entry here maps
+          # a schedule to '' and the slot silently falls back to guessing from
+          # the UTC hour.
+          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || '')) }}
           # Config
           WEBSITE_URL:         https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"

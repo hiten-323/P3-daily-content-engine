@@ -72,6 +72,32 @@ def main() -> int:
                 "publishing", "experiments"):
         check(f"policy domain '{dom}' present", isinstance(p.domain(dom), dict) and bool(p.domain(dom)))
 
+    # 6b. Workflow crons match the slot schedule they claim to implement.
+    #     They silently diverged: the workflow fired at 08:00/20:00 IST while
+    #     slots.py documented the founder-chosen 10:00/22:00, so every Instagram
+    #     post went out two hours early. A comment cannot enforce this; a test can.
+    try:
+        import yaml, re as _re
+        wf = yaml.safe_load(open(".github/workflows/daily.yml", encoding="utf-8"))
+        crons = [c["cron"] for c in wf[True]["schedule"]]
+
+        def _ist(cron):
+            mm, hh = cron.split()[0], cron.split()[1]
+            t = int(hh) * 60 + int(mm) + 330
+            return f"{(t // 60) % 24:02d}:{t % 60:02d}"
+
+        actual = sorted(_ist(c) for c in crons)
+        check("workflow publishes at the founder-chosen IST times",
+              actual == ["06:00", "10:00", "22:00"], str(actual))
+
+        job = list(wf["jobs"].values())[0]
+        step = [x for x in job["steps"] if x.get("name", "").startswith("Run autonomous")][0]
+        mapped = set(_re.findall(r"'(\d+ \d+ \* \* \*)'", step["env"]["FORCE_SLOT"]))
+        check("every cron maps to a slot in FORCE_SLOT",
+              mapped == set(crons), f"unmapped: {set(crons) - mapped}")
+    except Exception as _e:
+        check("workflow schedule check ran", False, str(_e)[:60])
+
     # 7. Docs reference files that exist
     for doc in ("MISSION.md", "OPERATING_PRINCIPLES.md", "SUCCESS_METRICS.md",
                 "GOAL_HIERARCHY.md", "POLICY_ENGINE.md", "ARCHITECTURE.md",
