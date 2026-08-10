@@ -86,7 +86,7 @@ on:
 # Opt into Node.js 24 now (Node 20 deprecated June 2026, removed Sept 2026)
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # Timed publishing: generate at 06:00 IST, Instagram at 08:00 + 20:00 IST
+  # Timed publishing: generate at 06:00 IST, Instagram at 10:00 + 22:00 IST
   ENABLE_TIMED_SLOTS: "true"
 
 # Three crons plus manual dispatch can overlap, and every run rebases and
@@ -164,6 +164,7 @@ jobs:
           python tests/test_measurement_integrity.py
           python tests/test_growth_director_spec.py
           python tests/test_publish_gate.py
+          python tests/test_publish_contract.py
           python tests/test_psychology_governance.py
           python tests/test_scroller_psychology.py
           python tests/test_fallback_safety.py
@@ -272,39 +273,53 @@ jobs:
         run: |
           python - <<'PY'
           import json, os, re, sys, urllib.request
+          sys.path.insert(0, ".")
+          from content_generator.core.publish_contract import evaluate, format_report
+
+          def alert(msg):
+              print(f"::error::{msg}")
+              hook = os.environ.get("ALERT_WEBHOOK_URL")
+              if hook:
+                  try:
+                      urllib.request.urlopen(urllib.request.Request(
+                          hook, data=json.dumps({"text": msg}).encode(),
+                          headers={"Content-Type": "application/json"}), timeout=15)
+                  except Exception as e:
+                      print(f"::warning::alert webhook failed: {e}")
+
           raw = open("run_result.json", encoding="utf-8", errors="ignore").read()
           m = re.search(r"\{.*\}\s*$", raw, re.S)      # the printed result block
           if not m:
-              print("::warning::could not parse pipeline result — skipping check")
-              sys.exit(0)
+              alert("PURITY BEANS: pipeline produced no parseable result. It cannot "
+                    "demonstrate that anything published.")
+              sys.exit(1)
           r = json.loads(m.group(0))
+
+          # An explicit, reasoned decision not to run is a different state from a
+          # broken run, and only this branch is allowed to be green without a
+          # publish contract.
           if r.get("_skipped") or r.get("skipped"):
               print(f"::notice::run skipped ({r.get('reason')}) — nothing to verify")
               sys.exit(0)
-          # If the key is absent entirely the pipeline predates this contract —
-          # warn, do not fail. A verification step that fails on its own missing
-          # input becomes the outage it was written to detect. (The first cut of
-          # this checked a key that run_full_pipeline never returned, and would
-          # have failed every run from the day it shipped.)
-          if "published_platforms" not in r:
-              print("::warning::result carries no published_platforms key — "
-                    "cannot verify publishing; check the pipeline contract")
+
+          # A MISSING CONTRACT IS NOW A HARD FAILURE.
+          # This used to warn and exit 0, which contradicted the step's own
+          # purpose: run_publish_slot never returned published_platforms, so the
+          # morning and evening slots — the runs that actually post to Instagram
+          # — were never verified once. A run that cannot say what it published
+          # has not shown that it published.
+          verdict = evaluate(r)
+          print(format_report(r))
+          if verdict["status"] == "missing":
+              alert("PURITY BEANS: run returned no publish contract, so publishing "
+                    "cannot be verified. This is a pipeline contract break, not a "
+                    "publishing failure — check scheduler return values.")
+              sys.exit(1)
+          if verdict["ok"]:
+              print(f"::notice::{verdict['status']}: {verdict['detail']}")
               sys.exit(0)
-          published = r.get("published_platforms") or []
-          print(f"published_platforms: {published}")
-          if published:
-              sys.exit(0)
-          msg = ("PURITY BEANS: pipeline completed but published to NO platform. "
-                 "Check token expiry (Instagram/Facebook), LLM quota, image host.")
-          print(f"::error::{msg}")
-          hook = os.environ.get("ALERT_WEBHOOK_URL")
-          if hook:
-              try:
-                  urllib.request.urlopen(urllib.request.Request(
-                      hook, data=json.dumps({"text": msg}).encode(),
-                      headers={"Content-Type": "application/json"}), timeout=15)
-              except Exception as e:
-                  print(f"::warning::alert webhook failed: {e}")
+          alert(f"PURITY BEANS: {verdict['detail']}. "
+                "Check token expiry (Instagram/Facebook), LLM quota, image host.")
           sys.exit(1)
           PY
 

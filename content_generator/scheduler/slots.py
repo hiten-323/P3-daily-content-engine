@@ -39,8 +39,8 @@ def get_current_slot(now_utc: datetime.datetime = None) -> str:
     """
     Determine the slot from the current UTC hour.
       < 02:00 UTC  -> generate  (06:00 IST run)
-      02-12 UTC    -> morning   (08:00 IST run)
-      >= 12 UTC    -> evening   (20:00 IST run)
+      02-12 UTC    -> morning   (10:00 IST run)
+      >= 12 UTC    -> evening   (22:00 IST run)
     """
     forced = os.getenv("FORCE_SLOT")
     if forced in ("generate", "morning", "evening"):
@@ -159,6 +159,22 @@ def _track(result: dict, content: dict, slot: str, piece: dict) -> None:
         logger.warning("[slots] tracking failed: %s", e)
 
 
+def _held(slot: str, day: int, content: dict, reason: str) -> dict:
+    """
+    A deliberate decision NOT to publish, reported as such.
+
+    "Held because nothing passed the gate" and "no contract at all" are
+    different states, and the workflow must be able to tell them apart: the
+    first is the safety system working, the second is a broken run. Returning a
+    bare {"success": False} collapsed them.
+    """
+    from content_generator.core.publish_contract import build
+    logger.warning("[slots] %s slot HELD — %s", slot, reason)
+    return build(slot=slot, day=day, expected={}, results={},
+                 generation_id=str((content or {}).get("generation_id") or ""),
+                 status="held", reason=reason)
+
+
 def run_publish_slot(slot: str) -> dict:
     """
     Execute a publish-only slot (morning or evening).
@@ -205,7 +221,7 @@ def run_publish_slot(slot: str) -> dict:
         approved = approved_assets(content)
 
         if "carousel" not in approved and "instagram_post" not in approved:
-            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+            return _held(slot, day, content, "canonical_validation_failed")
 
         # Hand the publisher ONLY gate-approved objects. Blanking a rejected key
         # to {} and relying on post_content to interpret empty-dict as "skip"
@@ -222,7 +238,7 @@ def run_publish_slot(slot: str) -> dict:
         # the learning log with a hook that never passed the gate.
         piece = approved.get("carousel") or approved.get("instagram_post") or {}
         _track(result, content, slot, piece)
-        _mirror_to_facebook(content, day, slot)
+        fb_result = _mirror_to_facebook(content, day, slot)
         # Instagram Story (image, 24h) — separate method, same slot
         try:
             story_res = post_story(content, day=day)
@@ -231,7 +247,9 @@ def run_publish_slot(slot: str) -> dict:
         except Exception as e:
             logger.warning("[slots] instagram story failed: %s", e)
         logger.info("[slots] morning publish: %s", result.get("success"))
-        return {"slot": slot, **result}
+        asset = "carousel" if "carousel" in approved else "instagram_post"
+        return _contract(slot, day, content, {"instagram": result, "facebook": fb_result},
+                         {"instagram": [asset], "facebook": [asset]})
 
     if slot == "evening":
         # Reel video (free motion reel) with image fallback — 22:00 IST
@@ -242,7 +260,7 @@ def run_publish_slot(slot: str) -> dict:
             _post_single_image, _assemble_caption, is_configured, post_reel_video,
         )
         if not is_configured():
-            return {"slot": slot, "success": False, "error": "not_configured"}
+            return _held(slot, day, content, "instagram_not_configured")
 
         # Publish the OBJECT the canonical gate approved — never look the asset
         # up again separately. The previous form checked `growth_reel not in
@@ -255,7 +273,7 @@ def run_publish_slot(slot: str) -> dict:
         if not reel:
             logger.error("[slots] evening slot: no reel passed the canonical gate "
                          "(approved=%s)", sorted(approved))
-            return {"slot": slot, "success": False, "error": "canonical_validation_failed"}
+            return _held(slot, day, content, "canonical_validation_failed")
         logger.info("[slots] evening slot publishing gate-approved asset: %s", chosen)
 
         body = str(reel.get("caption") or reel.get("hook_text") or "").strip()
@@ -292,16 +310,18 @@ def run_publish_slot(slot: str) -> dict:
         if not result or not result.get("success"):
             image = _find_reel_thumbnail()
             if not image:
-                return {"slot": slot, "success": False, "error": "no_image"}
+                return _held(slot, day, content, "no_image")
             result = _post_single_image(image, caption)
-            _mirror_to_facebook(content, day, slot, image=image, message=caption)
+            fb_result = _mirror_to_facebook(content, day, slot, image=image, message=caption)
         else:
-            _mirror_to_facebook(content, day, slot, message=caption)
+            fb_result = _mirror_to_facebook(content, day, slot, message=caption)
 
         result["hashtags_used"] = " ".join(w for w in caption.split() if w.startswith("#"))
         _track(result, content, slot, reel)
         logger.info("[slots] evening publish: %s", result.get("success"))
-        return {"slot": slot, **result}
+        return _contract(slot, day, content,
+                         {"instagram": result, "facebook": fb_result},
+                         {"instagram": [chosen], "facebook": [chosen]})
 
     return {"slot": slot, "success": False, "error": f"unknown_slot_{slot}"}
 
@@ -347,11 +367,43 @@ def _mark_hero_posted(path: str) -> None:
 
 
 def _mirror_to_facebook(content: dict, day: int, slot: str,
-                        image: str | None = None, message: str | None = None) -> None:
-    """Facebook copies Instagram's timing: same slot, same image, same text."""
+                        image: str | None = None, message: str | None = None) -> dict:
+    """
+    Facebook copies Instagram's timing: same slot, same image, same text.
+
+    Returns the publisher result. It used to return None and swallow failures
+    into a log line, so Facebook could fail on every run and the slot still
+    reported success — the exact "one platform silently fails" case.
+    """
     try:
         from content_generator.publisher.facebook import post_content as fb_post
         r = fb_post(content, day=day, preferred_image=image, message_override=message)
         logger.info("[slots] facebook mirror (%s): %s", slot, r.get("success"))
+        return r or {}
     except Exception as e:
         logger.warning("[slots] facebook mirror failed (%s): %s", slot, e)
+        return {"success": False, "error": str(e)[:200]}
+
+
+def _contract(slot: str, day: int, content: dict,
+              results: dict, expected: dict) -> dict:
+    """
+    The publish result contract this slot reports back (core/publish_contract).
+
+    Every platform the slot is responsible for appears with its own outcome, so
+    the workflow can tell "Instagram published, Facebook failed" from "published".
+    """
+    from content_generator.core.publish_contract import build, format_report
+    norm = {}
+    for platform, r in (results or {}).items():
+        r = r or {}
+        norm[platform] = {
+            "status":   "published" if r.get("success") else "failed",
+            "asset_id": (expected.get(platform) or [""])[0],
+            "remote_id": r.get("media_id") or r.get("post_id") or r.get("id") or "",
+            "error":    r.get("error") or "",
+        }
+    c = build(slot=slot, day=day, expected=expected, results=norm,
+              generation_id=str(content.get("generation_id") or ""))
+    logger.info("[slots] publish contract:\n%s", format_report(c))
+    return c
