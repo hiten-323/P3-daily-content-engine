@@ -347,8 +347,27 @@ jobs:
       # This commit bumps a timestamp daily AND persists the learning-engine
       # state (performance log, published posts, follower snapshots) so the
       # continuous learning loop survives across CI runs.
+      #
+      # RUNS ON FAILURE TOO. This was `if: success()`, and that single condition
+      # turned a publishing failure into a content outage:
+      #
+      #   pipeline generates content (13 min of real work)
+      #     -> publishes nothing (0 valid assets)
+      #     -> the verify step exits 1, so the JOB fails
+      #     -> this step is skipped, so the content is never committed
+      #     -> the 10:00 and 22:00 slots find no content file
+      #     -> and the generated content is lost for good
+      #
+      # That is why content_2026-08-07/08/09.json do not exist while the runs
+      # themselves show as having done 13 minutes of work. The generation may
+      # well have succeeded; only its persistence was conditional on an
+      # unrelated downstream step.
+      #
+      # Generated content and diagnostics are exactly what is most valuable
+      # after a failure. !cancelled() rather than always(), so a cancelled run
+      # cannot commit half-written state.
       - name: Persist learning data and keep repo active
-        if: success()
+        if: ${{ !cancelled() }}
         run: |
           git config user.name  "Purity Beans Engine"
           git config user.email "engine@puritybeans.auto"

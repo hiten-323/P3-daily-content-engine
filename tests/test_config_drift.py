@@ -98,6 +98,28 @@ def main() -> int:
     except Exception as _e:
         check("workflow schedule check ran", False, str(_e)[:60])
 
+    # 6c. Generated content must survive a failed run.
+    #     `if: success()` on the persist step turned a publishing failure into a
+    #     content outage: the pipeline did 13 minutes of real work, the verify
+    #     step exited 1 because nothing published, and the content was then never
+    #     committed — so the later publish slots found nothing and the work was
+    #     lost. Persistence must not depend on an unrelated downstream step.
+    try:
+        import yaml
+        wf = yaml.safe_load(open(".github/workflows/daily.yml", encoding="utf-8"))
+        job = list(wf["jobs"].values())[0]
+        persist = [x for x in job["steps"]
+                   if "Persist" in str(x.get("name", ""))]
+        check("persist step exists", bool(persist))
+        if persist:
+            cond = str(persist[0].get("if", ""))
+            check("content is persisted even when the run fails",
+                  "success()" not in cond, f"if: {cond}")
+            check("but not on cancellation (half-written state)",
+                  "cancelled" in cond or "always" in cond, f"if: {cond}")
+    except Exception as _e:
+        check("persist-condition check ran", False, str(_e)[:60])
+
     # 7. Docs reference files that exist
     for doc in ("MISSION.md", "OPERATING_PRINCIPLES.md", "SUCCESS_METRICS.md",
                 "GOAL_HIERARCHY.md", "POLICY_ENGINE.md", "ARCHITECTURE.md",
