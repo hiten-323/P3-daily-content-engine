@@ -199,6 +199,26 @@ def run_publish_slot(slot: str) -> dict:
         logger.info("[slots] %s slot already ran today — skipping", slot)
         return {"_skipped": True, "slot": slot, "reason": "already_ran"}
 
+    # The lock is taken BEFORE the work and marked completed only after it.
+    #
+    # This used to call lock.__enter__() and never __exit__(), so RunLock's
+    # crash-release path was dead code here: a slot that raised left a lock
+    # behind that read as a completed run, and because the workflow reports a
+    # skipped slot as green, every later slot that day skipped in silence. The
+    # lock file is committed to the repo, so that state outlived the container.
+    try:
+        result = _execute_publish_slot(slot)
+    except Exception:
+        lock.release()          # crashed — let the next slot attempt proceed
+        raise
+    # A HOLD is a legitimate completion: we looked and decided not to publish.
+    # Only a crash leaves the lock unmarked.
+    lock.mark_completed()
+    return result
+
+
+def _execute_publish_slot(slot: str) -> dict:
+    """The slot's actual work. The lock lifecycle belongs to run_publish_slot."""
     # MISSING CONTENT IS A HOLD, NEVER A GENERATION.
     #
     # This used to call run_full_pipeline() when today's file was absent, so a

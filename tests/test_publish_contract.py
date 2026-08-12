@@ -148,6 +148,44 @@ def main():
     check("slots.py compares the content date to today",
           'content.get("date")' in src and "stale_content" in src)
 
+    # 11. A crashed slot must not lock out the rest of the day.
+    #     The lock was written BEFORE the work and read as proof the work was
+    #     done, and slots.py called __enter__() without ever calling __exit__(),
+    #     so RunLock's crash-release path never ran. One crashed slot therefore
+    #     skipped every later slot that day — silently, behind a green tick,
+    #     because the lock file is committed to the repo and outlives the runner.
+    print("\nA crashed slot does not lock out the day:")
+    import datetime
+    import tempfile as _tf
+    from content_generator.scheduler.run_lock import RunLock, STALE_AFTER_MINUTES
+    lp = os.path.join(_tf.mkdtemp(prefix="pb_test_lock_"), ".running_test")
+    today = datetime.date.today().isoformat()
+
+    RunLock(lock_path=lp).__enter__()
+    check("a fresh lock records 'started', not 'completed'",
+          "started" in open(lp).read(), open(lp).read())
+    check("an in-flight run is not rerun",
+          RunLock(lock_path=lp).__enter__().already_ran)
+
+    old = (datetime.datetime.now()
+           - datetime.timedelta(minutes=STALE_AFTER_MINUTES + 5)).isoformat(timespec="seconds")
+    open(lp, "w").write(f"{today}|999|started|{old}")
+    check("a stale 'started' lock is taken over",
+          not RunLock(lock_path=lp).__enter__().already_ran)
+
+    lk = RunLock(lock_path=lp); lk.__enter__(); lk.mark_completed()
+    check("a completed run blocks a rerun",
+          RunLock(lock_path=lp).__enter__().already_ran)
+    check("completion is recorded in the lock", "completed" in open(lp).read())
+
+    open(lp, "w").write(f"{today}|123")
+    check("a legacy two-field lock still means done",
+          RunLock(lock_path=lp).__enter__().already_ran)
+
+    check("run_publish_slot owns the lock lifecycle",
+          "lock.release()" in src and "lock.mark_completed()" in src)
+    check("the slot body is separated from the lock", "_execute_publish_slot" in src)
+
     print(f"\n{'PUBLISH CONTRACT BROKEN' if failures else 'publish contract enforced'} "
           f"({len(failures)} failure(s))")
     return 1 if failures else 0
