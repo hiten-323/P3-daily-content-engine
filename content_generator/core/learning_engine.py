@@ -70,6 +70,9 @@ def record_performance(
 _HALF_LIFE_DAYS = 30.0
 _CROSS_OBJECTIVE_DISCOUNT = 0.4
 _MIN_OBSERVED_SIGNALS = 2
+# A single winner is an anecdote, not a learned rule. Keep the engine exploratory
+# until a mechanism has enough independent observations to support reuse.
+_MIN_LEARNING_SAMPLES = 5
 
 
 def _entry_kpi(entry: dict) -> str | None:
@@ -139,7 +142,6 @@ def is_teachable(entry: dict) -> bool:
 
 
 def _weighted_score(entry: dict) -> float:
-    # Score using creation KPI first, then apply today's compatibility discount.
     return (
         _engagement_score(entry.get("metrics", {}), _entry_kpi(entry))
         * _recency_factor(entry)
@@ -184,21 +186,41 @@ def _infer_reason(entry: dict) -> str:
 
 
 def get_learning_block(max_items: int = 5) -> str:
-    """Return recency- and objective-aware patterns from measured, teachable posts."""
+    """Return recency- and objective-aware patterns only after enough evidence exists."""
     entries = _load_log()
+    eligible = [e for e in entries if e.get("metrics") and is_teachable(e)]
+    if len(eligible) < _MIN_LEARNING_SAMPLES:
+        return ""
+
+    # Prefer mechanism groups with enough evidence. If none has reached the
+    # threshold, fall back to the overall evidence pool without pretending a
+    # sparse mechanism is statistically established.
+    mechanism_counts: dict[str, int] = {}
+    for e in eligible:
+        mechanism = str(e.get("attention_mechanism") or "").strip().lower()
+        if mechanism:
+            mechanism_counts[mechanism] = mechanism_counts.get(mechanism, 0) + 1
+    mature_mechanisms = {k for k, v in mechanism_counts.items() if v >= _MIN_LEARNING_SAMPLES}
+    if mature_mechanisms:
+        eligible = [
+            e for e in eligible
+            if not str(e.get("attention_mechanism") or "").strip()
+            or str(e.get("attention_mechanism") or "").strip().lower() in mature_mechanisms
+        ]
+
     scored = sorted(
-        ((e, _weighted_score(e)) for e in entries if e.get("metrics") and is_teachable(e)),
+        ((e, _weighted_score(e)) for e in eligible),
         key=lambda x: x[1], reverse=True,
     )
     seen, unique = set(), []
-    for entry, score in scored:
+    for entry, weighted in scored:
         key = (str(entry.get("hook", "")).strip().lower(),
                str(entry.get("topic", "")).strip().lower())
         if key not in seen:
             seen.add(key)
-            unique.append((entry, score))
+            unique.append((entry, weighted))
     scored = unique
-    if len(scored) < 3:
+    if len(scored) < _MIN_LEARNING_SAMPLES:
         return ""
 
     n_top = max(1, len(scored) // 5)
@@ -209,6 +231,7 @@ def get_learning_block(max_items: int = 5) -> str:
     lines = [
         "VIRAL MEMORY (this account's actual measured results — compounds over months):",
         "Use ONLY hook/topic structures similar to the TOP 20%. AVOID the bottom 20%.",
+        "Evidence rule: no mechanism is considered learned until it has at least 5 measured observations.",
         "TOP 20% — reuse these structures:",
     ]
     for e, _ in top[:max_items]:
