@@ -12,10 +12,14 @@ unattended, on GitHub Actions.
 
 ```
 06:00 IST  GENERATE   insights + Shopify revenue → learn → generate content
-                      → editorial gate → images → LinkedIn/blog/YouTube publish
-08:00 IST  MORNING    Instagram carousel  (7-9 AM algorithm window)
-20:00 IST  EVENING    Instagram reel post (7-10 PM algorithm window)
+                      → editorial gate (8.0) → images → LinkedIn/blog/YouTube publish
+10:00 IST  MORNING    Instagram carousel  (owner-chosen morning window)
+22:00 IST  EVENING    Instagram reel post (owner-chosen evening window)
 ```
+
+The publishing times above are the canonical production schedule. They are
+maintained in `content_generator/core/slot_registry.py` and the workflow cron
+is checked against that registry by the config-drift test.
 
 Every morning the system asks one question: *"What is the fastest way to gain
 followers tomorrow — and which of yesterday's content actually made money?"*
