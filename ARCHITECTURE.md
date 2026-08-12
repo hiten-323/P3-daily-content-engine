@@ -7,18 +7,26 @@ Status: **FROZEN** (see docs/ADR-001.md). Structural changes require a new ADR.
 ```
 06:00  GENERATE ─────────────────────────────────────────────────────────
        0.5 insights_fetch        yesterday's IG metrics → learning engine
-       0.6 revenue_attribution   Shopify orders → post-level revenue
+       0.6 revenue_attribution   Shopify orders → day-level attribution
        1   research              trends + strategy context
        2   generate              LLM cascade; prompts carry: viral memory,
                                  fatigue guard, Growth Director brief,
                                  realism rules, elite/growth mode context
-       3   brand injection + hook A/B + editorial gate (6.5)
+       3   brand injection + hook A/B + editorial gate (8.0)
        4-8 images (jar-referenced), UGC tool brief, LinkedIn/blog/YouTube
            publish. Instagram HELD. Content + images committed to repo.
 
-08:00  MORNING ── loads committed content → IG carousel (7-9 AM window)
-20:00  EVENING ── loads committed content → IG reel-style post (7-10 PM)
+10:00  MORNING ── loads committed content → IG carousel + FB mirror
+22:00  EVENING ── loads committed content → IG reel-style post + FB mirror
 ```
+
+The production schedule is defined once in `content_generator/core/slot_registry.py`:
+06:00, 10:00 and 22:00 IST. GitHub Actions cron entries and `FORCE_SLOT` are
+derived from that registry and protected by `tests/test_config_drift.py`.
+
+The 8.0 editorial threshold is also constitutional: `brand_guard.py` defines
+8.0 and `founder_policies.yaml` carries the same value as the founder-editable
+policy. The editorial engine consumes the policy value at runtime.
 
 ## Module map
 
@@ -38,8 +46,8 @@ Status: **FROZEN** (see docs/ADR-001.md). Structural changes require a new ADR.
 
 - **LLM**: Groq → Cerebras → Gemini → DeepSeek → OpenRouter (free-tier cascade)
 - **Images**: HuggingFace FLUX → Pollinations → fal.ai → Pillow placeholder
-- **Instagram**: Meta Graph API v18 (publish + insights; 60-day token, renewal ritual documented)
-- **Shopify**: Admin API 2024-10, read_orders only
+- **Instagram**: Meta Graph API v24.0 (publish + insights; long-lived token renewal ritual documented)
+- **Shopify**: Admin API 2026-07, read_orders only
 - **Runtime**: GitHub Actions ubuntu-latest, stateless; state persists via repo commits
 
 ## Key architectural decisions (rationale)
