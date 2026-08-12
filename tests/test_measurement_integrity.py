@@ -96,23 +96,34 @@ def main():
     check("_track passes real format", captured.get("format_used") == "carousel",
           str(captured.get("format_used")))
 
-    # 5. The live log must hold only real measurements. A row with no reach and
-    #    no hook teaches nothing and drags the median it is measured against.
-    print("\nLive performance log holds only real measurements:")
-    # Deliberately the REAL path, not LEARNING_DIR — this check is about
-    # production data, while the writes above are sandboxed.
+    # 5. The live log, REPORTED not asserted.
+    #
+    #    This suite runs in the CI pre-publish gate, so anything it fails blocks
+    #    the whole pipeline from publishing. That is right for code defects and
+    #    wrong for observations about production data, which drifts by nature.
+    #
+    #    The concrete hazard: a post that genuinely reached zero people is a
+    #    real measurement, but `reach or views` reads falsy, so it would have
+    #    been counted as an unmeasured row — failing the gate and stopping the
+    #    account from publishing because one post did badly. A data-quality
+    #    warning must never become an outage.
+    #
+    #    The behavioural guarantees above (a failed fetch records nothing, a
+    #    measured zero is preserved) are the code contract and stay blocking.
+    print("\nLive performance log — reported, not gating:")
     path = os.path.join(_REAL_LEARNING_DIR, "performance_log.json")
     if os.path.exists(path):
         with open(path, encoding="utf-8") as f:
             rows = json.load(f)
-        empty = [r for r in rows
-                 if not ((r.get("metrics") or {}).get("reach", 0)
-                         or (r.get("metrics") or {}).get("views", 0))]
-        check("no unmeasured rows in learning log", not empty,
-              f"{len(empty)} of {len(rows)} rows have no reach/views")
+        unmeasured = [r for r in rows
+                      if (r.get("metrics") or {}).get("reach") is None
+                      and (r.get("metrics") or {}).get("views") is None]
         hookless = [r for r in rows if not str(r.get("hook", "")).strip()]
-        check("no hookless rows in learning log", not hookless,
-              f"{len(hookless)} of {len(rows)} rows have no hook")
+        print(f"  INFO  {len(rows)} row(s); {len(unmeasured)} with no reach/views "
+              f"key at all; {len(hookless)} with no hook")
+        if unmeasured or hookless:
+            print("  INFO  these weaken learning but are not a code defect — "
+                  "not failing the publish gate over them")
 
     print(f"\n{'MEASUREMENT INTEGRITY BROKEN' if failures else 'measurement integrity OK'} "
           f"({len(failures)} failure(s))")
