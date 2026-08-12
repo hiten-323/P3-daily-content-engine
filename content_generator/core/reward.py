@@ -18,7 +18,10 @@ for what the engine should optimize within a stage. Cross-stage governance
 belongs in founder policy / Growth Director, not in an accidental property of
 raw metric magnitudes.
 
-Weights are "points per unit". Revenue is per rupee.
+MISSING-DATA CONTRACT: absent or None metrics are UNKNOWN, never zero. A
+provider that did not report a metric must not teach the engine that the metric
+was zero. Real zeroes are represented explicitly as numeric 0 and contribute
+zero points. The caller can inspect coverage via explain().
 """
 from __future__ import annotations
 import logging
@@ -26,31 +29,22 @@ import logging
 logger = logging.getLogger(__name__)
 
 WEIGHT_PROFILES: dict[str, dict[str, float]] = {
-    # 0-1K followers: compounding audience is the objective.
     "followers": {
-        "revenue": 1.0, "orders": 25.0,
-        "follows_gained": 40.0,
-        "shares": 12.0,
-        "profile_visits": 8.0,
-        "website_clicks": 6.0,
-        "saves": 4.0, "comments": 4.0,
-        "avg_view_duration_s": 0.8,
+        "revenue": 1.0, "orders": 25.0, "follows_gained": 40.0,
+        "shares": 12.0, "profile_visits": 8.0, "website_clicks": 6.0,
+        "saves": 4.0, "comments": 4.0, "avg_view_duration_s": 0.8,
         "reach": 0.02, "likes": 0.5, "views": 0.01,
     },
     "engagement": {
-        "revenue": 1.0, "orders": 25.0,
-        "comments": 20.0, "shares": 15.0, "saves": 12.0,
-        "follows_gained": 10.0, "profile_visits": 4.0,
-        "website_clicks": 4.0,
-        "avg_view_duration_s": 1.0,
+        "revenue": 1.0, "orders": 25.0, "comments": 20.0, "shares": 15.0,
+        "saves": 12.0, "follows_gained": 10.0, "profile_visits": 4.0,
+        "website_clicks": 4.0, "avg_view_duration_s": 1.0,
         "reach": 0.02, "likes": 1.0, "views": 0.01,
     },
     "revenue": {
-        "revenue": 2.0, "orders": 50.0,
-        "website_clicks": 8.0,
-        "profile_visits": 5.0, "follows_gained": 5.0,
-        "shares": 4.0, "saves": 4.0, "comments": 3.0,
-        "avg_view_duration_s": 0.5,
+        "revenue": 2.0, "orders": 50.0, "website_clicks": 8.0,
+        "profile_visits": 5.0, "follows_gained": 5.0, "shares": 4.0,
+        "saves": 4.0, "comments": 3.0, "avg_view_duration_s": 0.5,
         "reach": 0.01, "likes": 0.5, "views": 0.01,
     },
 }
@@ -78,27 +72,51 @@ def get_weights(kpi: str | None = None) -> dict[str, float]:
     return WEIGHT_PROFILES.get(kpi or get_active_kpi(), WEIGHT_PROFILES[DEFAULT_KPI])
 
 
+def observed_metrics(metrics: dict, kpi: str | None = None) -> dict[str, float]:
+    """Return only metrics actually observed; None/missing means UNKNOWN."""
+    m = metrics or {}
+    return {
+        key: float(m[key])
+        for key in get_weights(kpi)
+        if key in m and m[key] is not None
+    }
+
+
+def coverage(metrics: dict, kpi: str | None = None) -> float:
+    """Fraction of weighted KPI signals that were actually observed."""
+    weights = get_weights(kpi)
+    if not weights:
+        return 0.0
+    return len(observed_metrics(metrics, kpi)) / len(weights)
+
+
 def score(metrics: dict, kpi: str | None = None) -> float:
     """
     Weighted reward under the explicitly supplied KPI profile.
 
-    The caller can pass the KPI stamped at asset creation time. This is
-    essential for historical learning: changing founder policy must not
-    silently re-judge yesterday's experiment with today's objective.
+    Only observed metrics participate. A missing API field is UNKNOWN, not a
+    measured zero. Explicit numeric zero remains a genuine measured zero.
     """
+    observed = observed_metrics(metrics, kpi)
     w = get_weights(kpi)
-    m = metrics or {}
-    return float(sum(float(m.get(k, 0) or 0) * weight for k, weight in w.items()))
+    return float(sum(observed[key] * w[key] for key in observed))
 
 
 def explain(metrics: dict, kpi: str | None = None) -> dict:
-    """Score plus the per-signal contribution — so ranking is auditable."""
+    """Score plus per-signal contributions and measurement coverage."""
     kpi = kpi or get_active_kpi()
     w = get_weights(kpi)
-    m = metrics or {}
-    parts = {k: round(float(m.get(k, 0) or 0) * weight, 2)
-             for k, weight in w.items() if m.get(k)}
+    observed = observed_metrics(metrics, kpi)
+    parts = {k: round(observed[k] * w[k], 2) for k in observed}
     total = score(metrics, kpi)
     top = sorted(parts.items(), key=lambda x: x[1], reverse=True)[:3]
-    return {"kpi": kpi, "score": total, "contributions": parts,
-            "top_drivers": [k for k, _ in top]}
+    missing = [k for k in w if k not in observed]
+    return {
+        "kpi": kpi,
+        "score": total,
+        "coverage": coverage(metrics, kpi),
+        "observed_metrics": sorted(observed),
+        "missing_metrics": missing,
+        "contributions": parts,
+        "top_drivers": [k for k, _ in top],
+    }
