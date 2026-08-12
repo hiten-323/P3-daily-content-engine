@@ -10,13 +10,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 version:
-  number: "1.0"
-  effective_date: "2026-07-13"
+  number: "1.1"
+  effective_date: "2026-08-12"
   author: "Founder"
   changes:
     - "Initial domain-structured policy"
     - "Target KPI: followers (IGNITION stage)"
     - "Auto-publish enabled across all platforms"
+    - "Editorial minimum aligned to the constitutional 8.0 threshold"
 
 business:
   objective: growth            # growth | revenue | balance
@@ -26,7 +27,7 @@ content:
   auto_publish: true           # false = generate + save only (dry run)
   reels_per_day: 1
   blogs_per_week: 7
-  require_real_jar: true        # product images use real jar photos, never AI-invented
+  require_real_jar: true       # product images use real jar photos, never AI-invented
   # ALGORITHM CONSISTENCY (Kallaway): the algorithm rewards a NARROW, consistent
   # avatar + topic lane — it builds a strong "fit score" and pushes you to the
   # right non-followers. Mixing avatars/topics confuses it and you flop. Keep
@@ -50,7 +51,7 @@ marketing:
   active_campaign_override: ""  # e.g. "Festival Gifting" in Q4; blank = always-on
 
 quality:
-  minimum_score: 6.5            # editorial pass threshold
+  minimum_score: 8.0            # constitutional editorial pass threshold
   legal_risk_threshold: 0.25    # 0 strict … 1 lax
   plagiarism_threshold: 0
 
