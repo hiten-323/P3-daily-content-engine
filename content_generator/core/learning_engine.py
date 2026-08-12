@@ -69,12 +69,23 @@ def record_performance(
 
 _HALF_LIFE_DAYS = 30.0
 _CROSS_OBJECTIVE_DISCOUNT = 0.4
+_MIN_OBSERVED_SIGNALS = 2
 
 
 def _entry_kpi(entry: dict) -> str | None:
     """Return the KPI recorded when the asset was created; None means legacy."""
     stamped = str(entry.get("kpi") or "").strip().lower()
     return stamped or None
+
+
+def _observed_count(entry: dict) -> int:
+    from content_generator.core.reward import observed_metrics
+    return len(observed_metrics(entry.get("metrics", {}), _entry_kpi(entry)))
+
+
+def _is_measurable(entry: dict) -> bool:
+    """Only teach from records with enough actually observed KPI signals."""
+    return _observed_count(entry) >= _MIN_OBSERVED_SIGNALS
 
 
 def _engagement_score(m: dict, kpi: str | None = None) -> float:
@@ -108,7 +119,9 @@ def _objective_factor(entry: dict) -> float:
 
 
 def is_teachable(entry: dict) -> bool:
-    """Exclude entries whose hook contains claims rejected by the verifier."""
+    """Exclude entries with rejected claims or insufficient measurement evidence."""
+    if not _is_measurable(entry):
+        return False
     hook = str(entry.get("hook") or "")
     if not hook:
         return True
@@ -136,42 +149,45 @@ def _weighted_score(entry: dict) -> float:
 
 def analyze() -> dict:
     entries = _load_log()
-    scored = [(e, _weighted_score(e)) for e in entries if e.get("metrics")]
+    measured = [e for e in entries if e.get("metrics") and _is_measurable(e)]
+    scored = [(e, _weighted_score(e)) for e in measured]
     if not scored:
-        return {"winners": [], "failed": [], "median_score": 0.0, "count": 0}
+        return {"winners": [], "failed": [], "median_score": 0.0, "count": 0,
+                "unmeasurable": len(entries)}
     scores = sorted(s for _, s in scored)
     median = scores[len(scores) // 2]
     winners = [e for e, s in scored if s >= median and s > 0 and is_teachable(e)]
     failed = [e for e, s in scored
               if s <= median * 0.5 and _objective_factor(e) == 1.0]
-    return {"winners": winners, "failed": failed, "median_score": median, "count": len(scored)}
+    return {"winners": winners, "failed": failed, "median_score": median,
+            "count": len(scored), "unmeasurable": len(entries) - len(measured)}
 
 
 def _infer_reason(entry: dict) -> str:
     m = entry.get("metrics", {})
-    if m.get("revenue", 0) > 0:
-        return f"generated Rs {m['revenue']:.0f} in attributed sales — conversion structure"
-    views = m.get("views", 0) or m.get("reach", 0)
-    if not views:
+    revenue = m.get("revenue")
+    if revenue is not None and revenue > 0:
+        return f"generated Rs {revenue:.0f} in attributed sales — conversion structure"
+    views = m.get("views") if m.get("views") is not None else m.get("reach")
+    if views is None or views <= 0:
         return ""
-    save_rate = m.get("saves", 0) / views
-    share_rate = m.get("shares", 0) / views
-    comment_rate = m.get("comments", 0) / views
-    best = max(save_rate, share_rate, comment_rate)
-    if best == 0:
-        return "reached people but nothing made them act"
-    if best == save_rate:
-        return "high save rate — reference/utility value"
-    if best == share_rate:
-        return "high share rate — identity/social value"
-    return "high comment rate — opinion/conversation trigger"
+    rates = {}
+    for key, label in (("saves", "high save rate — reference/utility value"),
+                       ("shares", "high share rate — identity/social value"),
+                       ("comments", "high comment rate — opinion/conversation trigger")):
+        value = m.get(key)
+        if value is not None:
+            rates[label] = value / views
+    if not rates:
+        return ""
+    return max(rates.items(), key=lambda item: item[1])[0]
 
 
 def get_learning_block(max_items: int = 5) -> str:
-    """Return recency- and objective-aware patterns for future generation."""
+    """Return recency- and objective-aware patterns from measured, teachable posts."""
     entries = _load_log()
     scored = sorted(
-        ((e, _weighted_score(e)) for e in entries if e.get("metrics")),
+        ((e, _weighted_score(e)) for e in entries if e.get("metrics") and is_teachable(e)),
         key=lambda x: x[1], reverse=True,
     )
     seen, unique = set(), []
@@ -181,7 +197,7 @@ def get_learning_block(max_items: int = 5) -> str:
         if key not in seen:
             seen.add(key)
             unique.append((entry, score))
-    scored = [(e, s) for e, s in unique if is_teachable(e)]
+    scored = unique
     if len(scored) < 3:
         return ""
 
@@ -191,7 +207,7 @@ def get_learning_block(max_items: int = 5) -> str:
     bottom = same_obj[-n_top:] if same_obj else []
 
     lines = [
-        "VIRAL MEMORY (this account's actual results — compounds over months):",
+        "VIRAL MEMORY (this account's actual measured results — compounds over months):",
         "Use ONLY hook/topic structures similar to the TOP 20%. AVOID the bottom 20%.",
         "TOP 20% — reuse these structures:",
     ]
