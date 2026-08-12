@@ -38,22 +38,27 @@ def slots_enabled() -> bool:
 def get_current_slot(now_utc: datetime.datetime = None) -> str:
     """
     Determine the slot from the current UTC hour.
-      < 02:00 UTC  -> generate  (06:00 IST run)
-      02-12 UTC    -> morning   (10:00 IST run)
-      >= 12 UTC    -> evening   (22:00 IST run)
+
+    Boundaries are derived from core/slot_registry rather than hardcoded here.
+    They were hardcoded, and after the crons moved to 04:30/16:30 UTC the old
+    "< 2 / < 12 / else" thresholds no longer matched the schedule they were
+    meant to describe — a manual dispatch could resolve to a different slot
+    than the same time on a cron would.
+
+    Only reached on manual dispatch; scheduled runs set FORCE_SLOT.
     """
+    from content_generator.core.slot_registry import SLOTS_BY_ID, slot_from_utc_hour
+
     forced = os.getenv("FORCE_SLOT")
-    if forced in ("generate", "morning", "evening"):
+    if forced in SLOTS_BY_ID:
         logger.info("[slots] Current slot forced by FORCE_SLOT env: %s", forced)
         return forced
 
     now_utc = now_utc or datetime.datetime.utcnow()
-    h = now_utc.hour
-    if h < 2:
-        return "generate"
-    if h < 12:
-        return "morning"
-    return "evening"
+    slot = slot_from_utc_hour(now_utc.hour)
+    logger.info("[slots] No FORCE_SLOT — derived %s from %02d:00 UTC",
+                slot, now_utc.hour)
+    return slot
 
 
 def _load_todays_content() -> dict | None:

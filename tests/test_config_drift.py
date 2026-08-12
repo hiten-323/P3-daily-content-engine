@@ -72,31 +72,45 @@ def main() -> int:
                 "publishing", "experiments"):
         check(f"policy domain '{dom}' present", isinstance(p.domain(dom), dict) and bool(p.domain(dom)))
 
-    # 6b. Workflow crons match the slot schedule they claim to implement.
-    #     They silently diverged: the workflow fired at 08:00/20:00 IST while
-    #     slots.py documented the founder-chosen 10:00/22:00, so every Instagram
-    #     post went out two hours early. A comment cannot enforce this; a test can.
+    # 6b. The workflow schedule is DERIVED from core/slot_registry, not stated
+    #     independently. It was stated in three places — the cron list, the
+    #     FORCE_SLOT mapping, and the table in slots.py — and they diverged:
+    #     the workflow fired at 08:00/20:00 IST while slots.py documented the
+    #     founder-chosen 10:00/22:00, so every Instagram post went out two hours
+    #     early. The expected values below are computed from the registry, so
+    #     editing the YAML alone can no longer change the schedule silently, and
+    #     changing the registry is picked up here automatically.
     try:
         import yaml, re as _re
+        from content_generator.core.slot_registry import (
+            all_crons, force_slot_expression, slot_for_cron, SLOTS,
+        )
         wf = yaml.safe_load(open(".github/workflows/daily.yml", encoding="utf-8"))
         crons = [c["cron"] for c in wf[True]["schedule"]]
 
-        def _ist(cron):
-            mm, hh = cron.split()[0], cron.split()[1]
-            t = int(hh) * 60 + int(mm) + 330
-            return f"{(t // 60) % 24:02d}:{t % 60:02d}"
-
-        actual = sorted(_ist(c) for c in crons)
-        check("workflow publishes at the founder-chosen IST times",
-              actual == ["06:00", "10:00", "22:00"], str(actual))
+        check("workflow crons match the slot registry",
+              sorted(crons) == sorted(all_crons()),
+              f"yaml={sorted(crons)} registry={sorted(all_crons())}")
+        check("every cron resolves to a known slot",
+              all(slot_for_cron(c) for c in crons),
+              str([c for c in crons if not slot_for_cron(c)]))
 
         job = list(wf["jobs"].values())[0]
         step = [x for x in job["steps"] if x.get("name", "").startswith("Run autonomous")][0]
-        mapped = set(_re.findall(r"'(\d+ \d+ \* \* \*)'", step["env"]["FORCE_SLOT"]))
-        check("every cron maps to a slot in FORCE_SLOT",
-              mapped == set(crons), f"unmapped: {set(crons) - mapped}")
+        actual_expr = " ".join(str(step["env"]["FORCE_SLOT"]).split())
+        expected_expr = " ".join(force_slot_expression().split())
+        check("FORCE_SLOT matches the expression the registry generates",
+              actual_expr == expected_expr,
+              f"run `python -m content_generator.core.slot_registry --workflow`")
+
+        # The registry is also what publish_contract uses, so a slot cannot have
+        # a schedule here and different obligations there.
+        from content_generator.core.publish_contract import SLOT_EXPECTATIONS
+        check("publish contract expectations come from the registry",
+              set(SLOT_EXPECTATIONS) == {s["id"] for s in SLOTS},
+              f"{sorted(SLOT_EXPECTATIONS)} vs {sorted(s['id'] for s in SLOTS)}")
     except Exception as _e:
-        check("workflow schedule check ran", False, str(_e)[:60])
+        check("workflow schedule check ran", False, str(_e)[:80])
 
     # 6c. Generated content must survive a failed run.
     #     `if: success()` on the persist step turned a publishing failure into a

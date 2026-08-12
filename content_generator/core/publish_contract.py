@@ -38,17 +38,16 @@ logger = logging.getLogger(__name__)
 
 CONTRACT_VERSION = "1.0.0"
 
-# What each slot is responsible for. Instagram and Facebook are held during
-# generate and published in their own windows (see scheduler/slots.py).
+# What each slot is responsible for. Defined once in core/slot_registry, which
+# is also where the schedule lives — a slot's time and its obligations are the
+# same decision and drifted apart when they were stated separately.
+from content_generator.core.slot_registry import (   # noqa: E402
+    SLOTS_BY_ID, expected_platforms,
+)
+
 SLOT_EXPECTATIONS: dict[str, list[str]] = {
-    "generate": ["linkedin"],
-    "morning":  ["instagram", "facebook"],
-    "evening":  ["instagram", "facebook"],
+    sid: list(s.get("expects", [])) for sid, s in SLOTS_BY_ID.items()
 }
-
-
-def expected_platforms(slot: str) -> list[str]:
-    return list(SLOT_EXPECTATIONS.get(slot, []))
 
 
 def build(slot: str, day: int, expected: dict, results: dict,
