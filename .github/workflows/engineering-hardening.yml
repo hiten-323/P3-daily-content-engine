@@ -40,6 +40,8 @@ jobs:
         run: |
           python tests/test_render_safety.py
           python tests/test_measurement_integrity.py
+          python tests/test_measurement_windows.py
+          python tests/test_account_funnel.py
           python tests/test_objective_measurement_integrity.py
           python tests/test_learning_evidence_guard.py
           python tests/test_growth_director_spec.py
@@ -54,6 +56,6 @@ jobs:
         run: |
           python -m compileall -q content_generator config tests
 
-      - name: Run pytest when available
+      - name: Run pytest
         run: |
           python -m pytest tests/ -q
