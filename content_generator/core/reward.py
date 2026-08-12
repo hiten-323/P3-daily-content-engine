@@ -1,27 +1,16 @@
 """
 THE reward function — the single definition of "success" for this engine.
 
-Everything that learns (hook selection, hashtags, lead magnets, audio, viral
-memory) ranks by this one score. If these weights are wrong, the engine
-optimizes the wrong thing — so they live here, alone, documented and testable.
+The engine has a business hierarchy, not a flat engagement contest:
 
-STAGE / KPI AWARENESS: the founder policy sets target_kpi and weights switch
-with that KPI. At IGNITION (followers), audience growth is intentionally the
-primary optimization target; at the revenue stage, conversion signals become
-primary.
+    revenue -> orders -> conversion intent -> audience growth -> engagement
 
-IMPORTANT HIERARCHY CONTRACT: this function is a weighted reward, not a
-lexicographic business-objective hierarchy. Revenue/orders retain a non-zero
-floor in every profile, but that floor does NOT guarantee that any revenue
-outcome beats every audience outcome. The current KPI profile is the authority
-for what the engine should optimize within a stage. Cross-stage governance
-belongs in founder policy / Growth Director, not in an accidental property of
-raw metric magnitudes.
+Revenue and orders therefore receive deterministic hierarchy prefixes before
+KPI-specific optimization. This prevents a large follower/view count from
+outscoring a smaller but real commercial outcome.
 
-MISSING-DATA CONTRACT: absent or None metrics are UNKNOWN, never zero. A
-provider that did not report a metric must not teach the engine that the metric
-was zero. Real zeroes are represented explicitly as numeric 0 and contribute
-zero points. The caller can inspect coverage via explain().
+Missing-data contract: absent or None metrics are UNKNOWN, never zero. Real
+numeric zeroes remain measured zeroes.
 """
 from __future__ import annotations
 import logging
@@ -49,16 +38,18 @@ WEIGHT_PROFILES: dict[str, dict[str, float]] = {
     },
 }
 
-UNAVAILABLE_KPIS = {
-    "returning_viewers": "no per-viewer identity in the Graph API",
-    "repeat_engagement": "no per-viewer identity in the Graph API",
-    "website_ctr_per_post": "link clicks are account-level, not per-media",
-}
+# Lexicographic business hierarchy encoded as score prefixes. These constants
+# are intentionally much larger than any realistic engagement contribution.
+# The exact scale is less important than the invariant: one rupee of attributed
+# revenue outranks any finite engagement-only outcome; one order outranks the
+# remaining non-commercial signals.
+REVENUE_HIERARCHY = 1_000_000.0
+ORDER_HIERARCHY = 10_000.0
+
 DEFAULT_KPI = "followers"
 
 
 def get_active_kpi() -> str:
-    """The founder-set KPI (founder_policies.yaml -> business.target_kpi)."""
     try:
         from content_generator.core.founder_policy import policy
         kpi = str(policy().get("target_kpi") or DEFAULT_KPI).lower()
@@ -83,32 +74,39 @@ def observed_metrics(metrics: dict, kpi: str | None = None) -> dict[str, float]:
 
 
 def coverage(metrics: dict, kpi: str | None = None) -> float:
-    """Fraction of weighted KPI signals that were actually observed."""
     weights = get_weights(kpi)
     if not weights:
         return 0.0
     return len(observed_metrics(metrics, kpi)) / len(weights)
 
 
-def score(metrics: dict, kpi: str | None = None) -> float:
-    """
-    Weighted reward under the explicitly supplied KPI profile.
+def _commercial_prefix(observed: dict[str, float]) -> float:
+    revenue = max(0.0, observed.get("revenue", 0.0))
+    orders = max(0.0, observed.get("orders", 0.0))
+    return revenue * REVENUE_HIERARCHY + orders * ORDER_HIERARCHY
 
-    Only observed metrics participate. A missing API field is UNKNOWN, not a
-    measured zero. Explicit numeric zero remains a genuine measured zero.
-    """
+
+def score(metrics: dict, kpi: str | None = None) -> float:
+    """Return the KPI reward with deterministic commercial hierarchy."""
     observed = observed_metrics(metrics, kpi)
     w = get_weights(kpi)
-    return float(sum(observed[key] * w[key] for key in observed))
+    base = sum(observed[key] * w[key] for key in observed)
+    return float(_commercial_prefix(observed) + base)
 
 
 def explain(metrics: dict, kpi: str | None = None) -> dict:
-    """Score plus per-signal contributions and measurement coverage."""
+    """Score plus auditable commercial hierarchy and per-signal contributions."""
     kpi = kpi or get_active_kpi()
     w = get_weights(kpi)
     observed = observed_metrics(metrics, kpi)
-    parts = {k: round(observed[k] * w[k], 2) for k in observed}
+    base_parts = {k: round(observed[k] * w[k], 2) for k in observed}
+    commercial = _commercial_prefix(observed)
     total = score(metrics, kpi)
+    parts = dict(base_parts)
+    if observed.get("revenue", 0) > 0:
+        parts["revenue_hierarchy"] = round(observed["revenue"] * REVENUE_HIERARCHY, 2)
+    if observed.get("orders", 0) > 0:
+        parts["orders_hierarchy"] = round(observed["orders"] * ORDER_HIERARCHY, 2)
     top = sorted(parts.items(), key=lambda x: x[1], reverse=True)[:3]
     missing = [k for k in w if k not in observed]
     return {
@@ -117,6 +115,10 @@ def explain(metrics: dict, kpi: str | None = None) -> dict:
         "coverage": coverage(metrics, kpi),
         "observed_metrics": sorted(observed),
         "missing_metrics": missing,
+        "commercial_hierarchy": {
+            "revenue_prefix": round(max(0.0, observed.get("revenue", 0.0)) * REVENUE_HIERARCHY, 2),
+            "orders_prefix": round(max(0.0, observed.get("orders", 0.0)) * ORDER_HIERARCHY, 2),
+        },
         "contributions": parts,
         "top_drivers": [k for k, _ in top],
     }
