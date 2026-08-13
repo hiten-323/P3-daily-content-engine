@@ -33,6 +33,25 @@ from content_generator.providers.llm_router import call as llm_call, get_usage_l
 logger = logging.getLogger(__name__)
 
 
+def _extended_content_enabled() -> bool:
+    """
+    Extended assets (reel_2, blog, stories, yt_short) increase free-tier TPM load.
+
+    Source of truth: founder_policies.yaml content.enable_extended_content.
+    Env ENABLE_EXTENDED_CONTENT is an emergency override only (set to force on/off
+    without editing policy). Unset env → policy wins.
+    """
+    env = os.getenv("ENABLE_EXTENDED_CONTENT")
+    if env is not None and str(env).strip() != "":
+        return str(env).lower() == "true"
+    try:
+        from content_generator.core.founder_policy import policy
+        return bool(policy().get("enable_extended_content", False))
+    except Exception as e:
+        logger.debug("[pipeline] policy extended-content unavailable (%s) — default false", e)
+        return False
+
+
 # ── Image prompts — generated locally, no LLM ─────────────────────────────────
 
 def _image_prompts() -> dict:
@@ -206,8 +225,9 @@ def generate_daily_content(
 
     # ── Phase 1: core tasks (always run) ─────────────────────────────────────
     # Keep core small to stay within free-tier TPM limits (Groq/Cerebras).
-    # Extended tasks (blog, stories, yt_short) run only when ENABLE_EXTENDED=true.
-    _extended = os.getenv("ENABLE_EXTENDED_CONTENT", "false").lower() == "true"
+    # Extended tasks (blog, stories, yt_short) gated by founder policy.
+    _extended = _extended_content_enabled()
+    logger.info("[pipeline] extended content %s (policy/env)", "ON" if _extended else "OFF")
 
     phase1_tasks = {
         "reel_1":         (reels.build,          ("reel_1", arch_1, "morning (7-9am)",       "reel_morning", avoid, day_number), 1800),
@@ -217,7 +237,6 @@ def generate_daily_content(
         "growth_reel":    (growth_reel.build,    (day_number, avoid),                                                 2500),
     }
 
-    # Extended content — skipped by default to reduce TPM load
     if _extended:
         phase1_tasks.update({
             "reel_2":   (reels.build,    ("reel_2", arch_2, "evening/night (8-10pm)", "reel_night", avoid, day_number), 1800),
@@ -263,14 +282,10 @@ def generate_daily_content(
     )
 
     # ── Merge ─────────────────────────────────────────────────────────────────
-    # Version + run identity stamped on every generated set, so any published
-    # asset can be traced back to the exact run and code that produced it
-    # (and so telemetry's generation_id is populated rather than empty).
     import uuid as _uuid
     from content_generator.core.versions import PROMPT_VERSION, SCHEMA_VERSION
 
     def _kpi_at_creation() -> str:
-        """The founder's target KPI right now. Empty if unavailable — never guessed."""
         try:
             from content_generator.core.reward import get_active_kpi
             return get_active_kpi()
@@ -287,15 +302,6 @@ def generate_daily_content(
             return ""
 
     def _selected_frame_id(ctx: dict | None) -> str:
-        """
-        The psychology frame for this run, verified to exist in the registry.
-
-        Returns "" when no real frame can be selected — never a placeholder.
-        "default" was previously used here, but get_frame("default") returns
-        None, so every downstream governance lookup silently produced no rules.
-        An empty id is honest and the editorial gate rejects it; a fake id looks
-        governed and is not.
-        """
         try:
             from content_generator.core.coffee_psychology import (
                 get_frame, recommended_frame_for_format,
@@ -326,17 +332,8 @@ def generate_daily_content(
         "generation_id":  f"gen_{datetime.date.today().isoformat()}_{_uuid.uuid4().hex[:8]}",
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
-        # Psychology frame this run was generated under. NEVER "default" —
-        # there is no such frame in the registry, so a placeholder id resolves
-        # to None downstream and governance silently disappears. If no frame can
-        # be selected the id stays empty and the editorial gate rejects the run,
-        # which is the correct outcome: ungoverned content must not publish.
         "psychology_frame":         _selected_frame_id(research_context),
         "psychology_frame_version": (research_context or {}).get("psychology_frame_version", 1),
-        # The KPI this content was CREATED under. slots.py already read
-        # target_kpi_at_creation when tracking a publish, but nothing ever wrote
-        # it — so every record carried "". Stamped here, at the only moment the
-        # creation-time objective is actually known.
         "target_kpi_at_creation":   _kpi_at_creation(),
         "policy_version_at_creation": _policy_version_at_creation(),
         "reels":          [phase1_results["reel_1"], phase1_results["reel_2"]],
@@ -365,7 +362,6 @@ def generate_daily_content(
         },
     }
 
-    # Usage log is opt-in — gated so existing consumers don't break
     if os.getenv("ENABLE_USAGE_LOG", "false").lower() == "true":
         output["usage"] = get_usage_log()
 

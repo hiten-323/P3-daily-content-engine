@@ -52,6 +52,8 @@ jobs:
           python tests/test_fallback_safety.py
           python tests/test_config_drift.py
           python tests/test_operational_alignment.py
+          python tests/test_workflow_contract.py
+          python tests/test_persistence_invariant.py
 
       - name: Compile Python sources
         run: |
