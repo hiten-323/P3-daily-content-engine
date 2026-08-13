@@ -42,6 +42,7 @@ _DEFAULTS = {
     "business": {"objective": "growth", "target_kpi": "followers"},
     "content":  {"auto_publish": True, "reels_per_day": 1, "blogs_per_week": 7,
                  "require_real_jar": True,
+                 "enable_extended_content": True,
                  "core_avatar": "Urban Indian coffee drinker, 22-40, who cares about what they consume",
                  "core_topic_lane": "The truth about instant coffee quality and how to drink better coffee"},
     "brand":    {"premium": True, "aggressive_sales": False, "educational": True,
@@ -50,7 +51,7 @@ _DEFAULTS = {
                                 "Listen to us because we print exactly what's inside — and dare "
                                 "you to read any other label."},
     "marketing": {"priority_segments": ["general"], "active_campaign_override": ""},
-    "quality":  {"minimum_score": 6.5, "legal_risk_threshold": 0.25, "plagiarism_threshold": 0},
+    "quality":  {"minimum_score": 8.0, "legal_risk_threshold": 0.25, "plagiarism_threshold": 0},
     "publishing": {"instagram": True, "facebook": True, "linkedin": True, "youtube": True,
                    "max_daily_posts": {"instagram": 3, "facebook": 2, "linkedin": 1, "youtube": 1}},
     "experiments": {"enabled": True, "max_parallel": 2},
@@ -62,6 +63,7 @@ _FLAT_MAP = {
     "objective":              ("business", "objective"),
     "auto_publish":           ("content", "auto_publish"),
     "require_real_jar":       ("content", "require_real_jar"),
+    "enable_extended_content": ("content", "enable_extended_content"),
     "priority_segments":      ("marketing", "priority_segments"),
     "active_campaign_override": ("marketing", "active_campaign_override"),
     "legal_risk_threshold":   ("quality", "legal_risk_threshold"),
@@ -157,10 +159,11 @@ def load_policy(force: bool = False) -> FounderPolicy:
                 loaded = yaml.safe_load(f) or {}
             if isinstance(loaded, dict):
                 data = _deep_merge(data, loaded)
-            logger.info("[policy] Loaded v%s (kpi=%s, auto_publish=%s)",
+            logger.info("[policy] Loaded v%s (kpi=%s, auto_publish=%s, extended=%s)",
                         data.get("version", {}).get("number"),
                         data.get("business", {}).get("target_kpi"),
-                        data.get("content", {}).get("auto_publish"))
+                        data.get("content", {}).get("auto_publish"),
+                        data.get("content", {}).get("enable_extended_content"))
         else:
             logger.info("[policy] No founder_policies.yaml — safe defaults")
     except Exception as e:
@@ -205,6 +208,7 @@ def record_policy_version() -> dict:
         "recorded_at":    datetime.datetime.now().isoformat(timespec="seconds"),
         "snapshot":       {"target_kpi": p.get("target_kpi"),
                            "auto_publish": p.get("auto_publish"),
+                           "enable_extended_content": p.get("enable_extended_content"),
                            "priority_segments": p.get("priority_segments")},
     }
     history.append(record)
