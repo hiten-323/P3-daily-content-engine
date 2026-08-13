@@ -47,9 +47,14 @@ jobs:
               except Exception as exc:
                   print(f"::warning::alert webhook failed: {exc}")
 
+          # Missing credentials are an infrastructure failure, not a successful
+          # health check. The publisher is fail-closed for the same reason.
           if not account_id or not token:
-              print("::warning::Instagram token health skipped: account ID or token secret is not configured")
-              sys.exit(0)
+              alert(
+                  "PURITY BEANS: Instagram token health FAILED — "
+                  "INSTAGRAM_ACCOUNT_ID or INSTAGRAM_ACCESS_TOKEN is not configured."
+              )
+              sys.exit(1)
 
           query = urllib.parse.urlencode({"fields": "id", "access_token": token})
           url = f"https://graph.facebook.com/v24.0/{account_id}?{query}"
