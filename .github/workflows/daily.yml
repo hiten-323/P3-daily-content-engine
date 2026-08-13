@@ -1,5 +1,7 @@
 # Purity Beans — Autonomous Daily Pipeline
 # Canonical slots: 06:00 IST generate, 10:00 IST morning, 22:00 IST evening.
+# Extended content is controlled by founder_policies.yaml (content.enable_extended_content),
+# not by a hardcoded workflow env.
 
 name: Purity Beans Daily Pipeline
 
@@ -93,7 +95,38 @@ jobs:
           python tests/test_fallback_safety.py
           python tests/test_config_drift.py
           python tests/test_workflow_contract.py
+          python tests/test_persistence_invariant.py
 
+      # Soft Meta token notice on GENERATE — informational only.
+      # Generate is allowed to succeed without a live token (content is persisted
+      # for later slots). Publish slots use the hard preflight below.
+      - name: Meta token soft-check (generate)
+        if: ${{ success() && env.FORCE_SLOT == 'generate' }}
+        env:
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.parse, urllib.request
+          account = os.environ.get("INSTAGRAM_ACCOUNT_ID")
+          token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
+          if not account or not token:
+              print("::warning::Soft Meta token notice — credentials missing; generate continues, publish slots will hard-fail later.")
+              raise SystemExit(0)
+          url = f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account, safe='')}?fields=id"
+          try:
+              req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+              with urllib.request.urlopen(req, timeout=15) as response:
+                  payload = json.load(response)
+              if str(payload.get("id")) == account:
+                  print("::notice::Soft Meta token notice — token responds (generate continues).")
+              else:
+                  print("::warning::Soft Meta token notice — unexpected account id; generate continues.")
+          except Exception as exc:
+              print(f"::warning::Soft Meta token notice — token check failed ({exc}); generate continues, publish slots will hard-fail later.")
+          PY
+
+      # Hard Meta preflight for publish slots only.
       - name: Verify Meta publishing access
         if: ${{ success() && env.FORCE_SLOT != 'generate' }}
         env:
@@ -161,7 +194,8 @@ jobs:
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY: "true"
           ENABLE_USAGE_LOG: "false"
-          ENABLE_EXTENDED_CONTENT: "true"
+          # Extended content: founder_policies.yaml content.enable_extended_content
+          # is the source of truth. Do not hardcode ENABLE_EXTENDED_CONTENT here.
           PYTHONIOENCODING: utf-8
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
         run: |
@@ -240,6 +274,8 @@ jobs:
             output/archive/
           retention-days: 90
 
+      # Persist learning + daily content to Git so the next run can reconstruct
+      # state even if the Actions cache disappears entirely.
       - name: Persist learning data and keep repo active
         if: ${{ !cancelled() }}
         run: |
@@ -247,8 +283,10 @@ jobs:
           git config user.email "engine@puritybeans.auto"
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
+          # Learning state MUST be in Git (not only cache).
           git add -f output/learning/ 2>/dev/null || true
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
+          # Daily content JSON is what morning/evening slots load.
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/creative/ 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
