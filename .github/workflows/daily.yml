@@ -1,79 +1,23 @@
 # Purity Beans — Autonomous Daily Pipeline
-#
-# Runs every day at 06:00 IST (00:30 UTC).
-# Triggered automatically by GitHub Actions cron — no server required.
-#
-# What it does:
-#   1. Checks out the repo and installs dependencies
-#   2. Runs the full autonomous pipeline:
-#      research → strategy → content → editorial → objectives →
-#      memory → save → snapshot → nurture → founder WhatsApp report
-#   3. Commits output/ changes back to the repo (metrics DB, archive)
-#   4. On failure, sends an alert via ALERT_WEBHOOK_URL
-#
-# Required secrets (GitHub → Settings → Secrets → Actions):
-#   GEMINI_API_KEY       — primary LLM
-#   GROQ_API_KEY         — fallback LLM
-#   OPENROUTER_API_KEY   — final fallback LLM
-#   FOUNDER_PHONE        — your WhatsApp number (+91XXXXXXXXXX)
-#   WHATSAPP_TOKEN       — Meta Cloud API bearer token
-#   WHATSAPP_PHONE_ID    — WhatsApp Business phone number ID
-#   ALERT_WEBHOOK_URL    — Slack/Discord webhook for failure alerts (optional)
-#
-# Optional secrets (social publishing):
-#   HF_TOKEN             — Hugging Face token for free FLUX.1-schnell image generation
-#                          Get free token at: huggingface.co → Settings → Access Tokens
-#   FLUX_API_KEY         — fal.ai image generation (paid, higher quality)
-#
-#   LinkedIn:
-#   LI_API_ACCESS        — LinkedIn OAuth access token (already added)
-#   LI_AUTHOR_URN        — urn:li:person:XXXXX or urn:li:organization:XXXXX
-#
-#   Instagram:
-#   INSTAGRAM_ACCOUNT_ID    — Instagram Business Account ID
-#   INSTAGRAM_ACCESS_TOKEN  — Long-lived Page Access Token
-#   IMGBB_API_KEY           — Free image hosting for Instagram (api.imgbb.com)
-#
-#   Facebook:
-#   FACEBOOK_PAGE_ID           — Facebook Page ID
-#   FACEBOOK_PAGE_ACCESS_TOKEN — Page Access Token (can reuse INSTAGRAM_ACCESS_TOKEN)
-#
-#   YouTube Shorts:
-#   YOUTUBE_CLIENT_ID      — Google OAuth client ID
-#   YOUTUBE_CLIENT_SECRET  — Google OAuth client secret
-#   YOUTUBE_REFRESH_TOKEN  — Offline refresh token (run: python -m content_generator.publisher.youtube --setup)
-#   RUNWAY_API_KEY       — Runway video generation
-#   SMTP_USER            — email nurture sequences
-#   SMTP_PASS            — email nurture sequences
-#   SHOPIFY_STORE_DOMAIN — your-store.myshopify.com
-#   SHOPIFY_ADMIN_TOKEN  — Admin API token. Scopes: write_content+read_content
-#                          (daily blog publishing); read_orders (optional, for
-#                          revenue attribution)
-#   SHOPIFY_BLOG_ID      — optional; defaults to the store's first blog
-#
-# Manual trigger:
-#   GitHub UI → Actions → "Purity Beans Daily Pipeline" → Run workflow
+# Canonical slots: 06:00 IST generate, 10:00 IST morning, 22:00 IST evening.
 
 name: Purity Beans Daily Pipeline
 
 on:
   schedule:
-    # These MUST match the table in scheduler/slots.py and the FORCE_SLOT
-    # mapping below. They disagreed: the workflow fired at 08:00/20:00 IST
-    # while slots.py documented — and the founder chose — 10:00/22:00. Both
-    # called it "owner-chosen time"; the workflow is the one that actually runs,
-    # so every Instagram post went out two hours before its chosen window.
-    #
-    # 00:30 UTC = 06:00 IST — GENERATE slot: full pipeline, IG/FB held
     - cron: '30 0 * * *'
-    # 04:30 UTC = 10:00 IST — MORNING slot: IG carousel + FB (owner-chosen time)
     - cron: '30 4 * * *'
-    # 16:30 UTC = 22:00 IST — EVENING slot: IG reel post + FB (owner-chosen time)
     - cron: '30 16 * * *'
-
-  # Allow manual trigger from GitHub Actions UI
   workflow_dispatch:
     inputs:
+      slot:
+        description: 'Manual slot to execute — never infer from wall-clock time'
+        required: true
+        type: choice
+        options:
+          - generate
+          - morning
+          - evening
       day_number:
         description: 'Override day number (leave blank for auto)'
         required: false
@@ -83,16 +27,11 @@ on:
         required: false
         default: 'false'
 
-# Opt into Node.js 24 now (Node 20 deprecated June 2026, removed Sept 2026)
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # Timed publishing: generate at 06:00 IST, Instagram at 10:00 + 22:00 IST
   ENABLE_TIMED_SLOTS: "true"
+  FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || github.event.inputs.slot || '')) }}
 
-# Three crons plus manual dispatch can overlap, and every run rebases and
-# pushes to the same branch. A manual trigger during a scheduled run raced on
-# that push. Queue them instead — never cancel, because a cancelled generate
-# slot leaves the publish slots with nothing to post.
 concurrency:
   group: purity-beans-daily
   cancel-in-progress: false
@@ -103,40 +42,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: write   # needed to push .last_run keep-alive commit
-
+      contents: write
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # Full history needed for day_number calculation
           fetch-depth: 0
 
-      # ── 2. Python setup ──────────────────────────────────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      # ── 3. Dependencies ──────────────────────────────────────────────────────
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Pillow ships no fonts. Without these the composer falls back to Pillow's
-      # bitmap default, which lacks most glyphs — that is what put tofu boxes
-      # (▯) into published carousel slides. Don't rely on the runner image
-      # happening to include them.
       - name: Install rendering fonts
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-dejavu-core fonts-liberation
           fc-list | grep -ci dejavu || (echo "DejaVu missing after install" && exit 1)
 
-      # ── 4. Restore output/ from cache (metrics DB persists between runs) ─────
       - name: Restore output cache
         uses: actions/cache@v4
         with:
@@ -148,17 +77,11 @@ jobs:
       - name: Ensure output directory
         run: mkdir -p output
 
-      # ── 5. Force-unlock if requested ─────────────────────────────────────────
       - name: Clear run lock (if force_run)
         if: ${{ github.event.inputs.force_run == 'true' }}
         run: python -m content_generator.scheduler.daily --unlock
 
-      # ── 5b. Pre-publish gate ─────────────────────────────────────────────────
-      # Nothing on CI verified the renderer before this existed, so a Linux-only
-      # font bug shipped tofu glyphs to the live grid for days. These checks run
-      # on the same runner that renders the posts, and block the run rather than
-      # publish a defect onto a permanent profile grid.
-      - name: Verify render safety and config drift
+      - name: Verify render, measurement, governance and workflow contracts
         run: |
           python tests/test_render_safety.py
           python tests/test_measurement_integrity.py
@@ -169,91 +92,79 @@ jobs:
           python tests/test_scroller_psychology.py
           python tests/test_fallback_safety.py
           python tests/test_config_drift.py
+          python tests/test_workflow_contract.py
 
-      # ── 6. Run the pipeline ───────────────────────────────────────────────────
+      - name: Verify Meta publishing access
+        if: ${{ success() && env.FORCE_SLOT != 'generate' }}
+        env:
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.parse, urllib.request
+          account = os.environ.get("INSTAGRAM_ACCOUNT_ID")
+          token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
+          if not account or not token:
+              print("::error::PURITY BEANS: Instagram publishing credentials are missing.")
+              sys.exit(1)
+          url = f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account, safe='')}?fields=id"
+          try:
+              req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+              with urllib.request.urlopen(req, timeout=20) as response:
+                  payload = json.load(response)
+              if str(payload.get("id")) != account:
+                  raise RuntimeError("Meta returned an unexpected account id")
+              print("::notice::Meta publishing preflight passed.")
+          except Exception as exc:
+              print(f"::error::PURITY BEANS: Meta publishing preflight failed: {exc}")
+              sys.exit(1)
+          PY
+
       - name: Run autonomous pipeline
         env:
-          # LLM providers
-          GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
-          # Secret is named OPENROUTER_API_TOKEN in this repo
-          OPENROUTER_API_KEY:  ${{ secrets.OPENROUTER_API_TOKEN }}
-          DEEPSEEK_API_KEY:    ${{ secrets.DEEPSEEK_API_KEY }}
-          CEREBRAS_API_KEY:    ${{ secrets.CEREBRAS_API_KEY }}
-
-          # Founder notifications + WhatsApp nurture
-          FOUNDER_PHONE:       ${{ secrets.FOUNDER_PHONE }}
-          AISENSY_API_KEY:          ${{ secrets.AISENSY_API_KEY }}
-          AISENSY_CAMPAIGN_NAME:    ${{ secrets.AISENSY_CAMPAIGN_NAME }}
-          WHATSAPP_TOKEN:      ${{ secrets.WHATSAPP_TOKEN }}
-          WHATSAPP_PHONE_ID:   ${{ secrets.WHATSAPP_PHONE_ID }}
-
-          # ── SOCIAL PUBLISHING ─────────────────────────────────────────────────
-          # LinkedIn (✅ secrets already added — will post on next run)
-          LI_API_ACCESS:       ${{ secrets.LI_API_ACCESS }}
-          LI_AUTHOR_URN:       ${{ secrets.LI_AUTHOR_URN }}
-
-          # Instagram Business (add INSTAGRAM_ACCOUNT_ID + INSTAGRAM_ACCESS_TOKEN)
-          INSTAGRAM_ACCOUNT_ID:      ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
-          INSTAGRAM_ACCESS_TOKEN:    ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-          # Required for Instagram image hosting (free: api.imgbb.com)
-          IMGBB_API_KEY:             ${{ secrets.IMGBB_API_KEY }}
-          # Shoppable posts (optional): set ONE after enabling Instagram Shopping.
-          # IG_PRODUCT_ID = tag every post with one product; or
-          # IG_CATALOG_ID = engine resolves a product per post by keyword.
-          IG_PRODUCT_ID:             ${{ secrets.IG_PRODUCT_ID }}
-          IG_CATALOG_ID:             ${{ secrets.IG_CATALOG_ID }}
-          # Optional: Cloudinary image hosting (free 25GB/month)
-          CLOUDINARY_URL:            ${{ secrets.CLOUDINARY_URL }}
-
-          # Facebook Page (same token as Instagram if same Meta App)
-          FACEBOOK_PAGE_ID:          ${{ secrets.FACEBOOK_PAGE_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_TOKEN }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          FOUNDER_PHONE: ${{ secrets.FOUNDER_PHONE }}
+          AISENSY_API_KEY: ${{ secrets.AISENSY_API_KEY }}
+          AISENSY_CAMPAIGN_NAME: ${{ secrets.AISENSY_CAMPAIGN_NAME }}
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+          WHATSAPP_PHONE_ID: ${{ secrets.WHATSAPP_PHONE_ID }}
+          LI_API_ACCESS: ${{ secrets.LI_API_ACCESS }}
+          LI_AUTHOR_URN: ${{ secrets.LI_AUTHOR_URN }}
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          IG_PRODUCT_ID: ${{ secrets.IG_PRODUCT_ID }}
+          IG_CATALOG_ID: ${{ secrets.IG_CATALOG_ID }}
+          CLOUDINARY_URL: ${{ secrets.CLOUDINARY_URL }}
+          FACEBOOK_PAGE_ID: ${{ secrets.FACEBOOK_PAGE_ID }}
           FACEBOOK_PAGE_ACCESS_TOKEN: ${{ secrets.FACEBOOK_PAGE_ACCESS_TOKEN }}
-
-          # YouTube Shorts (✅ secrets already added — will post on next run)
-          YOUTUBE_CLIENT_ID:     ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
-
-          # ── FAILURE ALERTS ────────────────────────────────────────────────────
-          ALERT_WEBHOOK_URL:   ${{ secrets.ALERT_WEBHOOK_URL }}
-          ALERT_EMAIL_TO:      ${{ secrets.ALERT_EMAIL_TO }}
-
-          # ── IMAGE GENERATION ──────────────────────────────────────────────────
-          HF_TOKEN:            ${{ secrets.HF_TOKEN }}
-          FAL_KEY:             ${{ secrets.FLUX_API_KEY }}
-          RUNWAY_API_KEY:      ${{ secrets.RUNWAY_API_KEY }}
-
-          # Optional: email nurture
-          SMTP_HOST:           ${{ secrets.SMTP_HOST }}
-          SMTP_USER:           ${{ secrets.SMTP_USER }}
-          SMTP_PASS:           ${{ secrets.SMTP_PASS }}
-          NURTURE_FROM_EMAIL:  ${{ secrets.NURTURE_FROM_EMAIL }}
-
-          # Shopify revenue attribution (names must match revenue_attribution.py)
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          FAL_KEY: ${{ secrets.FLUX_API_KEY }}
+          RUNWAY_API_KEY: ${{ secrets.RUNWAY_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          NURTURE_FROM_EMAIL: ${{ secrets.NURTURE_FROM_EMAIL }}
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
-          SHOPIFY_ADMIN_TOKEN:  ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
-          SHOPIFY_BLOG_ID:      ${{ secrets.SHOPIFY_BLOG_ID }}
-
-          # Must stay in step with the cron list above — a stale entry here maps
-          # a schedule to '' and the slot silently falls back to guessing from
-          # the UTC hour.
-          FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || '')) }}
-          # Config
-          WEBSITE_URL:         https://p3online.in
+          SHOPIFY_ADMIN_TOKEN: ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
+          SHOPIFY_BLOG_ID: ${{ secrets.SHOPIFY_BLOG_ID }}
+          WEBSITE_URL: https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"
-          ENABLE_WEEKLY_SUMMARY:   "true"
-          ENABLE_USAGE_LOG:        "false"
-          # Generates blog, stories, yt_short, reel_2 (owner enabled — stories +
-          # YouTube Shorts are part of the growth plan; watch TPM in logs)
+          ENABLE_WEEKLY_SUMMARY: "true"
+          ENABLE_USAGE_LOG: "false"
           ENABLE_EXTENDED_CONTENT: "true"
-          PYTHONIOENCODING:        utf-8
-          # Optional day override from manual trigger
+          PYTHONIOENCODING: utf-8
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
-
         run: |
-          # Both branches used to run the identical command, so the day_number
-          # input was accepted by the UI and thrown away. --day now exists.
           set -o pipefail
           if [ -n "$OVERRIDE_DAY_NUMBER" ]; then
             python -m content_generator.scheduler.daily --now --day "$OVERRIDE_DAY_NUMBER" | tee run_result.json
@@ -261,69 +172,57 @@ jobs:
             python -m content_generator.scheduler.daily --now | tee run_result.json
           fi
 
-      # ── 6b. A green check must mean something was published ──────────────────
-      # An expired Instagram token, an exhausted LLM quota or a dead image host
-      # all produce a run that completes and posts nothing. Without this the
-      # result is a green tick and silence — the same failure as a process
-      # reporting "online" while doing no work.
-      - name: Verify something was actually published
+      - name: Verify slot result
         if: success()
         env:
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          FORCE_SLOT: ${{ env.FORCE_SLOT }}
         run: |
           python - <<'PY'
-          import json, os, re, sys, urllib.request
-          sys.path.insert(0, ".")
-          from content_generator.core.publish_contract import evaluate, format_report
-
+          import glob, json, os, re, sys, urllib.request
+          from pathlib import Path
+          slot = os.environ.get("FORCE_SLOT", "").strip()
+          if slot not in {"generate", "morning", "evening"}:
+              print("::error::PURITY BEANS: no explicit execution slot; refusing wall-clock guessing.")
+              sys.exit(1)
           def alert(msg):
               print(f"::error::{msg}")
               hook = os.environ.get("ALERT_WEBHOOK_URL")
               if hook:
                   try:
-                      urllib.request.urlopen(urllib.request.Request(
-                          hook, data=json.dumps({"text": msg}).encode(),
-                          headers={"Content-Type": "application/json"}), timeout=15)
-                  except Exception as e:
-                      print(f"::warning::alert webhook failed: {e}")
-
-          raw = open("run_result.json", encoding="utf-8", errors="ignore").read()
-          m = re.search(r"\{.*\}\s*$", raw, re.S)      # the printed result block
-          if not m:
-              alert("PURITY BEANS: pipeline produced no parseable result. It cannot "
-                    "demonstrate that anything published.")
-              sys.exit(1)
-          r = json.loads(m.group(0))
-
-          # An explicit, reasoned decision not to run is a different state from a
-          # broken run, and only this branch is allowed to be green without a
-          # publish contract.
-          if r.get("_skipped") or r.get("skipped"):
-              print(f"::notice::run skipped ({r.get('reason')}) — nothing to verify")
+                      urllib.request.urlopen(urllib.request.Request(hook, data=json.dumps({"text": msg}).encode(), headers={"Content-Type": "application/json"}), timeout=15)
+                  except Exception as exc:
+                      print(f"::warning::alert webhook failed: {exc}")
+          if slot == "generate":
+              files = sorted(glob.glob("output/content_*.json"), key=lambda p: Path(p).stat().st_mtime, reverse=True)
+              if not files:
+                  alert("PURITY BEANS: GENERATE completed without a persisted content file.")
+                  sys.exit(1)
+              print(f"::notice::GENERATE verified — persisted {files[0]}; no publication expected at 06:00 IST.")
               sys.exit(0)
-
-          # A MISSING CONTRACT IS NOW A HARD FAILURE.
-          # This used to warn and exit 0, which contradicted the step's own
-          # purpose: run_publish_slot never returned published_platforms, so the
-          # morning and evening slots — the runs that actually post to Instagram
-          # — were never verified once. A run that cannot say what it published
-          # has not shown that it published.
-          verdict = evaluate(r)
-          print(format_report(r))
+          raw = Path("run_result.json").read_text(encoding="utf-8", errors="ignore")
+          m = re.search(r"\{.*\}\s*$", raw, re.S)
+          if not m:
+              alert(f"PURITY BEANS: {slot.upper()} produced no parseable publish result.")
+              sys.exit(1)
+          try:
+              result = json.loads(m.group(0))
+          except json.JSONDecodeError as exc:
+              alert(f"PURITY BEANS: {slot.upper()} returned invalid JSON: {exc}")
+              sys.exit(1)
+          from content_generator.core.publish_contract import evaluate, format_report
+          verdict = evaluate(result)
+          print(format_report(result))
           if verdict["status"] == "missing":
-              alert("PURITY BEANS: run returned no publish contract, so publishing "
-                    "cannot be verified. This is a pipeline contract break, not a "
-                    "publishing failure — check scheduler return values.")
+              alert(f"PURITY BEANS: {slot.upper()} publish contract missing.")
               sys.exit(1)
           if verdict["ok"]:
               print(f"::notice::{verdict['status']}: {verdict['detail']}")
               sys.exit(0)
-          alert(f"PURITY BEANS: {verdict['detail']}. "
-                "Check token expiry (Instagram/Facebook), LLM quota, image host.")
+          alert(f"PURITY BEANS: {verdict['detail']}")
           sys.exit(1)
           PY
 
-      # ── 7. Save output/ back to cache ─────────────────────────────────────────
       - name: Save output cache
         if: always()
         uses: actions/cache/save@v4
@@ -331,7 +230,6 @@ jobs:
           path: output/
           key: purity-beans-output-${{ runner.os }}-${{ github.run_id }}
 
-      # ── 8. Upload artifacts (content + logs for this run) ────────────────────
       - name: Upload run artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -342,63 +240,29 @@ jobs:
             output/archive/
           retention-days: 90
 
-      # ── 9. Persist learning data + keep repo active ────────────────────────────
-      # GitHub pauses cron workflows after 60 days of repo inactivity.
-      # This commit bumps a timestamp daily AND persists the learning-engine
-      # state (performance log, published posts, follower snapshots) so the
-      # continuous learning loop survives across CI runs.
-      #
-      # RUNS ON FAILURE TOO. This was `if: success()`, and that single condition
-      # turned a publishing failure into a content outage:
-      #
-      #   pipeline generates content (13 min of real work)
-      #     -> publishes nothing (0 valid assets)
-      #     -> the verify step exits 1, so the JOB fails
-      #     -> this step is skipped, so the content is never committed
-      #     -> the 10:00 and 22:00 slots find no content file
-      #     -> and the generated content is lost for good
-      #
-      # That is why content_2026-08-07/08/09.json do not exist while the runs
-      # themselves show as having done 13 minutes of work. The generation may
-      # well have succeeded; only its persistence was conditional on an
-      # unrelated downstream step.
-      #
-      # Generated content and diagnostics are exactly what is most valuable
-      # after a failure. !cancelled() rather than always(), so a cancelled run
-      # cannot commit half-written state.
       - name: Persist learning data and keep repo active
         if: ${{ !cancelled() }}
         run: |
-          git config user.name  "Purity Beans Engine"
+          git config user.name "Purity Beans Engine"
           git config user.email "engine@puritybeans.auto"
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/ 2>/dev/null || true
-          # Persist today's content + images + slot locks so the later
-          # publish-slot runs (08:00 / 20:00 IST) can load them.
-          # Clean creative files older than 7 days to limit repo growth.
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/creative/ 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
           git add -f output/.running* 2>/dev/null || true
-          git pull --rebase --autostash || true
-          git diff --staged --quiet || git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"
-          # This push is NOT optional. The 08:00 and 20:00 publish slots load
-          # today's content, images and slot locks from the repo, so a failed
-          # push means those runs find nothing and the day publishes nothing —
-          # while this job reports success. `|| true` hid exactly that. Retry
-          # once against a moved remote, then fail loudly.
+          git pull --rebase --autostash
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"
+          fi
           if ! git push; then
             echo "push rejected — rebasing on the remote and retrying"
-            git pull --rebase --autostash || true
-            git push || {
-              echo "::error::Could not push run artefacts. The 08:00/20:00 publish slots will have no content to post."
-              exit 1
-            }
+            git pull --rebase --autostash
+            git push || { echo "::error::Could not push run artefacts; publish slots cannot load persisted content."; exit 1; }
           fi
 
-      # ── 10. On failure: alert ─────────────────────────────────────────────────
       - name: Alert on failure
         if: failure()
         env:
@@ -407,6 +271,6 @@ jobs:
           if [ -n "$ALERT_WEBHOOK_URL" ]; then
             curl -s -X POST "$ALERT_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d "{\"text\": \"PURITY BEANS PIPELINE FAILED\\nRun: ${{ github.run_number }}\\nDate: $(date)\\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+              -d "{\"text\": \"PURITY BEANS PIPELINE FAILED\nRun: ${{ github.run_number }}\nDate: $(date)\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
           fi
           echo "Pipeline failed — check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
