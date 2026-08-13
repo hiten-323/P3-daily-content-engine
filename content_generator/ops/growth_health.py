@@ -3,7 +3,7 @@
 This module deliberately does not change business logic. It verifies that the
 systems which the growth loop depends on are actually healthy: measurement,
 Meta account access, attribution hygiene, policy configuration, asset
-provenance, and learning readiness.
+provenance, learning readiness, and extended-content configuration.
 
 Exit code 0 means the engine is safe to run. A hard failure means a dependency
 cannot be trusted and the caller should fail closed rather than publish.
@@ -52,10 +52,7 @@ def _metric_state(record: dict[str, Any], name: str) -> str:
     metrics = record.get("metrics")
     if not isinstance(metrics, dict):
         metrics = record
-    if name not in metrics:
-        return "unknown"
-    value = metrics.get(name)
-    if value is None:
+    if name not in metrics or metrics.get(name) is None:
         return "unknown"
     return "measured"
 
@@ -65,8 +62,7 @@ def measurement_health() -> dict[str, Any]:
     measured = 0
     unknown = 0
     for record in records:
-        state = _metric_state(record, "views")
-        if state == "measured":
+        if _metric_state(record, "views") == "measured":
             measured += 1
         else:
             unknown += 1
@@ -99,8 +95,14 @@ def meta_preflight() -> dict[str, Any]:
 def config_health() -> dict[str, Any]:
     result: dict[str, Any] = {"status": "ok", "warnings": []}
     text = WORKFLOW.read_text(encoding="utf-8") if WORKFLOW.exists() else ""
-    if 'ENABLE_EXTENDED_CONTENT: "true"' in text:
+    extended_enabled = 'ENABLE_EXTENDED_CONTENT: "true"' in text
+    if extended_enabled:
         result["warnings"].append("extended_content_enabled")
+        # Extended content is optional. Its configuration must remain explicit
+        # and must not silently become part of the core publish obligation.
+        if 'ENABLE_EXTENDED_CONTENT:' not in text:
+            result["status"] = "failed"
+            result["warnings"].append("extended_content_configuration_missing")
     if "EDITORIAL_THRESHOLD" in (ROOT / "content_generator" / "core" / "brand_guard.py").read_text(encoding="utf-8"):
         result["warnings"].append("legacy_editorial_threshold_symbol_present")
     if not POLICY.exists():
@@ -116,12 +118,11 @@ def attribution_health() -> dict[str, Any]:
     data = _load_json(path)
     if isinstance(data, dict):
         ids = list(data.keys())
-        duplicate_ids = len(ids) != len(set(ids))
     elif isinstance(data, list):
         ids = [str(x) for x in data]
-        duplicate_ids = len(ids) != len(set(ids))
     else:
         return {"status": "failed", "orders": 0}
+    duplicate_ids = len(ids) != len(set(ids))
     return {"status": "failed" if duplicate_ids else "ok", "orders": len(ids)}
 
 
