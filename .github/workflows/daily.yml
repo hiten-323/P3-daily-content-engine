@@ -203,9 +203,9 @@ jobs:
           alert(verdict["detail"]); sys.exit(1)
           PY
 
-      # Diagnostics/artifacts are retained regardless of outcome.
-      # Production state is persisted only after the slot result above succeeds.
-      - name: Upload run diagnostics
+      # Diagnostics and generated media are retained as Actions artifacts only.
+      # Production state is persisted to Git only after the slot result succeeds.
+      - name: Upload run diagnostics and creative artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -213,6 +213,7 @@ jobs:
           path: |
             run_result.json
             output/reports/
+            output/creative/
           if-no-files-found: ignore
           retention-days: 90
 
@@ -227,7 +228,7 @@ jobs:
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/
-          # Keep large media out of Git; artifacts retain diagnostics/creative outputs.
+          # Large media never enters Git; artifacts above retain it for 90 days.
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
