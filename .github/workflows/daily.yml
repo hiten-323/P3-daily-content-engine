@@ -1,7 +1,6 @@
 # Purity Beans — Autonomous Daily Pipeline
 # Canonical slots: 06:00 IST generate, 10:00 IST morning, 22:00 IST evening.
-# Extended content is controlled by founder_policies.yaml (content.enable_extended_content),
-# not by a hardcoded workflow env.
+# Git is authoritative persistent state. Actions cache is intentionally not used for output state.
 
 name: Purity Beans Daily Pipeline
 
@@ -16,10 +15,7 @@ on:
         description: 'Manual slot to execute — never infer from wall-clock time'
         required: true
         type: choice
-        options:
-          - generate
-          - morning
-          - evening
+        options: [generate, morning, evening]
       day_number:
         description: 'Override day number (leave blank for auto)'
         required: false
@@ -55,7 +51,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
+          cache: pip
 
       - name: Install dependencies
         run: |
@@ -67,14 +63,6 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq fonts-dejavu-core fonts-liberation
           fc-list | grep -ci dejavu || (echo "DejaVu missing after install" && exit 1)
-
-      - name: Restore output cache
-        uses: actions/cache@v4
-        with:
-          path: output/
-          key: purity-beans-output-${{ runner.os }}
-          restore-keys: |
-            purity-beans-output-
 
       - name: Ensure output directory
         run: mkdir -p output
@@ -97,9 +85,6 @@ jobs:
           python tests/test_workflow_contract.py
           python tests/test_persistence_invariant.py
 
-      # Soft Meta token notice on GENERATE — informational only.
-      # Generate is allowed to succeed without a live token (content is persisted
-      # for later slots). Publish slots use the hard preflight below.
       - name: Meta token soft-check (generate)
         if: ${{ success() && env.FORCE_SLOT == 'generate' }}
         env:
@@ -108,25 +93,17 @@ jobs:
         run: |
           python - <<'PY'
           import json, os, urllib.parse, urllib.request
-          account = os.environ.get("INSTAGRAM_ACCOUNT_ID")
-          token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
+          account=os.environ.get("INSTAGRAM_ACCOUNT_ID"); token=os.environ.get("INSTAGRAM_ACCESS_TOKEN")
           if not account or not token:
-              print("::warning::Soft Meta token notice — credentials missing; generate continues, publish slots will hard-fail later.")
-              raise SystemExit(0)
-          url = f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account, safe='')}?fields=id"
+              print("::warning::Instagram credentials unavailable; generate continues; publish slots fail closed."); raise SystemExit(0)
+          url=f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account,safe='')}?fields=id"
           try:
-              req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-              with urllib.request.urlopen(req, timeout=15) as response:
-                  payload = json.load(response)
-              if str(payload.get("id")) == account:
-                  print("::notice::Soft Meta token notice — token responds (generate continues).")
-              else:
-                  print("::warning::Soft Meta token notice — unexpected account id; generate continues.")
-          except Exception as exc:
-              print(f"::warning::Soft Meta token notice — token check failed ({exc}); generate continues, publish slots will hard-fail later.")
+              req=urllib.request.Request(url,headers={"Authorization":f"Bearer {token}"})
+              with urllib.request.urlopen(req,timeout=15) as r: payload=json.load(r)
+              print("::notice::Meta token responds." if str(payload.get("id"))==account else "::warning::Unexpected Meta account id; publish slots will preflight again.")
+          except Exception as exc: print(f"::warning::Meta token check failed ({type(exc).__name__}); generate continues.")
           PY
 
-      # Hard Meta preflight for publish slots only.
       - name: Verify Meta publishing access
         if: ${{ success() && env.FORCE_SLOT != 'generate' }}
         env:
@@ -135,22 +112,15 @@ jobs:
         run: |
           python - <<'PY'
           import json, os, sys, urllib.parse, urllib.request
-          account = os.environ.get("INSTAGRAM_ACCOUNT_ID")
-          token = os.environ.get("INSTAGRAM_ACCESS_TOKEN")
-          if not account or not token:
-              print("::error::PURITY BEANS: Instagram publishing credentials are missing.")
-              sys.exit(1)
-          url = f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account, safe='')}?fields=id"
+          account=os.environ.get("INSTAGRAM_ACCOUNT_ID"); token=os.environ.get("INSTAGRAM_ACCESS_TOKEN")
+          if not account or not token: print("::error::Instagram publishing credentials are missing."); sys.exit(1)
+          url=f"https://graph.facebook.com/v24.0/{urllib.parse.quote(account,safe='')}?fields=id"
           try:
-              req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-              with urllib.request.urlopen(req, timeout=20) as response:
-                  payload = json.load(response)
-              if str(payload.get("id")) != account:
-                  raise RuntimeError("Meta returned an unexpected account id")
+              req=urllib.request.Request(url,headers={"Authorization":f"Bearer {token}"})
+              with urllib.request.urlopen(req,timeout=20) as r: payload=json.load(r)
+              if str(payload.get("id"))!=account: raise RuntimeError("unexpected account id")
               print("::notice::Meta publishing preflight passed.")
-          except Exception as exc:
-              print(f"::error::PURITY BEANS: Meta publishing preflight failed: {exc}")
-              sys.exit(1)
+          except Exception as exc: print(f"::error::Meta publishing preflight failed: {type(exc).__name__}"); sys.exit(1)
           PY
 
       - name: Run autonomous pipeline
@@ -194,17 +164,11 @@ jobs:
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY: "true"
           ENABLE_USAGE_LOG: "false"
-          # Extended content: founder_policies.yaml content.enable_extended_content
-          # is the source of truth. Do not hardcode ENABLE_EXTENDED_CONTENT here.
           PYTHONIOENCODING: utf-8
           OVERRIDE_DAY_NUMBER: ${{ github.event.inputs.day_number }}
         run: |
           set -o pipefail
-          if [ -n "$OVERRIDE_DAY_NUMBER" ]; then
-            python -m content_generator.scheduler.daily --now --day "$OVERRIDE_DAY_NUMBER" | tee run_result.json
-          else
-            python -m content_generator.scheduler.daily --now | tee run_result.json
-          fi
+          if [ -n "$OVERRIDE_DAY_NUMBER" ]; then python -m content_generator.scheduler.daily --now --day "$OVERRIDE_DAY_NUMBER" | tee run_result.json; else python -m content_generator.scheduler.daily --now | tee run_result.json; fi
 
       - name: Verify slot result
         if: success()
@@ -213,92 +177,66 @@ jobs:
           FORCE_SLOT: ${{ env.FORCE_SLOT }}
         run: |
           python - <<'PY'
-          import glob, json, os, re, sys, urllib.request
+          import glob,json,os,re,sys,urllib.request
           from pathlib import Path
-          slot = os.environ.get("FORCE_SLOT", "").strip()
-          if slot not in {"generate", "morning", "evening"}:
-              print("::error::PURITY BEANS: no explicit execution slot; refusing wall-clock guessing.")
-              sys.exit(1)
+          slot=os.environ.get("FORCE_SLOT","").strip()
+          if slot not in {"generate","morning","evening"}: print("::error::No explicit execution slot; refusing wall-clock guessing."); sys.exit(1)
           def alert(msg):
               print(f"::error::{msg}")
-              hook = os.environ.get("ALERT_WEBHOOK_URL")
+              hook=os.environ.get("ALERT_WEBHOOK_URL")
               if hook:
-                  try:
-                      urllib.request.urlopen(urllib.request.Request(hook, data=json.dumps({"text": msg}).encode(), headers={"Content-Type": "application/json"}), timeout=15)
-                  except Exception as exc:
-                      print(f"::warning::alert webhook failed: {exc}")
-          if slot == "generate":
-              files = sorted(glob.glob("output/content_*.json"), key=lambda p: Path(p).stat().st_mtime, reverse=True)
-              if not files:
-                  alert("PURITY BEANS: GENERATE completed without a persisted content file.")
-                  sys.exit(1)
-              print(f"::notice::GENERATE verified — persisted {files[0]}; no publication expected at 06:00 IST.")
-              sys.exit(0)
-          raw = Path("run_result.json").read_text(encoding="utf-8", errors="ignore")
-          m = re.search(r"\{.*\}\s*$", raw, re.S)
-          if not m:
-              alert(f"PURITY BEANS: {slot.upper()} produced no parseable publish result.")
-              sys.exit(1)
-          try:
-              result = json.loads(m.group(0))
-          except json.JSONDecodeError as exc:
-              alert(f"PURITY BEANS: {slot.upper()} returned invalid JSON: {exc}")
-              sys.exit(1)
-          from content_generator.core.publish_contract import evaluate, format_report
-          verdict = evaluate(result)
-          print(format_report(result))
-          if verdict["status"] == "missing":
-              alert(f"PURITY BEANS: {slot.upper()} publish contract missing.")
-              sys.exit(1)
-          if verdict["ok"]:
-              print(f"::notice::{verdict['status']}: {verdict['detail']}")
-              sys.exit(0)
-          alert(f"PURITY BEANS: {verdict['detail']}")
-          sys.exit(1)
+                  try: urllib.request.urlopen(urllib.request.Request(hook,data=json.dumps({"text":msg}).encode(),headers={"Content-Type":"application/json"}),timeout=15)
+                  except Exception: pass
+          if slot=="generate":
+              files=sorted(glob.glob("output/content_*.json"),key=lambda p:Path(p).stat().st_mtime,reverse=True)
+              if not files: alert("GENERATE completed without a persisted content file."); sys.exit(1)
+              print(f"::notice::GENERATE verified — {files[0]}; no publication expected at 06:00 IST."); sys.exit(0)
+          raw=Path("run_result.json").read_text(encoding="utf-8",errors="ignore")
+          m=re.search(r"\{.*\}\s*$",raw,re.S)
+          if not m: alert(f"{slot.upper()} produced no parseable publish result."); sys.exit(1)
+          try: result=json.loads(m.group(0))
+          except json.JSONDecodeError as exc: alert(f"{slot.upper()} returned invalid JSON: {exc}"); sys.exit(1)
+          from content_generator.core.publish_contract import evaluate,format_report
+          verdict=evaluate(result); print(format_report(result))
+          if verdict["status"]=="missing": alert(f"{slot.upper()} publish contract missing."); sys.exit(1)
+          if verdict["ok"]: print(f"::notice::{verdict['status']}: {verdict['detail']}"); sys.exit(0)
+          alert(verdict["detail"]); sys.exit(1)
           PY
 
-      - name: Save output cache
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: output/
-          key: purity-beans-output-${{ runner.os }}-${{ github.run_id }}
-
-      - name: Upload run artifacts
+      # Diagnostics/artifacts are retained regardless of outcome.
+      # Production state is persisted only after the slot result above succeeds.
+      - name: Upload run diagnostics
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: purity-beans-day-${{ github.run_number }}
+          name: purity-beans-run-${{ github.run_number }}
           path: |
-            output/*.json
-            output/archive/
+            run_result.json
+            output/reports/
+          if-no-files-found: ignore
           retention-days: 90
 
-      # Persist learning + daily content to Git so the next run can reconstruct
-      # state even if the Actions cache disappears entirely.
-      - name: Persist learning data and keep repo active
-        if: ${{ !cancelled() }}
+      - name: Persist validated state to Git
+        if: ${{ success() }}
         run: |
+          set -euo pipefail
           git config user.name "Purity Beans Engine"
           git config user.email "engine@puritybeans.auto"
+          # Synchronize BEFORE staging generated state. Remote Git is authoritative.
+          git pull --rebase --autostash
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
-          # Learning state MUST be in Git (not only cache).
-          git add -f output/learning/ 2>/dev/null || true
+          git add -f output/learning/
+          # Keep large media out of Git; artifacts retain diagnostics/creative outputs.
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
-          # Daily content JSON is what morning/evening slots load.
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
-          git add -f output/creative/ 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
           git add -f output/.running* 2>/dev/null || true
-          git pull --rebase --autostash
-          if ! git diff --staged --quiet; then
-            git commit -m "chore: run ${{ github.run_number }} — content + learning data [skip ci]"
-          fi
+          if ! git diff --staged --quiet; then git commit -m "chore: run ${{ github.run_number }} — validated content + learning data [skip ci]"; fi
           if ! git push; then
             echo "push rejected — rebasing on the remote and retrying"
             git pull --rebase --autostash
-            git push || { echo "::error::Could not push run artefacts; publish slots cannot load persisted content."; exit 1; }
+            git push || { echo "::error::Could not push validated run state; publish slots cannot load persisted content."; exit 1; }
           fi
 
       - name: Alert on failure
@@ -307,8 +245,6 @@ jobs:
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: |
           if [ -n "$ALERT_WEBHOOK_URL" ]; then
-            curl -s -X POST "$ALERT_WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d "{\"text\": \"PURITY BEANS PIPELINE FAILED\nRun: ${{ github.run_number }}\nDate: $(date)\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+            curl -s -X POST "$ALERT_WEBHOOK_URL" -H "Content-Type: application/json" -d "{\"text\":\"PURITY BEANS PIPELINE FAILED\nRun: ${{ github.run_number }}\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
           fi
           echo "Pipeline failed — check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
