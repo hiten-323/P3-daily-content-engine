@@ -38,13 +38,31 @@ WEIGHT_PROFILES: dict[str, dict[str, float]] = {
     },
 }
 
-# Lexicographic business hierarchy encoded as score prefixes. These constants
-# are intentionally much larger than any realistic engagement contribution.
-# The exact scale is less important than the invariant: one rupee of attributed
-# revenue outranks any finite engagement-only outcome; one order outranks the
-# remaining non-commercial signals.
-REVENUE_HIERARCHY = 1_000_000.0
-ORDER_HIERARCHY = 10_000.0
+# Lexicographic business hierarchy encoded as score prefixes.
+#
+# ORDERS get the prefix; ATTRIBUTED REVENUE does not. They are different kinds
+# of evidence and the repo's own tests encode the distinction:
+#
+#   test_learning_evidence_guard  1 order must outrank 10,000 follows
+#   test_reward_objective_integrity  100 follows must outrank Rs 1 of revenue
+#
+# Both hold once you notice what each number means. An order is a discrete,
+# completed conversion — a real person bought coffee, and that outranks any
+# amount of engagement. Attributed revenue is not discrete: attribution is
+# day-level and splits a day's takings across that day's posts, so a post can
+# be credited Rs 0.33. Letting a fractional accounting artefact outrank a
+# genuine audience gain is what GOAL_HIERARCHY.md blocks by name — "selling
+# harder at 105 followers would raise short-term revenue but kill reach ->
+# blocked (L2 growth staging > naive L1)".
+#
+# Revenue keeps its per-profile weight, so it always contributes and a
+# revenue-KPI run still ranks it highest. It simply does not get to dominate
+# the followers stage on a rounding artefact.
+#
+# Previously both were prefixes, and REVENUE_HIERARCHY = 1_000_000 made Rs 1
+# beat 10,000 followers 2.5x. Both tests above failed; neither was wired into CI.
+REVENUE_HIERARCHY = 0.0
+ORDER_HIERARCHY = 1_000_000.0
 
 DEFAULT_KPI = "followers"
 
@@ -122,3 +140,21 @@ def explain(metrics: dict, kpi: str | None = None) -> dict:
         "contributions": parts,
         "top_drivers": [k for k, _ in top],
     }
+
+
+# Spec KPIs the Instagram Graph API does not expose per post, and the honest
+# reason why. Documented here so nobody "adds" them later with invented numbers.
+# Removed in a refactor, which broke the import in test_growth_director_spec.
+#
+#   returning_viewers / repeat_engagement — Instagram exposes no per-viewer
+#     identity on media insights. There is no supported way to tell a repeat
+#     viewer from a new one. The closest real proxies are account-level
+#     `accounts_engaged` over time and repeat commenters; neither is per-post.
+#
+#   website_ctr — link clicks are reported at ACCOUNT level, not per post, so
+#     per-post CTR needs per-post landing URLs (a link-in-bio router).
+UNAVAILABLE_KPIS = {
+    "returning_viewers": "no per-viewer identity in the Graph API",
+    "repeat_engagement": "no per-viewer identity in the Graph API",
+    "website_ctr_per_post": "link clicks are account-level, not per-media",
+}

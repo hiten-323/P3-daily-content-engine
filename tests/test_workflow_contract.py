@@ -51,7 +51,47 @@ def main() -> None:
     assert "git add -f output/learning/" in text
     assert "output/content_" in text
 
+    # EVERY TEST THE GATE INVOKES MUST EXIST.
+    #
+    # The gate runs before the pipeline, so a missing file fails every run
+    # before anything generates or publishes — a total outage wearing the
+    # costume of a safety check. This shipped once: the workflow called
+    # test_workflow_contract.py and test_persistence_invariant.py while neither
+    # had been written yet.
+    runs_pytest = re.search(r"pytest\s[^\n]*\btests/", text)
+    invoked = re.findall(r"python (tests/\w+\.py)", text)
+
+    missing = [t for t in invoked if not (ROOT / t).is_file()]
+    assert not missing, f"the gate invokes tests that do not exist: {missing}"
+
+    # A suite nobody runs protects nothing. `pytest tests/` collects the whole
+    # directory, so it satisfies this; naming files individually does not,
+    # unless every file is named.
+    if not runs_pytest:
+        on_disk = {f"tests/{p.name}" for p in (ROOT / "tests").glob("test_*.py")}
+        unwired = sorted(on_disk - set(invoked))
+        assert not unwired, f"test suites exist but are never run: {unwired}"
+
+    # Whichever runner is used, every suite must actually EXECUTE something.
+    # Ten suites were pytest-style (test_* functions, no main()); running those
+    # as `python tests/x.py` merely imports them and exits 0, so they passed
+    # while asserting nothing. Script-style suites therefore expose test_main()
+    # and the gate uses pytest, which collects both shapes.
+    for path in (ROOT / "tests").glob("test_*.py"):
+        body = path.read_text(encoding="utf-8")
+        collectable = ("def test_" in body)
+        assert collectable, (
+            f"{path.name} defines no test_* function, so pytest collects nothing "
+            "from it — add test_main() if it is script-style"
+        )
+
     print("workflow contract: PASS")
+
+
+def test_main():
+    """Let pytest collect this suite too — one runner sees both styles."""
+    rc = main()
+    assert rc in (0, None), f"suite reported failures (rc={rc})"
 
 
 if __name__ == "__main__":

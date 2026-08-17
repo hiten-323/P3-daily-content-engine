@@ -72,67 +72,12 @@ def main() -> int:
                 "publishing", "experiments"):
         check(f"policy domain '{dom}' present", isinstance(p.domain(dom), dict) and bool(p.domain(dom)))
 
-    # 6b. The workflow schedule is DERIVED from core/slot_registry, not stated
-    #     independently. It was stated in three places — the cron list, the
-    #     FORCE_SLOT mapping, and the table in slots.py — and they diverged:
-    #     the workflow fired at 08:00/20:00 IST while slots.py documented the
-    #     founder-chosen 10:00/22:00, so every Instagram post went out two hours
-    #     early. The expected values below are computed from the registry, so
-    #     editing the YAML alone can no longer change the schedule silently, and
-    #     changing the registry is picked up here automatically.
-    try:
-        import yaml, re as _re
-        from content_generator.core.slot_registry import (
-            all_crons, force_slot_expression, slot_for_cron, SLOTS,
-        )
-        wf = yaml.safe_load(open(".github/workflows/daily.yml", encoding="utf-8"))
-        crons = [c["cron"] for c in wf[True]["schedule"]]
-
-        check("workflow crons match the slot registry",
-              sorted(crons) == sorted(all_crons()),
-              f"yaml={sorted(crons)} registry={sorted(all_crons())}")
-        check("every cron resolves to a known slot",
-              all(slot_for_cron(c) for c in crons),
-              str([c for c in crons if not slot_for_cron(c)]))
-
-        job = list(wf["jobs"].values())[0]
-        step = [x for x in job["steps"] if x.get("name", "").startswith("Run autonomous")][0]
-        actual_expr = " ".join(str(step["env"]["FORCE_SLOT"]).split())
-        expected_expr = " ".join(force_slot_expression().split())
-        check("FORCE_SLOT matches the expression the registry generates",
-              actual_expr == expected_expr,
-              f"run `python -m content_generator.core.slot_registry --workflow`")
-
-        # The registry is also what publish_contract uses, so a slot cannot have
-        # a schedule here and different obligations there.
-        from content_generator.core.publish_contract import SLOT_EXPECTATIONS
-        check("publish contract expectations come from the registry",
-              set(SLOT_EXPECTATIONS) == {s["id"] for s in SLOTS},
-              f"{sorted(SLOT_EXPECTATIONS)} vs {sorted(s['id'] for s in SLOTS)}")
-    except Exception as _e:
-        check("workflow schedule check ran", False, str(_e)[:80])
-
-    # 6c. Generated content must survive a failed run.
-    #     `if: success()` on the persist step turned a publishing failure into a
-    #     content outage: the pipeline did 13 minutes of real work, the verify
-    #     step exited 1 because nothing published, and the content was then never
-    #     committed — so the later publish slots found nothing and the work was
-    #     lost. Persistence must not depend on an unrelated downstream step.
-    try:
-        import yaml
-        wf = yaml.safe_load(open(".github/workflows/daily.yml", encoding="utf-8"))
-        job = list(wf["jobs"].values())[0]
-        persist = [x for x in job["steps"]
-                   if "Persist" in str(x.get("name", ""))]
-        check("persist step exists", bool(persist))
-        if persist:
-            cond = str(persist[0].get("if", ""))
-            check("content is persisted even when the run fails",
-                  "success()" not in cond, f"if: {cond}")
-            check("but not on cancellation (half-written state)",
-                  "cancelled" in cond or "always" in cond, f"if: {cond}")
-    except Exception as _e:
-        check("persist-condition check ran", False, str(_e)[:60])
+    # Workflow assertions live in test_workflow_contract.py (schedule, slot
+    # inputs, preflight, slot-aware verification) and
+    # test_persistence_invariant.py (what survives a failed run). The copies
+    # here disagreed the moment FORCE_SLOT moved to job level and Git
+    # persistence became success-only: this file asserted one implementation
+    # while the invariant is broader. One owner per invariant.
 
     # 7. Docs reference files that exist
     for doc in ("MISSION.md", "OPERATING_PRINCIPLES.md", "SUCCESS_METRICS.md",
@@ -143,6 +88,12 @@ def main() -> int:
     print(f"\n{'DRIFT DETECTED' if failures else 'no drift'} "
           f"({len(failures)} failure(s))")
     return 1 if failures else 0
+
+
+def test_main():
+    """Let pytest collect this suite too — one runner sees both styles."""
+    rc = main()
+    assert rc in (0, None), f"suite reported failures (rc={rc})"
 
 
 if __name__ == "__main__":

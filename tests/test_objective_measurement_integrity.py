@@ -45,6 +45,11 @@ def test_no_legacy_meta_graph_v18_reference_in_python_sources() -> None:
     for path in root.rglob("*.py"):
         if any(part in {".git", ".venv", "venv", "node_modules"} for part in path.parts):
             continue
+        # The scan must not flag itself: this file necessarily contains the
+        # very string it searches for, so it reported a permanent false
+        # positive and failed on every run.
+        if path.resolve() == Path(__file__).resolve():
+            continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         if "v18.0" in text:
             offenders.append(str(path.relative_to(root)))

@@ -15,7 +15,10 @@ on:
         description: 'Manual slot to execute — never infer from wall-clock time'
         required: true
         type: choice
-        options: [generate, morning, evening]
+        options:
+          - generate
+          - morning
+          - evening
       day_number:
         description: 'Override day number (leave blank for auto)'
         required: false
@@ -73,17 +76,12 @@ jobs:
 
       - name: Verify render, measurement, governance and workflow contracts
         run: |
-          python tests/test_render_safety.py
-          python tests/test_measurement_integrity.py
-          python tests/test_growth_director_spec.py
-          python tests/test_publish_gate.py
-          python tests/test_publish_contract.py
-          python tests/test_psychology_governance.py
-          python tests/test_scroller_psychology.py
-          python tests/test_fallback_safety.py
-          python tests/test_config_drift.py
-          python tests/test_workflow_contract.py
-          python tests/test_persistence_invariant.py
+          # ONE runner over BOTH styles. Ten suites were pytest-style and
+          # invoked by nobody; running them as scripts executes no test
+          # function at all, so they would have passed vacuously. The
+          # script-style suites now expose test_main(), so pytest collects
+          # every suite in tests/ and nothing is silently skipped.
+          pytest -q tests/
 
       - name: Meta token soft-check (generate)
         if: ${{ success() && env.FORCE_SLOT == 'generate' }}
@@ -160,6 +158,13 @@ jobs:
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
           SHOPIFY_ADMIN_TOKEN: ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SHOPIFY_BLOG_ID: ${{ secrets.SHOPIFY_BLOG_ID }}
+          # ENABLE_EXTENDED_CONTENT: deliberately NOT set here. Extended content
+          # (blog, stories, YouTube Short, second reel) is a founder decision and
+          # is resolved from founder_policies.yaml -> enable_extended_content by
+          # generator._extended_content_enabled(). Hardcoding "true" in the
+          # workflow would override the policy silently, which is why
+          # test_workflow_contract forbids the literal and
+          # test_token_health_contract requires the key to be named here.
           WEBSITE_URL: https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY: "true"
@@ -210,8 +215,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: purity-beans-run-${{ github.run_number }}
+          # output/*.json is here deliberately. Persisting to Git only on
+          # success is the right rule — unvalidated state must not enter the
+          # repo the publish slots read from — but it means a failed run leaves
+          # the day's generated content nowhere unless the artifact catches it.
+          # That exact combination lost three days of content in August: the
+          # pipeline did 13 minutes of real work, a later step failed, and the
+          # content was neither committed nor uploaded.
+          # Git holds validated state; artifacts hold everything, for diagnosis.
           path: |
             run_result.json
+            output/*.json
             output/reports/
             output/creative/
           if-no-files-found: ignore

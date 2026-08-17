@@ -130,5 +130,11 @@ def main():
     return 1 if failures else 0
 
 
+def test_main():
+    """Let pytest collect this suite too — one runner sees both styles."""
+    rc = main()
+    assert rc in (0, None), f"suite reported failures (rc={rc})"
+
+
 if __name__ == "__main__":
     raise SystemExit(main())

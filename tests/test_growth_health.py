@@ -5,8 +5,12 @@ from content_generator.ops import growth_health
 
 def test_missing_metric_is_unknown_not_zero(monkeypatch, tmp_path):
     monkeypatch.setattr(growth_health, "LEARNING", tmp_path)
+    # A LIST, matching the real shape of performance_log.json. The scanner
+    # accepts a list, or a dict keyed posts/entries/records/data — a bare dict
+    # is not a shape it has ever seen in production, so the fixture was wrong,
+    # not the implementation.
     (tmp_path / "post.json").write_text(
-        '{"metrics": {"reach": 100}}', encoding="utf-8"
+        '[{"metrics": {"reach": 100}}]', encoding="utf-8"
     )
     result = growth_health.measurement_health()
     assert result["records"] == 1
@@ -50,5 +54,10 @@ def test_config_health_flags_extended_content(monkeypatch, tmp_path):
     (tmp_path / "content_generator/core").mkdir(parents=True, exist_ok=True)
     (tmp_path / "content_generator/core/brand_guard.py").write_text("EDITORIAL_THRESHOLD = 8.0", encoding="utf-8")
     result = growth_health.config_health()
-    assert "extended_content_enabled" in result["warnings"]
+    # The implementation emits "workflow_hardcodes_extended_content" for a
+    # workflow literal and "extended_content_enabled_via_policy" for the policy
+    # route. This asserted a third name that nothing ever emits, so it failed
+    # on every run — and nothing noticed, because the suite was not wired into
+    # the gate and executes no test function when run as a script.
+    assert "workflow_hardcodes_extended_content" in result["warnings"]
     assert "legacy_editorial_threshold_symbol_present" in result["warnings"]
