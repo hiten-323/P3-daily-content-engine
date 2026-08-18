@@ -158,13 +158,8 @@ jobs:
           SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
           SHOPIFY_ADMIN_TOKEN: ${{ secrets.SHOPIFY_ADMIN_TOKEN }}
           SHOPIFY_BLOG_ID: ${{ secrets.SHOPIFY_BLOG_ID }}
-          # ENABLE_EXTENDED_CONTENT: deliberately NOT set here. Extended content
-          # (blog, stories, YouTube Short, second reel) is a founder decision and
-          # is resolved from founder_policies.yaml -> enable_extended_content by
-          # generator._extended_content_enabled(). Hardcoding "true" in the
-          # workflow would override the policy silently, which is why
-          # test_workflow_contract forbids the literal and
-          # test_token_health_contract requires the key to be named here.
+          # Extended content is founder-policy controlled, never a workflow override.
+          # Source: founder_policies.yaml -> content.enable_extended_content.
           WEBSITE_URL: https://p3online.in
           ENABLE_EDITORIAL_REVIEW: "true"
           ENABLE_WEEKLY_SUMMARY: "true"
@@ -215,14 +210,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: purity-beans-run-${{ github.run_number }}
-          # output/*.json is here deliberately. Persisting to Git only on
-          # success is the right rule — unvalidated state must not enter the
-          # repo the publish slots read from — but it means a failed run leaves
-          # the day's generated content nowhere unless the artifact catches it.
-          # That exact combination lost three days of content in August: the
-          # pipeline did 13 minutes of real work, a later step failed, and the
-          # content was neither committed nor uploaded.
-          # Git holds validated state; artifacts hold everything, for diagnosis.
           path: |
             run_result.json
             output/*.json
@@ -241,7 +228,7 @@ jobs:
           git pull --rebase --autostash
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
-          git add -f output/learning/
+          git add -f output/learning/ 2>/dev/null || true
           # Large media never enters Git; artifacts above retain it for 90 days.
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
