@@ -18,5 +18,28 @@
         "hotels"
       ]
     }
+  },
+  {
+    "number": "1.2",
+    "effective_date": "2026-08-13",
+    "author": "Founder",
+    "changes": [
+      "Initial domain-structured policy",
+      "Target KPI: followers (IGNITION stage)",
+      "Auto-publish enabled across all platforms",
+      "Editorial minimum aligned to the constitutional 8.0 threshold",
+      "enable_extended_content is a founder policy decision (not a workflow override)"
+    ],
+    "recorded_at": "2026-08-18T02:02:27",
+    "snapshot": {
+      "target_kpi": "followers",
+      "auto_publish": true,
+      "enable_extended_content": true,
+      "priority_segments": [
+        "general",
+        "corporate",
+        "hotels"
+      ]
+    }
   }
 ]
