@@ -1,0 +1,386 @@
+{
+  "day_number": 230,
+  "reels": [
+    {
+      "type": "reel",
+      "hook": "Turn the jar around before you buy it.",
+      "hook_text": "Turn the jar around before you buy it.",
+      "hook_spoken": "The front of the pack is marketing. The back is the recipe.",
+      "hook_text_overlay": "READ THE BACK",
+      "frames": [
+        {
+          "on_screen": "READ THE BACK",
+          "spoken": "The front of the pack is marketing. The back is the recipe."
+        },
+        {
+          "on_screen": "INGREDIENTS",
+          "spoken": "Find the ingredient list. Read every line, not just the first."
+        },
+        {
+          "on_screen": "WHAT'S IN OURS",
+          "spoken": "Purity Beans lists one thing: coffee. Zero chicory, nothing added."
+        },
+        {
+          "on_screen": "ONE LINE",
+          "spoken": "Coffee needs one ingredient. Anything else is worth knowing about."
+        },
+        {
+          "on_screen": "YOUR TURN",
+          "spoken": "Check the jar in your kitchen tonight and see what it says."
+        }
+      ],
+      "body": "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+      "caption": "The front of a coffee pack is marketing. The back is the recipe.\n\nPurity Beans lists one ingredient: coffee. Zero chicory, nothing added.\n\nCheck the jar in your kitchen tonight.\n\np3online.in",
+      "cta": "Read the label, then shop at p3online.in — Purity Beans",
+      "comment_trigger": "What does the label on your jar actually say?",
+      "save_trigger": "Save this for your next grocery run.",
+      "share_trigger": "Send this to whoever buys the coffee in your house.",
+      "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+      "audio": {
+        "audio_category": "product_showcase",
+        "mood": "premium",
+        "local_track": null,
+        "recommendation": "premium trending audio / high-energy for launches",
+        "manual_instruction": "When posting by hand, add premium trending audio / high-energy for launches from the app's music library (trending audio gives the reach boost the API can't).",
+        "confidence": 0.5,
+        "reason": "Content classified as 'product_showcase' -> premium mood. No performance history yet — exploring."
+      },
+      "loop_ending": "Ends on the jar being turned around, which is where it opens — the last frame reads as the first.",
+      "angle": "EXPOSE",
+      "source": "evergreen_template",
+      "ai_image_hook_prompt": "Hyperrealistic cinematic still frame for Instagram Reel hook. Concept: Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory powder, brown dust, and 'filler' particles explode outward as if repelled by the jar. The jar never moves. Camera: locked-off close-up, slight push-in, 9:16 vertical. THE PURITY BEANS JAR IS THE HERO — must match reference exactly. No redesign. No alternate label. No generic jar. Lighting: dark background, single warm amber/gold beam on the Purity Beans jar. Style: photorealistic, editorial luxury FMCG, deep shadows, cinematic color grade. Vertical 9:16. No text or typography in the image. Photographed look, not rendered: visible skin pores and texture, natural asymmetric face, flyaway hairs, real fabric wrinkles, one believable light source with correct shadow direction, mixed color temperature like a real room, natural grain, slight motion blur where relevant, subject slightly off-center. Lived-in environment details: a used spoon, water ring, charging cable, fingerprints on glass. The jar has a correct contact shadow and environment reflections on the glass; label texture catches light like printed paper. NO perfect symmetry, NO plastic skin, NO oversaturation, NO text in image, NO 3D-render look. REFERENCE JARS (match exactly — same label, shape, cap): brand_assets/puritybeans_ultra_blend_50g_front.png, brand_assets/puritybeans_ultra_blend_50g_lifestyle.png, brand_assets/puritybeans_ultra_blend_100g_front.png, brand_assets/puritybeans_ultra_blend_100g_lifestyle.png",
+      "ai_video_motion_prompt": "Motion for: Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory. Camera: locked-off close-up, slight push-in, 9:16 vertical. Motion rules: Everything moves EXCEPT the Purity Beans jar. Particles scatter outward. Gold light pulses gently on the jar. Background chaos, product stillness. The Purity Beans jar stays sharp and prominent at all times. Slow, intentional motion. No cuts. No transitions. Physics-true motion: steam rises and disperses naturally, liquid has weight, humans breathe with visible chest movement and micro blinks. Subtle handheld sway or slow locked-off push only. 24fps film feel. No floaty camera moves, no morphing, no extra fingers appearing, faces stay stable and consistent throughout.",
+      "reference_jar_paths": [
+        "brand_assets/puritybeans_ultra_blend_50g_front.png",
+        "brand_assets/puritybeans_ultra_blend_50g_lifestyle.png",
+        "brand_assets/puritybeans_ultra_blend_100g_front.png",
+        "brand_assets/puritybeans_ultra_blend_100g_lifestyle.png"
+      ],
+      "hook_visual_concept": "Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory powder, brown dust, and 'filler' particles explode outward as if repelled by the jar. The jar never moves.",
+      "editorial_score": {
+        "shareability": 7.0,
+        "saveability": 7.0,
+        "emotion_pull": 7.0,
+        "hook_strength": 7.0,
+        "brand_clarity": 7.0,
+        "overall": 7.0,
+        "verdict": "REJECT",
+        "feedback": ""
+      },
+      "objective": "Engagement Growth",
+      "primary_cta": "Tag someone who needs to see this",
+      "success_metric": "shares",
+      "target": 300
+    },
+    {
+      "type": "reel",
+      "hook": "Turn the jar around before you buy it.",
+      "hook_text": "Turn the jar around before you buy it.",
+      "hook_spoken": "The front of the pack is marketing. The back is the recipe.",
+      "hook_text_overlay": "READ THE BACK",
+      "frames": [
+        {
+          "on_screen": "READ THE BACK",
+          "spoken": "The front of the pack is marketing. The back is the recipe."
+        },
+        {
+          "on_screen": "INGREDIENTS",
+          "spoken": "Find the ingredient list. Read every line, not just the first."
+        },
+        {
+          "on_screen": "WHAT'S IN OURS",
+          "spoken": "Purity Beans lists one thing: coffee. Zero chicory, nothing added."
+        },
+        {
+          "on_screen": "ONE LINE",
+          "spoken": "Coffee needs one ingredient. Anything else is worth knowing about."
+        },
+        {
+          "on_screen": "YOUR TURN",
+          "spoken": "Check the jar in your kitchen tonight and see what it says."
+        }
+      ],
+      "body": "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+      "caption": "The front of a coffee pack is marketing. The back is the recipe.\n\nPurity Beans lists one ingredient: coffee. Zero chicory, nothing added.\n\nCheck the jar in your kitchen tonight.\n\np3online.in",
+      "cta": "Read the label, then shop at p3online.in — Purity Beans",
+      "comment_trigger": "What does the label on your jar actually say?",
+      "save_trigger": "Save this for your next grocery run.",
+      "share_trigger": "Send this to whoever buys the coffee in your house.",
+      "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+      "audio": {
+        "audio_category": "product_showcase",
+        "mood": "premium",
+        "local_track": null,
+        "recommendation": "premium trending audio / high-energy for launches",
+        "manual_instruction": "When posting by hand, add premium trending audio / high-energy for launches from the app's music library (trending audio gives the reach boost the API can't).",
+        "confidence": 0.5,
+        "reason": "Content classified as 'product_showcase' -> premium mood. No performance history yet — exploring."
+      },
+      "loop_ending": "Ends on the jar being turned around, which is where it opens — the last frame reads as the first.",
+      "angle": "EXPOSE",
+      "source": "evergreen_template",
+      "ai_image_hook_prompt": "Hyperrealistic cinematic still frame for Instagram Reel hook. Concept: Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory powder, brown dust, and 'filler' particles explode outward as if repelled by the jar. The jar never moves. Camera: locked-off close-up, slight push-in, 9:16 vertical. THE PURITY BEANS JAR IS THE HERO — must match reference exactly. No redesign. No alternate label. No generic jar. Lighting: dark background, single warm amber/gold beam on the Purity Beans jar. Style: photorealistic, editorial luxury FMCG, deep shadows, cinematic color grade. Vertical 9:16. No text or typography in the image. Photographed look, not rendered: visible skin pores and texture, natural asymmetric face, flyaway hairs, real fabric wrinkles, one believable light source with correct shadow direction, mixed color temperature like a real room, natural grain, slight motion blur where relevant, subject slightly off-center. Lived-in environment details: a used spoon, water ring, charging cable, fingerprints on glass. The jar has a correct contact shadow and environment reflections on the glass; label texture catches light like printed paper. NO perfect symmetry, NO plastic skin, NO oversaturation, NO text in image, NO 3D-render look. REFERENCE JARS (match exactly — same label, shape, cap): brand_assets/puritybeans_ultra_blend_50g_front.png, brand_assets/puritybeans_ultra_blend_50g_lifestyle.png, brand_assets/puritybeans_ultra_blend_100g_front.png, brand_assets/puritybeans_ultra_blend_100g_lifestyle.png",
+      "ai_video_motion_prompt": "Motion for: Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory. Camera: locked-off close-up, slight push-in, 9:16 vertical. Motion rules: Everything moves EXCEPT the Purity Beans jar. Particles scatter outward. Gold light pulses gently on the jar. Background chaos, product stillness. The Purity Beans jar stays sharp and prominent at all times. Slow, intentional motion. No cuts. No transitions. Physics-true motion: steam rises and disperses naturally, liquid has weight, humans breathe with visible chest movement and micro blinks. Subtle handheld sway or slow locked-off push only. 24fps film feel. No floaty camera moves, no morphing, no extra fingers appearing, faces stay stable and consistent throughout.",
+      "reference_jar_paths": [
+        "brand_assets/puritybeans_ultra_blend_50g_front.png",
+        "brand_assets/puritybeans_ultra_blend_50g_lifestyle.png",
+        "brand_assets/puritybeans_ultra_blend_100g_front.png",
+        "brand_assets/puritybeans_ultra_blend_100g_lifestyle.png"
+      ],
+      "hook_visual_concept": "Purity Beans jar sits perfectly still, completely clean and lit in gold, while all around it chicory powder, brown dust, and 'filler' particles explode outward as if repelled by the jar. The jar never moves.",
+      "editorial_score": {
+        "shareability": 7.0,
+        "saveability": 7.0,
+        "emotion_pull": 7.0,
+        "hook_strength": 7.0,
+        "brand_clarity": 7.0,
+        "overall": 7.0,
+        "verdict": "REJECT",
+        "feedback": ""
+      },
+      "objective": "Engagement Growth",
+      "primary_cta": "Tag someone who needs to see this",
+      "success_metric": "shares",
+      "target": 300
+    }
+  ],
+  "carousel": {
+    "type": "carousel",
+    "hook": "Three things to check on a coffee label",
+    "title": "Three things to check on a coffee label",
+    "slides": [
+      {
+        "slide": 1,
+        "heading": "Read the ingredient list",
+        "body": "It is on the back, usually in the smallest type on the pack.",
+        "visual": "Close-up of an ingredient panel, jar turned to camera"
+      },
+      {
+        "slide": 2,
+        "heading": "Count the ingredients",
+        "body": "Coffee needs one. Anything else is there for a reason worth knowing.",
+        "visual": "Finger tracing down a short ingredient list"
+      },
+      {
+        "slide": 3,
+        "heading": "Look for chicory by name",
+        "body": "It is a root, not a bean, and it is listed when present.",
+        "visual": "Ingredient panel with the word chicory in frame"
+      },
+      {
+        "slide": 4,
+        "heading": "Check the order",
+        "body": "Ingredients are listed by weight, so the first one is the bulk of it.",
+        "visual": "Ingredient panel with the first line highlighted"
+      },
+      {
+        "slide": 5,
+        "heading": "What ours says",
+        "body": "Purity Beans lists coffee. Zero chicory, no additives.",
+        "visual": "Purity Beans jar, label facing camera"
+      },
+      {
+        "slide": 6,
+        "heading": "Do it tonight",
+        "body": "Turn around the jar in your kitchen and read the list. Purity Beans — p3online.in",
+        "visual": "Hand turning a jar on a kitchen counter"
+      }
+    ],
+    "caption": "Three things worth checking on any coffee label. Purity Beans lists one ingredient: coffee. Zero chicory, no additives. p3online.in",
+    "cta": "Shop pure coffee at p3online.in — Purity Beans",
+    "comment_trigger": "Which of the three surprised you?",
+    "save_trigger": "Save this for your next grocery run.",
+    "share_trigger": "Share with someone who drinks instant daily.",
+    "hashtags": "#PurityBeans #PureCoffee #ZeroChicory #CoffeeIndia #ReadTheLabel",
+    "source": "evergreen_template",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Website Traffic",
+    "primary_cta": "Full article at p3online.in",
+    "success_metric": "link_clicks",
+    "target": 300
+  },
+  "instagram_post": {
+    "type": "instagram_post",
+    "hook": "One ingredient. That is the whole list.",
+    "body": "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+    "caption": "One ingredient. That is the whole list. Purity Beans is 100% coffee — zero chicory, no additives, no preservatives. Turn your jar around and compare. p3online.in",
+    "cta": "Shop at p3online.in — Purity Beans",
+    "comment_trigger": "How many ingredients are on your jar?",
+    "save_trigger": "Save this for your next grocery run.",
+    "share_trigger": "Send this to a fellow coffee drinker.",
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeLover",
+    "source": "evergreen_template",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Brand Awareness",
+    "primary_cta": "Follow for daily coffee truth",
+    "success_metric": "reach",
+    "target": 50000
+  },
+  "linkedin_post": {
+    "type": "linkedin_post",
+    "hook": "What our distributors ask about first",
+    "body": "The first question is always the ingredient list, because it is what the customer asks them about at the counter. Purity Beans is 100% coffee — zero chicory, no additives, no preservatives — which makes it a straightforward product to stand behind on a shelf full of blends. We are expanding our distributor network. If you distribute FMCG and want the details, message me. p3online.in",
+    "cta": "DM for the distributor pack Purity Beans — pure coffee, nothing added. Shop: https://p3online.in",
+    "hashtags": "#FMCG #Distribution #Coffee #IndianBrands #PurityBeans",
+    "source": "evergreen_distributor",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this before your next grocery run — real coffee matters.",
+    "share_trigger": "Share with someone who starts every morning with coffee.",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Brand Awareness",
+    "primary_cta": "Follow for daily coffee truth",
+    "success_metric": "reach",
+    "target": 50000
+  },
+  "_source": "emergency_fallback_evergreen",
+  "_recycled": true,
+  "_asset_metadata": [
+    {
+      "content_id": "pb_497426c26f",
+      "day": 230,
+      "channel": "instagram",
+      "type": "reel",
+      "topic": "",
+      "hook": "Turn the jar around before you buy it.",
+      "cta": "Read the label, then shop at p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Always-On Growth",
+      "experiment": "comment_mechanic",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": null,
+      "psychology_frame_version": null,
+      "hook_strategy": "second_person",
+      "payoff_type": "useful_test",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "reel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": null,
+      "hook_layers_distinct": true,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-08-19T02:12:24",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_c0a4f551b0",
+      "day": 230,
+      "channel": "instagram",
+      "type": "carousel",
+      "topic": "Three things to check on a coffee label",
+      "hook": "Three things to check on a coffee label",
+      "cta": "Shop pure coffee at p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Always-On Growth",
+      "experiment": "comment_mechanic",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": null,
+      "psychology_frame_version": null,
+      "hook_strategy": null,
+      "payoff_type": "useful_test",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "carousel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": null,
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-08-19T02:12:24",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_a987797d86",
+      "day": 230,
+      "channel": "linkedin",
+      "type": "post",
+      "topic": "",
+      "hook": "What our distributors ask about first",
+      "cta": "DM for the distributor pack",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Always-On Growth",
+      "experiment": "comment_mechanic",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": null,
+      "psychology_frame_version": null,
+      "hook_strategy": "question",
+      "payoff_type": "new_knowledge",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "linkedin",
+      "format": "post",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": null,
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-08-19T02:12:24",
+      "status": "scheduled"
+    }
+  ]
+}
