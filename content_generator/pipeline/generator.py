@@ -315,11 +315,21 @@ def generate_daily_content(
         if candidate:
             logger.warning("[psychology] frame %r not in registry — reselecting", candidate)
         try:
-            fallback = recommended_frame_for_format("reel")
-            fid = fallback.get("id") if isinstance(fallback, dict) else str(fallback or "")
-            if fid and get_frame(fid):
-                logger.info("[psychology] selected frame: %s", fid)
-                return fid
+            # recommended_frame_for_format returns a LIST of frame ids in
+            # preference order. This only handled a dict or a bare string, so
+            # str(list) produced "['revelation', ...]" — never a valid id — and
+            # selection fell through to "", which the editorial gate then
+            # rejects as ungoverned. Take the first id that resolves.
+            recommended = recommended_frame_for_format("reel")
+            if isinstance(recommended, dict):
+                recommended = [recommended.get("id")]
+            elif isinstance(recommended, str):
+                recommended = [recommended]
+            for fid in (recommended or []):
+                fid = str(fid or "").strip()
+                if fid and get_frame(fid):
+                    logger.info("[psychology] selected frame: %s", fid)
+                    return fid
         except Exception as e:
             logger.warning("[psychology] frame recommendation failed: %s", e)
         logger.error("[psychology] no valid frame selected — run will be rejected "
