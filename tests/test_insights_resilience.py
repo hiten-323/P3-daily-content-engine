@@ -133,3 +133,71 @@ def test_learning_steps_are_declared_non_fatal() -> None:
             f"{label} feeds learning only — it must not be able to abort the "
             f"pipeline before content is generated. Got: {line.strip()}"
         )
+
+
+# ── access diagnostic ────────────────────────────────────────────────────────
+
+def test_diagnostic_names_the_missing_scopes(monkeypatch, caplog) -> None:
+    """
+    The engine spent two weeks unable to say why /insights 400s while
+    followers_count succeeds. The diagnostic must name the cause, not hint.
+    """
+    insights._reset_circuit()
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "t")
+    monkeypatch.setenv("INSTAGRAM_ACCOUNT_ID", "1784")
+
+    def _fake(path, params, bypass_circuit=False):
+        if path == "debug_token":
+            return {"data": {"type": "USER", "is_valid": True,
+                             "scopes": ["instagram_basic", "pages_show_list"]}}
+        return {"username": "puritybeans", "account_type": "BUSINESS"}
+
+    monkeypatch.setattr(insights, "_graph_get", _fake)
+    with caplog.at_level("ERROR"):
+        found = insights.diagnose_access()
+
+    assert found["missing_scopes"] == ["instagram_manage_insights", "pages_read_engagement"]
+    assert "instagram_manage_insights" in caplog.text
+    assert "MISSING for media insights" in caplog.text
+
+
+def test_diagnostic_reports_a_personal_account(monkeypatch, caplog) -> None:
+    insights._reset_circuit()
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "t")
+    monkeypatch.setenv("INSTAGRAM_ACCOUNT_ID", "1784")
+
+    def _fake(path, params, bypass_circuit=False):
+        if path == "debug_token":
+            return {"data": {"scopes": list(insights._INSIGHTS_SCOPES)}}
+        return {"username": "puritybeans", "account_type": "PERSONAL"}
+
+    monkeypatch.setattr(insights, "_graph_get", _fake)
+    with caplog.at_level("ERROR"):
+        found = insights.diagnose_access()
+
+    assert found["account_type"] == "PERSONAL"
+    assert "media insights are unavailable" in caplog.text
+    # Scopes are all present, so it must say so rather than blame them.
+    assert "scope theory is" in caplog.text
+
+
+def test_diagnostic_runs_even_though_the_breaker_is_open(monkeypatch) -> None:
+    """It only runs when the circuit is open, so it must be exempt from it."""
+    insights._reset_circuit()
+    monkeypatch.setenv("INSTAGRAM_ACCESS_TOKEN", "t")
+    insights._circuit_open = True
+    seen = {}
+
+    class _Resp:
+        def read(self):
+            return b'{"data":{"scopes":["instagram_basic"]}}'
+
+    def _urlopen(req, timeout=None):
+        seen["called"] = True
+        return _Resp()
+
+    monkeypatch.setattr(insights.urllib.request, "urlopen", _urlopen)
+    assert insights._graph_get("debug_token", {}, bypass_circuit=True) is not None
+    assert seen.get("called"), "the diagnostic must bypass the breaker it reports on"
+    assert insights._graph_get("123/insights", {}) is None, "normal calls stay blocked"
+    insights._reset_circuit()

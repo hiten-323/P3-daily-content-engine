@@ -146,10 +146,10 @@ def _note_failure(path: str, detail: str) -> None:
         )
 
 
-def _graph_get(path: str, params: dict) -> dict | None:
+def _graph_get(path: str, params: dict, bypass_circuit: bool = False) -> dict | None:
     global _consecutive_failures
     token = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-    if not token or _circuit_open:
+    if not token or (_circuit_open and not bypass_circuit):
         return None
     params = {**params, "access_token": token}
     url = f"{_GRAPH_API}/{path}?{urllib.parse.urlencode(params)}"
@@ -162,6 +162,74 @@ def _graph_get(path: str, params: dict) -> dict | None:
     except Exception as e:
         _note_failure(path, _error_detail(e, token))
         return None
+
+
+# ── Why is insights failing? ─────────────────────────────────────────────────
+# Per Meta's Instagram Media Insights reference, an app on the Facebook Login
+# path (host graph.facebook.com, which is what config/api_versions.py sets)
+# needs instagram_basic AND instagram_manage_insights AND pages_read_engagement.
+# followers_count only needs instagram_basic — which is exactly the split the
+# 2026-08-21 log showed: followers_count returned 98 while all 55 /insights
+# calls returned 400.
+#
+# That is an inference, and the engine should not run on inferences. These three
+# calls make it a statement of fact. They run only once, and only when the
+# breaker has already tripped, so a healthy run pays nothing.
+_INSIGHTS_SCOPES = ("instagram_basic", "instagram_manage_insights", "pages_read_engagement")
+
+
+def diagnose_access() -> dict:
+    """Report token scopes and account type after a systemic insights failure."""
+    token = os.getenv("INSTAGRAM_ACCESS_TOKEN")
+    account_id = os.getenv("INSTAGRAM_ACCOUNT_ID")
+    if not token:
+        return {}
+
+    logger.error("[insights] --- ACCESS DIAGNOSTIC (insights failed systemically) ---")
+    findings: dict = {}
+
+    debug = _graph_get(
+        "debug_token", {"input_token": token}, bypass_circuit=True
+    ) or {}
+    info = debug.get("data") or {}
+    granted = set(info.get("scopes") or [])
+    if granted:
+        findings["scopes"] = sorted(granted)
+        missing = [s for s in _INSIGHTS_SCOPES if s not in granted]
+        findings["missing_scopes"] = missing
+        logger.error("[insights] token type=%s valid=%s", info.get("type"), info.get("is_valid"))
+        logger.error("[insights] granted scopes: %s", ", ".join(sorted(granted)) or "(none)")
+        if missing:
+            logger.error(
+                "[insights] MISSING for media insights: %s — this is the cause. "
+                "Re-authorise the app with these scopes.", ", ".join(missing),
+            )
+        else:
+            logger.error(
+                "[insights] All required scopes are present, so the scope theory is "
+                "wrong — look at account type and media ownership next."
+            )
+    else:
+        logger.error("[insights] Could not read token scopes (see error above).")
+
+    if account_id:
+        acct = _graph_get(
+            account_id, {"fields": "id,username,account_type"}, bypass_circuit=True
+        ) or {}
+        if acct:
+            findings["account_type"] = acct.get("account_type")
+            logger.error(
+                "[insights] account username=%s type=%s", acct.get("username"),
+                acct.get("account_type"),
+            )
+            if str(acct.get("account_type") or "").upper() == "PERSONAL":
+                logger.error(
+                    "[insights] Account is PERSONAL — media insights are unavailable "
+                    "on personal accounts. Convert to Business or Creator."
+                )
+
+    logger.error("[insights] --- END DIAGNOSTIC ---")
+    return findings
 
 
 def _fetch_media_insights(media_id: str) -> dict | None:
@@ -377,6 +445,9 @@ def fetch_pending_insights() -> dict:
         logger.info("[insights] %s window=%s %s", post.get("asset_id"), window, metrics)
 
     _save_posts(posts)
+    if _circuit_open:
+        diagnose_access()
+
     logger.info(
         "[insights] Done — %d learning records, %d snapshots, %d pending, %d failed, "
         "followers=%s%s",
