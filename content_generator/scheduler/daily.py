@@ -42,9 +42,6 @@ def run_full_pipeline(day_number: int = None) -> dict:
            memory -> save -> snapshot -> nurture -> founder_report -> summary
     Every step is wrapped in watchdog + retry. One failing step never kills the others.
     """
-    from content_generator.scheduler.watchdog import timed_step, timed_step_hard
-    from content_generator.scheduler.retry_manager import RetryManager
-    from content_generator.scheduler.health_monitor import assert_healthy
     from content_generator.scheduler.run_lock import RunLock
 
     # ── Run lock — skip if today already ran ──────────────────────────────────
@@ -53,6 +50,28 @@ def run_full_pipeline(day_number: int = None) -> dict:
     if lock.already_ran:
         logger.info("[scheduler] Today's run already completed — exiting")
         return {"_skipped": True, "reason": "already_ran_today"}
+
+    # The lock is marked completed only after the work finishes, and released if
+    # it raises. This path called __enter__() and never __exit__(), release() or
+    # mark_completed() — the same defect already fixed in scheduler/slots.py but
+    # left here, so the generate lock was written "started" and never closed.
+    # Observed live: output/.running stuck at "2026-08-19|2632|started" while
+    # the run had long since finished. A retry or manual dispatch inside the
+    # 45-minute staleness window is then skipped as "a run is still in flight".
+    try:
+        result = _run_generate_slot(day_number)
+    except Exception:
+        lock.release()          # crashed — let the next attempt proceed
+        raise
+    lock.mark_completed()
+    return result
+
+
+def _run_generate_slot(day_number: int = None) -> dict:
+    """The generate slot's work. The lock lifecycle belongs to run_full_pipeline."""
+    from content_generator.scheduler.watchdog import timed_step, timed_step_hard
+    from content_generator.scheduler.retry_manager import RetryManager
+    from content_generator.scheduler.health_monitor import assert_healthy
 
     rm = RetryManager(default_max_retries=2, default_base_wait=30)
     t0 = time.time()
