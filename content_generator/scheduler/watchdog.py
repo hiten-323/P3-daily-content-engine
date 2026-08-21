@@ -29,7 +29,7 @@ _RUN_LOG_PATH   = os.path.join("output", "run_log.json")
 # ── Context manager ───────────────────────────────────────────────────────────
 
 @contextmanager
-def timed_step(label: str, timeout_s: int = None):
+def timed_step(label: str, timeout_s: int = None, fatal: bool = True):
     """
     Context manager that enforces a hard timeout on a code block.
 
@@ -76,6 +76,11 @@ def timed_step(label: str, timeout_s: int = None):
     timer.daemon = True
     timer.start()
 
+    # fatal=False marks a step whose failure must not take the pipeline down.
+    # Learning steps are the case that matters: GOAL_HIERARCHY.md ranks learning
+    # fidelity (L4) BELOW content quality (L3), so a step that only feeds learning
+    # can never be allowed to stop content from being produced. On 2026-08-21 a
+    # timeout here aborted the run three steps before generation.
     error = None
     try:
         yield
@@ -84,12 +89,16 @@ def timed_step(label: str, timeout_s: int = None):
     except TimeoutError:
         error = TimeoutError(f"{label} timed out after {deadline}s")
         logger.error("[watchdog] TIMEOUT: %s", label)
-        raise
+        if fatal:
+            raise
+        logger.warning("[watchdog] %s is non-fatal — pipeline continues", label)
     except Exception as e:
         error = e
         logger.error("[watchdog] FAIL: %s — %s", label, e)
         _alert(f"PIPELINE FAILURE: {label}\nError: {e}")
-        raise
+        if fatal:
+            raise
+        logger.warning("[watchdog] %s is non-fatal — pipeline continues", label)
     finally:
         timer.cancel()
         elapsed = (datetime.datetime.now() - start).total_seconds()

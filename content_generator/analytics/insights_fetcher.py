@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import urllib.parse
+import urllib.error
 import urllib.request
 
 from config.api_versions import META_GRAPH_BASE
@@ -93,18 +94,73 @@ def track_published_post(
     logger.info("[insights] Tracking published post %s (%s)", media_id, asset_id)
 
 
+# ── Graph API circuit breaker ────────────────────────────────────────────────
+# 2026-08-21: a generate run spent 90s issuing ~220 requests, every one of which
+# returned HTTP 400. It then tripped the 60s watchdog, and the TimeoutError took
+# content generation down with it — nothing learned, nothing published.
+#
+# Consecutive total failure is a systemic condition: an expired token, a missing
+# scope, an account type change. The 56th identical 400 tells us nothing the 8th
+# did not, so the breaker stops the run and reports once. This is what actually
+# bounds the step's runtime — the watchdog timer cannot interrupt a running body.
+_MAX_CONSECUTIVE_FAILURES = 8
+_consecutive_failures = 0
+_circuit_open = False
+
+
+def _reset_circuit() -> None:
+    """Called at the start of each run so one bad day never poisons the next."""
+    global _consecutive_failures, _circuit_open
+    _consecutive_failures = 0
+    _circuit_open = False
+
+
+def _error_detail(exc: Exception, token: str | None) -> str:
+    """
+    Meta puts the actual reason in the response body. str(HTTPError) is only
+    "HTTP Error 400: Bad Request", which names no cause and cannot be acted on —
+    every 400 in this engine's history was logged that way, so the cause was
+    never visible. Read the body, and redact the token in case it is echoed.
+    """
+    body = ""
+    if isinstance(exc, urllib.error.HTTPError):
+        try:
+            body = exc.read().decode("utf-8", "replace").strip()
+        except Exception:
+            body = ""
+    if body and token:
+        body = body.replace(token, "***")
+    return f"{exc} — {body[:500]}" if body else str(exc)
+
+
+def _note_failure(path: str, detail: str) -> None:
+    global _consecutive_failures, _circuit_open
+    _consecutive_failures += 1
+    logger.warning("[insights] Graph API call failed (%s): %s", path, detail)
+    if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES and not _circuit_open:
+        _circuit_open = True
+        logger.error(
+            "[insights] %d consecutive Graph API failures — stopping this run. "
+            "This is a systemic fault, not per-post. Last error: %s",
+            _consecutive_failures, detail,
+        )
+
+
 def _graph_get(path: str, params: dict) -> dict | None:
+    global _consecutive_failures
     token = os.getenv("INSTAGRAM_ACCESS_TOKEN")
-    if not token:
+    if not token or _circuit_open:
         return None
     params = {**params, "access_token": token}
     url = f"{_GRAPH_API}/{path}?{urllib.parse.urlencode(params)}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "PurityBeans/1.0"})
         resp = urllib.request.urlopen(req, timeout=_TIMEOUT)
-        return json.loads(resp.read().decode("utf-8"))
+        payload = json.loads(resp.read().decode("utf-8"))
+        _consecutive_failures = 0
+        return payload
     except Exception as e:
-        logger.warning("[insights] Graph API call failed (%s): %s", path, e)
+        _note_failure(path, _error_detail(e, token))
         return None
 
 
@@ -245,6 +301,7 @@ def fetch_pending_insights() -> dict:
 
     from content_generator.core.learning_engine import record_performance
 
+    _reset_circuit()
     posts = _load_posts()
     now = datetime.datetime.now()
     recorded = 0
@@ -321,8 +378,10 @@ def fetch_pending_insights() -> dict:
 
     _save_posts(posts)
     logger.info(
-        "[insights] Done — %d learning records, %d snapshots, %d pending, %d failed, followers=%s",
+        "[insights] Done — %d learning records, %d snapshots, %d pending, %d failed, "
+        "followers=%s%s",
         recorded, snapshots_written, pending, failed, follower_count,
+        " [CIRCUIT OPEN — systemic Graph API failure, see errors above]" if _circuit_open else "",
     )
     return {
         "recorded": recorded,

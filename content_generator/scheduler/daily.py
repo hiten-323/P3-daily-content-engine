@@ -90,7 +90,10 @@ def _run_generate_slot(day_number: int = None) -> dict:
 
     # ── 0.5 Insights — auto-record yesterday's post performance ──────────────
     # Runs BEFORE generation so today's prompts learn from yesterday's results.
-    with timed_step("insights_fetch", timeout_s=60):
+    # fatal=False: on 2026-08-21 this step timed out and the TimeoutError
+    # propagated out of run_full_pipeline, so the day produced no content at
+    # all. Measurement informs content; it must never be able to prevent it.
+    with timed_step("insights_fetch", timeout_s=180, fatal=False):
         rm.run(
             fn=lambda: _do_fetch_insights(),
             label="insights_fetch",
@@ -98,7 +101,7 @@ def _run_generate_slot(day_number: int = None) -> dict:
         )
 
     # ── 0.6 Revenue attribution — Shopify orders -> post-level learning ──────
-    with timed_step("revenue_attribution", timeout_s=60):
+    with timed_step("revenue_attribution", timeout_s=120, fatal=False):
         rm.run(
             fn=lambda: _do_revenue_attribution(),
             label="revenue_attribution",
