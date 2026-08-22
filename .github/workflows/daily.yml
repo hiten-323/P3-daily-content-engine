@@ -236,7 +236,27 @@ jobs:
           # c345418 removed it to keep media out of Git, and every Instagram
           # image post has failed "no_images" since. The 7-day prune below is
           # what bounds repo growth — you only prune what you keep.
-          find output/creative -type f -mtime +7 -delete 2>/dev/null || true
+          # Prune on the date in the FILENAME, not mtime. Every run starts with a
+          # fresh checkout, which stamps every file's mtime as "now", so
+          # `find -mtime +7` matched nothing on the runner and bounded growth in
+          # theory only. Media from July is still in the tree because of it.
+          python - <<'PRUNE'
+          import datetime, glob, os, re
+          cutoff = datetime.date.today() - datetime.timedelta(days=7)
+          removed = 0
+          for path in glob.glob("output/creative/*"):
+              m = re.search(r"(\d{4})-(\d{2})-(\d{2})", os.path.basename(path))
+              if not m:
+                  continue          # no date in the name: leave it alone
+              try:
+                  stamped = datetime.date(*(int(g) for g in m.groups()))
+              except ValueError:
+                  continue
+              if stamped < cutoff:
+                  os.remove(path)
+                  removed += 1
+          print(f"pruned {removed} creative files older than {cutoff}")
+          PRUNE
           git add -f output/creative/ 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true

@@ -59,3 +59,26 @@ def test_content_json_is_still_staged() -> None:
         "the day's content JSON must be committed, or publish slots hold with "
         "no_content_for_today"
     )
+
+
+def test_prune_is_not_mtime_based() -> None:
+    """
+    Every run starts with a fresh checkout, which stamps every file's mtime as
+    "now". `find output/creative -mtime +7` therefore matched nothing on the
+    runner: growth was bounded in theory and unbounded in fact — July media was
+    still in the tree weeks later. The prune must key off the date embedded in
+    the filename instead.
+    """
+    step = _commit_step()
+    assert not re.search(r"find\s+output/creative.*-mtime", step), (
+        "creative is pruned by mtime, which is always 'now' after checkout — "
+        "the prune is a no-op and the repo grows without bound"
+    )
+
+
+def test_prune_still_exists_in_some_form() -> None:
+    """Committing creative without any prune is the other failure mode."""
+    step = _commit_step()
+    assert "output/creative" in step and ("os.remove" in step or "-delete" in step), (
+        "output/creative is committed but never pruned — ~1MB/day, forever"
+    )
