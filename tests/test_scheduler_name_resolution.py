@@ -69,3 +69,38 @@ def test_generate_entry_points_resolve_every_name() -> None:
 def test_publish_entry_points_resolve_every_name() -> None:
     from content_generator.scheduler import slots
     _check(slots, "run_publish_slot", "_execute_publish_slot", "_track", "_held")
+
+
+def test_package_import_does_not_preload_the_entry_module() -> None:
+    """
+    `python -m content_generator.scheduler.daily` is the workflow's only entry
+    point. If importing the content_generator package pulls scheduler.daily into
+    sys.modules first, runpy executes the module a SECOND time as "__main__",
+    giving two independent copies of every module-level object. Python reports
+    this as:
+
+        RuntimeWarning: 'content_generator.scheduler.daily' found in sys.modules
+        after import of package 'content_generator.scheduler', but prior to
+        execution of ... this may result in unpredictable behaviour
+
+    It appeared on every production run. run_daily_pipeline is now resolved
+    lazily via PEP 562 so the eager import is gone; this keeps it gone.
+    """
+    import subprocess
+    import sys
+
+    code = (
+        "import sys, content_generator; "
+        "print('content_generator.scheduler.daily' in sys.modules)"
+    )
+    out = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True, check=True,
+    ).stdout.strip()
+    assert out == "False", (
+        "importing content_generator eagerly imports scheduler.daily again — "
+        "the runpy double-execution warning is back"
+    )
+
+    # The public name must still resolve, or this 'fix' just broke the API.
+    import content_generator
+    assert callable(content_generator.run_daily_pipeline)

@@ -229,8 +229,15 @@ jobs:
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/ 2>/dev/null || true
-          # Large media never enters Git; artifacts above retain it for 90 days.
+          # Creative MUST be committed. Each slot is a separate workflow run on a
+          # separate runner, so images written by the 00:30 generate run do not
+          # exist on the 04:30 publish runner unless Git carries them. 0d20beb
+          # added this line when timed slots landed, for exactly that reason;
+          # c345418 removed it to keep media out of Git, and every Instagram
+          # image post has failed "no_images" since. The 7-day prune below is
+          # what bounds repo growth — you only prune what you keep.
           find output/creative -type f -mtime +7 -delete 2>/dev/null || true
+          git add -f output/creative/ 2>/dev/null || true
           git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
           git add -f output/.running* 2>/dev/null || true

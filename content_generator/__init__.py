@@ -36,7 +36,6 @@ Capture and manage leads (Sales Engine):
 from content_generator.pipeline.generator import generate_daily_content, save_content
 from content_generator.analytics.metrics_store import record_metrics
 from content_generator.analytics.attribution import record_conversion, generate_tracking_url
-from content_generator.scheduler.daily import run_now as run_daily_pipeline
 from content_generator.leads.lead_capture import record_lead
 from content_generator.crm.pipeline_tracker import advance_stage, close_deal
 
@@ -92,3 +91,16 @@ def _load_env() -> None:
                 continue
             k, _, v = line.partition("=")
             os.environ.setdefault(k.strip(), v.strip())
+
+
+# run_daily_pipeline is resolved lazily (PEP 562). Importing it eagerly put
+# content_generator.scheduler.daily into sys.modules before runpy executed it,
+# so `python -m content_generator.scheduler.daily` — the workflow's only entry
+# point — ran the module twice under two names ("...daily" and "__main__"),
+# each with its own copy of every module-level object. That is what the
+# RuntimeWarning in the run logs was reporting. The public name is unchanged.
+def __getattr__(name):
+    if name == "run_daily_pipeline":
+        from content_generator.scheduler.daily import run_now
+        return run_now
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
