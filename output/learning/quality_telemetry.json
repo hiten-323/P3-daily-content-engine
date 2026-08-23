@@ -213,5 +213,26 @@
     "retry_count": 1,
     "providers_used": {},
     "emergency": false
+  },
+  {
+    "ts": "2026-08-23T02:20:51",
+    "date": "2026-08-23",
+    "day_number": 234,
+    "generation_ms": 335926,
+    "validation_ms": 0,
+    "publish_ms": 100274,
+    "assets_generated": 5,
+    "assets_valid": 5,
+    "throughput": 5,
+    "avg_editorial_score": 7.0,
+    "min_editorial_score": 7.0,
+    "max_editorial_score": 7.0,
+    "avg_confidence": 0.5,
+    "schema_failure_rate": 0.0,
+    "brand_failure_rate": 0.0,
+    "editorial_reject_rate": 1.0,
+    "retry_count": 1,
+    "providers_used": {},
+    "emergency": false
   }
 ]
