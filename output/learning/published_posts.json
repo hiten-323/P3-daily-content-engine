@@ -844,5 +844,26 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {}
+  },
+  {
+    "media_id": "18083199725398452",
+    "asset_id": "instagram_morning_day234",
+    "track": "brand",
+    "hook": "Three things to check on a coffee label",
+    "topic": "Consumer Purchase",
+    "kpi_at_creation": "",
+    "policy_version": "",
+    "attention_mechanism": "specificity",
+    "scroller_state": "skeptical",
+    "psychology_frame": "",
+    "hook_strategy": "",
+    "payoff_type": "useful_test",
+    "decision_version": "1.0.0",
+    "format": "carousel",
+    "hashtags": "#Drinks #CoffeeLover #CoffeeAddict #Coffee #CoffeeFirst #IcedCoffee #PremiumCoffee #InstantCoffee #GourmetCoffee #RealCoffee #IndianFoodie #CoffeeIndia #IndianBrands #IndianCoffee #WFHIndia #WhatsInYourCoffee #ChicoryFree #NoChicory #NoPreservatives #QualityOverQuantity #PurityBeans #PurityBeansCoffee #BrewPure #PureCoffeeExperience #PurityBeansExperience",
+    "published_at": "2026-08-23T05:02:39",
+    "insights_recorded": false,
+    "measurement_snapshots": [],
+    "fetch_attempts_by_window": {}
   }
 ]
