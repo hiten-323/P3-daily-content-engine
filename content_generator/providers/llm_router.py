@@ -75,6 +75,53 @@ _STATES = {
     "openrouter":  _ProviderState("openrouter"),
 }
 
+# ── Cascade diagnostics ──────────────────────────────────────────────────────
+# Every committed content file from 2026-08-05 to 2026-08-23 was
+# emergency_fallback_evergreen; not one day has ever come from real generation.
+# The logs could not say why, because the non-retryable branch of _try_provider
+# recorded a failure and returned without logging anything at all. This records
+# one row per provider attempt so a run can be classified as either
+#   A: every provider failed at transport, or
+#   B: a provider answered and the response produced nothing usable.
+# Those need opposite fixes, and until now the logs distinguished neither.
+_cascade_log: list[dict] = []
+_cascade_lock = Lock()
+
+_SECRET_PREFIXES = ("sk-", "gsk_", "csk-", "AIza", "Bearer ", "key-")
+
+
+def _redact(text: str, limit: int = 200) -> str:
+    """Truncate a provider error body and strip anything shaped like a credential."""
+    if not text:
+        return ""
+    out = str(text)
+    for token in _SECRET_PREFIXES:
+        while token in out:
+            i = out.index(token)
+            j = i + len(token)
+            while j < len(out) and (out[j].isalnum() or out[j] in "-_."):
+                j += 1
+            out = out[:i] + "***" + out[j:]
+    out = " ".join(out.split())
+    return out[:limit]
+
+
+def _record_attempt(**row) -> None:
+    with _cascade_lock:
+        _cascade_log.append(row)
+
+
+def get_cascade_log() -> list[dict]:
+    """Per-attempt diagnostics for the current run."""
+    with _cascade_lock:
+        return list(_cascade_log)
+
+
+def reset_cascade_log() -> None:
+    with _cascade_lock:
+        _cascade_log.clear()
+
+
 # Accumulated usage across the run — read by pipeline/generator.py
 _usage_log: list[dict] = []
 _usage_lock = Lock()
@@ -132,39 +179,71 @@ def _try_provider(
     Returns raw text on success, None on permanent failure.
     """
     state = _STATES[name]
+    started = time.time()
     if not state.is_available():
-        logger.debug("Skipping %s — circuit breaker open", name)
+        logger.warning("[llm] %-11s SKIPPED — circuit breaker open", name)
+        _record_attempt(label=label, provider=name, model="", status=0, attempts=0,
+                        latency_s=0.0, category="circuit_open", detail="")
         return None
 
     for attempt in range(retries):
         wait = 15 * (2 ** attempt)   # 15s, 30s, 60s  (was 30/60/120)
+        t0 = time.time()
         with _API_SEMAPHORE:
             text, usage = call_fn(prompt, max_tokens)
+        elapsed = time.time() - t0
 
         if text is not None:
             state.record_success()
             _record_usage(label, name, usage)
-            logger.info("[llm] ✅ %s -> %s (%d chars)", label, name, len(text))
+            _record_attempt(label=label, provider=name, model=usage.get("model", ""),
+                            status=200, attempts=attempt + 1, latency_s=round(elapsed, 1),
+                            category="ok", detail=f"{len(text)} chars")
+            logger.info("[llm] %-11s OK  %s (%d chars, %.1fs)", name, label, len(text), elapsed)
             return text
 
-        status      = usage.get("status_code", 0)
-        is_quota    = status == 429
+        status = usage.get("status_code", 0)
+        model  = usage.get("model", "")
+        detail = _redact(usage.get("error", ""))
 
-        if is_quota:
-            # 429 quota error — record immediately, trip after 2 hits, skip retries
+        # Every branch below logs. The non-retryable one previously recorded a
+        # failure and returned in silence, which is why weeks of logs never named
+        # a cause — the most common failures were the least visible.
+        if status == 0 and not usage:
+            category = "no_api_key_or_transport"
+        elif status == 429:
+            category = "quota_429"
+        elif status in (401, 403):
+            category = "auth_rejected"
+        elif status in _RETRY_STATUSES:
+            category = "retryable"
+        elif 400 <= status < 500:
+            category = "client_error"
+        else:
+            category = "unknown"
+
+        _record_attempt(label=label, provider=name, model=model, status=status,
+                        attempts=attempt + 1, latency_s=round(elapsed, 1),
+                        category=category, detail=detail)
+        logger.warning(
+            "[llm] %-11s FAIL %s status=%s model=%s attempt=%d/%d %.1fs [%s] %s",
+            name, label, status or "-", model or "-", attempt + 1, retries,
+            elapsed, category, detail,
+        )
+
+        if status == 429:
             state.record_failure(quota_error=True)
-            logger.warning("[llm] %s QUOTA EXHAUSTED (429) — skipping to next provider", name)
             return None   # don't wait, don't retry — move to next provider immediately
 
         if status in _RETRY_STATUSES:
-            logger.warning("[llm] %s %s status %s — retry in %ds", label, name, status, wait)
             time.sleep(wait)
         else:
-            # Non-retryable error — break immediately
             state.record_failure()
             return None
 
     state.record_failure()
+    logger.warning("[llm] %-11s exhausted %d attempts for %s (%.1fs total)",
+                   name, retries, label, time.time() - started)
     return None
 
 
@@ -184,11 +263,69 @@ def call(prompt: str, label: str, max_tokens: int = 3000) -> dict:
         retries = 3 if name == "gemini" else 2 if name in ("groq", "deepseek", "cerebras") else 4
         raw = _try_provider(name, fn, full_prompt, max_tokens, label, retries)
         if raw:
-            data = extract(raw)
-            logger.info("[pipeline] ✅ %s done", label)
+            try:
+                data = extract(raw)
+            except Exception as e:
+                # The provider answered; the answer was not usable. This is a
+                # CONTENT fault, not a transport fault, and the fix is different.
+                _record_attempt(label=label, provider=name, model="", status=200,
+                                attempts=1, latency_s=0.0, category="unparseable",
+                                detail=_redact(str(e)))
+                logger.error(
+                    "[llm] %s answered %s but the response did not parse: %s",
+                    name, label, _redact(str(e)),
+                )
+                raise
+            # json_repair returns {} for input it cannot make sense of, and {} is
+            # a dict, so it passes through every downstream check until the
+            # content is empty and validation rejects it — with nothing anywhere
+            # saying the LLM is at fault. Say it here.
+            if not data:
+                _record_attempt(label=label, provider=name, model="", status=200,
+                                attempts=1, latency_s=0.0, category="parsed_empty",
+                                detail=f"raw {len(raw)} chars -> empty dict")
+                logger.error(
+                    "[llm] %s answered %s with %d chars that parsed to an EMPTY dict "
+                    "— the provider is reachable and the response is unusable "
+                    "(failure mode B, not a cascade outage)",
+                    name, label, len(raw),
+                )
+            logger.info("[pipeline] %s done via %s (%d keys)", label, name, len(data or {}))
             return data
 
+    _log_cascade_verdict(label)
     raise RuntimeError(
         f"All LLM providers failed for '{label}'. "
         "Set GEMINI_API_KEY or GROQ_API_KEY in GitHub Secrets."
     )
+
+
+def _log_cascade_verdict(label: str) -> None:
+    """
+    Summarise why a label fell through every provider.
+
+    Without this the only evidence was the single line "All LLM providers
+    failed", which is compatible with a missing key, exhausted quota, a
+    decommissioned model and a network outage — four different fixes.
+    """
+    rows = [r for r in get_cascade_log() if r.get("label") == label]
+    logger.error("[llm] ---- CASCADE FAILED for %s ----", label)
+    for r in rows:
+        logger.error(
+            "[llm]   %-11s status=%-4s model=%-28s %-24s %s",
+            r.get("provider"), r.get("status") or "-", r.get("model") or "-",
+            r.get("category"), r.get("detail") or "",
+        )
+    cats = {r.get("category") for r in rows}
+    if cats <= {"no_api_key_or_transport", "circuit_open"}:
+        hint = "no provider was actually reachable — check keys are set and non-empty"
+    elif cats & {"auth_rejected"}:
+        hint = "a provider rejected the credential — the key is present but invalid"
+    elif cats & {"quota_429"}:
+        hint = "quota exhausted — free tiers reset daily; consider staggering the run"
+    elif cats & {"client_error"}:
+        hint = "4xx from the provider — most often a decommissioned or misspelled model id"
+    else:
+        hint = "see per-provider rows above"
+    logger.error("[llm]   verdict: %s", hint)
+    logger.error("[llm] ---- END CASCADE ----")

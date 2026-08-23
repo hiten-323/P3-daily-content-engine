@@ -39,7 +39,8 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
 
     if resp.status_code != 200:
         logger.warning("Gemini %s: %s", resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code}
+        return None, {"status_code": resp.status_code, "model": _MODEL,
+                      "error": resp.text}
 
     data       = resp.json()
     candidates = data.get("candidates", [])

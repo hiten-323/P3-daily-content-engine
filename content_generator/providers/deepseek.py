@@ -53,8 +53,9 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
         if resp.status_code == 402:
             # Insufficient balance — treat same as quota exhaustion, skip immediately
             logger.warning("DeepSeek %s: 402 Insufficient Balance — skipping provider", model)
-            return None, {"status_code": 429}   # 429 triggers quota circuit breaker
+            return None, {"status_code": 429, "model": model, "error": resp.text}  # quota breaker
         logger.warning("DeepSeek %s %s: %s", model, resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code}
+        return None, {"status_code": resp.status_code, "model": model,
+                      "error": resp.text}
 
     return None, {}

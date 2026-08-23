@@ -57,6 +57,7 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             return text, usage
 
         logger.warning("Groq %s %s: %s", model, resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code}
+        return None, {"status_code": resp.status_code, "model": model,
+                      "error": resp.text}
 
     return None, {}

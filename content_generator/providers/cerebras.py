@@ -66,9 +66,10 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
                 if attempt < 3:
                     time.sleep(BACKOFF[attempt])
                     continue
-                return None, {"status_code": 429}
+                return None, {"status_code": 429, "model": model, "error": resp.text}
 
             logger.warning("Cerebras %s %s: %s", model, resp.status_code, resp.text[:200])
-            return None, {"status_code": resp.status_code}
+            return None, {"status_code": resp.status_code, "model": model,
+                          "error": resp.text}
 
     return None, {}
