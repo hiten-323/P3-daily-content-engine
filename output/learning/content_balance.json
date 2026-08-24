@@ -13,5 +13,10 @@
     "asset_id": "instagram_morning_day235",
     "kind": "value",
     "date": "2026-08-24"
+  },
+  {
+    "asset_id": "instagram_evening_day235",
+    "kind": "product",
+    "date": "2026-08-24"
   }
 ]

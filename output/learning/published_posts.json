@@ -1053,5 +1053,26 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {}
+  },
+  {
+    "media_id": "17957571978223718",
+    "asset_id": "instagram_evening_day235",
+    "track": "brand",
+    "hook": "Turn the jar around before you buy it.",
+    "topic": "Consumer Purchase",
+    "kpi_at_creation": "",
+    "policy_version": "",
+    "attention_mechanism": "specificity",
+    "scroller_state": "skeptical",
+    "psychology_frame": "",
+    "hook_strategy": "second_person",
+    "payoff_type": "useful_test",
+    "decision_version": "1.0.0",
+    "format": "reel",
+    "hashtags": "#Drinks #CoffeeLover #CoffeeAddict #Coffee #CoffeeOClock #IcedCoffee #PremiumCoffee #InstantCoffee #GourmetCoffee #CleanCoffee #IndianFoodie #CoffeeIndia #IndianBrands #IndianCoffee #CoorgCoffee #WhatsInYourCoffee #ChicoryFree #NoChicory #NoPreservatives #CoffeeGifting #PurityBeans #PurityBeansCoffee #BrewPure #PureCoffeeExperience #PurityBeansExperience",
+    "published_at": "2026-08-24T17:10:27",
+    "insights_recorded": false,
+    "measurement_snapshots": [],
+    "fetch_attempts_by_window": {}
   }
 ]
