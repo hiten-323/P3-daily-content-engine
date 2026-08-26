@@ -366,16 +366,21 @@ def post_story(content: dict, day: int = 0) -> dict:
     if not is_configured():
         return {"success": False, "media_id": "", "error": "not_configured"}
 
-    # Build the story image from story_1 (or a brand default)
-    story = content.get("stories") or {}
-    s1    = story.get("story_1") or {}
-    headline = str(s1.get("headline") or s1.get("poll_question")
-                   or "REAL COFFEE. ZERO CHICORY.")
-    sub      = str(s1.get("subtext") or "")
+    # Prefer generated story_1, else today's reel/carousel hook, else a
+    # day-rotated bank. Never the historical slogan pair that printed
+    # identically every day except for the jar.
+    from content_generator.publisher.story_copy import resolve_story_copy
+    copy = resolve_story_copy(content, day=day)
+    headline = copy["headline"]
+    sub = copy["sub"]
+    logger.info("[instagram] story copy source=%s headline=%r", copy.get("source"), headline)
 
-    # Story-native engagement line (stories convert on replies, not likes)
-    if not sub:
-        sub = str(s1.get("poll_question") or "Reply and tell me how you take your coffee")
+    product = None
+    try:
+        from content_generator.rotation import PRODUCTS, pick as _pick_product
+        product = _pick_product(PRODUCTS, day)
+    except Exception as e:
+        logger.debug("[instagram] product pick skipped: %s", e)
 
     image_path = None
     try:
@@ -383,7 +388,7 @@ def post_story(content: dict, day: int = 0) -> dict:
         # (The 1:1 post composer left a white box and dead space in stories.)
         from content_generator.creative.cinematic_frame import compose_cinematic_frame
         image_path = compose_cinematic_frame(
-            headline=headline, sub=sub, day=day, idx=9,
+            headline=headline, sub=sub, day=day, idx=9, product=product,
             width=1080, height=1920, label=f"story_day{day}",
         )
     except Exception as e:
