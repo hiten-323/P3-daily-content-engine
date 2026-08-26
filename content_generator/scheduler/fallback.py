@@ -157,6 +157,308 @@ _EVERGREEN: list[dict] = [
         "hashtags": "#Coffee #FMCG #IndianBrands #Distribution #PurityBeans",
         "source": "evergreen_template",
     },
+    # ── Set 2 — count the ingredients ─────────────────────────────────────────
+    {
+        "type": "reel",
+        "hook": "Instant coffee should have a very short ingredient list.",
+        "hook_text": "Instant coffee should have a very short ingredient list.",
+        "hook_spoken": "Pick up any jar of instant coffee and count the lines.",
+        "hook_text_overlay": "COUNT THE LINES",
+        "frames": [
+            {"on_screen": "COUNT THE LINES",
+             "spoken": "Pick up any jar of instant coffee and count the ingredients."},
+            {"on_screen": "ONE IS ENOUGH",
+             "spoken": "Coffee needs one ingredient to be coffee. That is the whole list."},
+            {"on_screen": "ANYTHING ELSE",
+             "spoken": "Everything after the first line is there for a reason. Worth knowing which."},
+            {"on_screen": "WHAT OURS SAYS",
+             "spoken": "Purity Beans lists coffee. Zero chicory, no additives, no preservatives."},
+            {"on_screen": "GO COUNT",
+             "spoken": "Go count the lines on the jar in your kitchen right now."},
+        ],
+        "body": "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+        "caption": "Count the ingredients on your instant coffee.\n\nCoffee needs one. Purity Beans lists one: coffee.\n\nCheck the jar in your kitchen tonight.\n\np3online.in",
+        "cta": "Count yours, then shop at p3online.in",
+        "comment_trigger": "How many ingredients does your jar list?",
+        "save_trigger": "Save this before your next grocery run.",
+        "share_trigger": "Send this to whoever buys the coffee in your house.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "audio": "Quiet kitchen ambience, no music bed - the spoken line carries it.",
+        "loop_ending": "Ends on the jar being picked up, which is how it opens - the last frame reads as the first.",
+        "angle": "EDUCATE",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "carousel",
+        "hook": "What 100% coffee actually means",
+        "title": "What 100% coffee actually means",
+        "slides": [
+            {"slide": 1, "heading": "It is a claim about the list",
+             "body": "It means the ingredient list has coffee on it and nothing else.",
+             "visual": "Ingredient panel filling the frame"},
+            {"slide": 2, "heading": "Not a claim about strength",
+             "body": "Strength comes from how much you use and how you brew it.",
+             "visual": "Spoon of coffee held over a cup"},
+            {"slide": 3, "heading": "Not a claim about roast",
+             "body": "Roast changes flavour. It does not change what is in the jar.",
+             "visual": "Two jars side by side on a counter"},
+            {"slide": 4, "heading": "Read it as a list, not a slogan",
+             "body": "The front of a pack is designed. The back is declared.",
+             "visual": "Jar being turned from front to back"},
+            {"slide": 5, "heading": "What ours says",
+             "body": "Purity Beans lists coffee. Zero chicory, no additives.",
+             "visual": "Purity Beans jar, label facing camera"},
+            {"slide": 6, "heading": "Check yours tonight",
+             "body": "Turn the jar around and read the list. Purity Beans - p3online.in",
+             "visual": "Hand turning a jar on a kitchen counter"},
+        ],
+        "caption": "100% coffee is a claim about the ingredient list, not about strength or roast.\n\nPurity Beans lists one ingredient: coffee.\n\nCheck the jar in your kitchen tonight.\n\np3online.in",
+        "cta": "Read your label, then shop at p3online.in",
+        "comment_trigger": "What does your jar list after the first line?",
+        "save_trigger": "Save this for your next grocery run.",
+        "share_trigger": "Send this to whoever buys the coffee in your house.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "instagram_post",
+        "hook": "Ingredients are listed by weight, so the first line is most of the jar.",
+        "body": "That is why the order matters as much as the list. Purity Beans lists coffee. Zero chicory, no additives.",
+        "caption": "Ingredients are listed by weight, so the first line is most of what you are buying.\n\nThe order tells you as much as the list does.\n\nPurity Beans is 100% coffee. Zero chicory.\n\np3online.in",
+        "cta": "Read the label, then shop at p3online.in",
+        "comment_trigger": "What is the first ingredient on your jar?",
+        "save_trigger": "Save this for your next grocery run.",
+        "share_trigger": "Send this to whoever buys the coffee in your house.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+
+    # ── Set 3 — chicory, explained plainly ────────────────────────────────────
+    {
+        "type": "reel",
+        "hook": "Chicory is a root, not a coffee bean.",
+        "hook_text": "Chicory is a root, not a coffee bean.",
+        "hook_spoken": "Chicory is a root. Roasted and ground, it looks a lot like coffee.",
+        "hook_text_overlay": "ROOT, NOT BEAN",
+        "frames": [
+            {"on_screen": "ROOT, NOT BEAN",
+             "spoken": "Chicory is a root. Roasted and ground, it looks a lot like coffee."},
+            {"on_screen": "IT IS DECLARED",
+             "spoken": "When it is in the jar, it is named on the ingredient list."},
+            {"on_screen": "FIVE SECONDS",
+             "spoken": "Which means you can find out by turning the jar around."},
+            {"on_screen": "WHAT OURS SAYS",
+             "spoken": "Purity Beans lists coffee and nothing else. Zero chicory."},
+            {"on_screen": "CHECK YOURS",
+             "spoken": "Turn your jar around tonight and look for the word."},
+        ],
+        "body": "Chicory is a roasted root. It is declared on the label when present. Purity Beans lists coffee only.",
+        "caption": "Chicory is a root, not a bean. Roasted and ground, it looks like coffee.\n\nWhen it is in a jar it is named on the label, so you can check in seconds.\n\nPurity Beans lists coffee. Zero chicory.\n\np3online.in",
+        "cta": "Check your label, then shop at p3online.in",
+        "comment_trigger": "Does the word chicory appear on your jar?",
+        "save_trigger": "Save this so you remember what to look for.",
+        "share_trigger": "Send this to someone who has never read their coffee label.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "audio": "Quiet kitchen ambience, no music bed - the spoken line carries it.",
+        "loop_ending": "Ends on the jar turning, which is how it opens - the last frame reads as the first.",
+        "angle": "EDUCATE",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "carousel",
+        "hook": "Chicory, explained without the drama",
+        "title": "Chicory, explained without the drama",
+        "slides": [
+            {"slide": 1, "heading": "It is a root",
+             "body": "Chicory is a plant root, not a coffee bean.",
+             "visual": "Chicory root beside coffee beans on a board"},
+            {"slide": 2, "heading": "It is roasted and ground",
+             "body": "Processed that way, it looks very similar to ground coffee.",
+             "visual": "Two dark grounds side by side in bowls"},
+            {"slide": 3, "heading": "It carries its own taste",
+             "body": "It is more bitter and a little woody next to coffee.",
+             "visual": "Two cups poured side by side"},
+            {"slide": 4, "heading": "It is always declared",
+             "body": "If it is in the jar, it is named on the ingredient list.",
+             "visual": "Ingredient panel with a finger pointing at a line"},
+            {"slide": 5, "heading": "So you can simply check",
+             "body": "Turning the jar around answers the question in seconds.",
+             "visual": "Hand rotating a jar to the back label"},
+            {"slide": 6, "heading": "What ours says",
+             "body": "Purity Beans lists coffee. Zero chicory. p3online.in",
+             "visual": "Purity Beans jar, label facing camera"},
+        ],
+        "caption": "Chicory is a root, not a bean. Roasted and ground it looks like coffee, and it is always named on the label when present.\n\nPurity Beans lists coffee. Zero chicory.\n\nCheck the jar in your kitchen tonight.\n\np3online.in",
+        "cta": "Check your label, then shop at p3online.in",
+        "comment_trigger": "Does the word chicory appear on your jar?",
+        "save_trigger": "Save this so you know what to look for.",
+        "share_trigger": "Send this to someone who has never checked.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "instagram_post",
+        "hook": "Chicory is a root, not a coffee bean.",
+        "body": "Roasted and ground it looks like coffee, and it is named on the ingredient list whenever it is in the jar. Purity Beans lists coffee. Zero chicory.",
+        "caption": "Chicory is a root, not a bean.\n\nRoasted and ground it looks like coffee - and it is always named on the label when it is there.\n\nPurity Beans lists coffee. Zero chicory.\n\np3online.in",
+        "cta": "Check your label, then shop at p3online.in",
+        "comment_trigger": "Does the word chicory appear on your jar?",
+        "save_trigger": "Save this so you remember what to look for.",
+        "share_trigger": "Send this to someone who has never read their label.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+    # ── Set 4 — how to keep it tasting like it should ─────────────────────────
+    {
+        "type": "reel",
+        "hook": "Most instant coffee goes stale in the jar, not in the shop.",
+        "hook_text": "Most instant coffee goes stale in the jar, not in the shop.",
+        "hook_spoken": "The jar on your counter is doing more damage than the shelf ever did.",
+        "hook_text_overlay": "SEAL IT",
+        "frames": [
+            {"on_screen": "SEAL IT",
+             "spoken": "The jar on your counter is doing more damage than the shelf ever did."},
+            {"on_screen": "AIR",
+             "spoken": "Every time it stays open, moisture gets in and aroma gets out."},
+            {"on_screen": "HEAT",
+             "spoken": "Above the stove is the warmest shelf in the kitchen. Move it."},
+            {"on_screen": "DRY SPOON",
+             "spoken": "A wet spoon clumps the whole jar. Keep one spoon dry, just for coffee."},
+            {"on_screen": "TONIGHT",
+             "spoken": "Close it tight, move it off the stove, and taste the difference this week."},
+        ],
+        "body": "Purity Beans is 100% coffee. Zero chicory, no additives, no preservatives.",
+        "caption": "Instant coffee usually goes stale in the jar, not in the shop.\n\nClose it tight, keep it off the stove, use a dry spoon.\n\nPurity Beans is 100% coffee. Zero chicory.\n\np3online.in",
+        "cta": "Store it right, then restock at p3online.in",
+        "comment_trigger": "Where does the coffee jar live in your kitchen?",
+        "save_trigger": "Save this and move your jar tonight.",
+        "share_trigger": "Send this to whoever leaves the lid off.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "audio": "Quiet kitchen ambience, no music bed - the spoken line carries it.",
+        "loop_ending": "Ends on the lid closing, which is how it opens - the last frame reads as the first.",
+        "angle": "EDUCATE",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "carousel",
+        "hook": "Four things that stale your coffee at home",
+        "title": "Four things that stale your coffee at home",
+        "slides": [
+            {"slide": 1, "heading": "An open lid",
+             "body": "Aroma leaves the moment the jar is open. Close it between cups.",
+             "visual": "Open jar on a counter, lid beside it"},
+            {"slide": 2, "heading": "A wet spoon",
+             "body": "Moisture clumps what it touches and the clumps spread.",
+             "visual": "Damp spoon going into a jar"},
+            {"slide": 3, "heading": "The shelf above the stove",
+             "body": "It is the warmest place in the kitchen. Pick a cooler one.",
+             "visual": "Jar on a shelf directly above a hob"},
+            {"slide": 4, "heading": "Sunlight on the counter",
+             "body": "Light and warmth together age it faster than either alone.",
+             "visual": "Jar in a bright window"},
+            {"slide": 5, "heading": "Fix all four tonight",
+             "body": "Lid closed, dry spoon, cool shelf, out of the sun.",
+             "visual": "Jar being moved into a closed cupboard"},
+            {"slide": 6, "heading": "What ours says",
+             "body": "Purity Beans is 100% coffee. Zero chicory. p3online.in",
+             "visual": "Purity Beans jar, label facing camera"},
+        ],
+        "caption": "Four things stale your coffee at home: an open lid, a wet spoon, the shelf above the stove, and direct sun.\n\nAll four are free to fix tonight.\n\nPurity Beans is 100% coffee. Zero chicory.\n\np3online.in",
+        "cta": "Store it right, then restock at p3online.in",
+        "comment_trigger": "Which of the four is happening in your kitchen?",
+        "save_trigger": "Save this and fix one tonight.",
+        "share_trigger": "Send this to whoever leaves the lid off.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "instagram_post",
+        "hook": "A wet spoon will clump a whole jar of instant coffee.",
+        "body": "Keep one dry spoon for coffee, close the lid between cups, and keep the jar off the shelf above the stove. Purity Beans is 100% coffee. Zero chicory.",
+        "caption": "A wet spoon will clump a whole jar.\n\nOne dry spoon, lid closed between cups, and keep it off the shelf above the stove.\n\nPurity Beans is 100% coffee. Zero chicory.\n\np3online.in",
+        "cta": "Store it right, then restock at p3online.in",
+        "comment_trigger": "Where does your coffee jar live?",
+        "save_trigger": "Save this and move your jar tonight.",
+        "share_trigger": "Send this to whoever leaves the lid off.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+
+    # ── Set 5 — freeze dried, explained ───────────────────────────────────────
+    {
+        "type": "reel",
+        "hook": "Freeze dried and spray dried are not the same thing.",
+        "hook_text": "Freeze dried and spray dried are not the same thing.",
+        "hook_spoken": "Two jars can both say instant coffee and be made completely differently.",
+        "hook_text_overlay": "TWO METHODS",
+        "frames": [
+            {"on_screen": "TWO METHODS",
+             "spoken": "Two jars can both say instant coffee and be made completely differently."},
+            {"on_screen": "SPRAY DRIED",
+             "spoken": "Spray drying uses hot air. It is fast, and heat costs aroma."},
+            {"on_screen": "FREEZE DRIED",
+             "spoken": "Freeze drying works cold, so more of the aroma survives the process."},
+            {"on_screen": "LOOK AT IT",
+             "spoken": "Freeze dried looks like crystals. Spray dried looks like fine powder."},
+            {"on_screen": "OURS",
+             "spoken": "Purity Beans is freeze dried arabica. 100% coffee, zero chicory."},
+        ],
+        "body": "Purity Beans is freeze dried arabica. 100% coffee, zero chicory, no additives.",
+        "caption": "Freeze dried and spray dried are not the same thing.\n\nSpray drying uses hot air. Freeze drying works cold, so more aroma survives.\n\nLook at the granules: crystals or powder.\n\nPurity Beans is freeze dried arabica. 100% coffee, zero chicory.\n\np3online.in",
+        "cta": "Look at your granules, then shop at p3online.in",
+        "comment_trigger": "Crystals or powder in your jar?",
+        "save_trigger": "Save this for your next grocery run.",
+        "share_trigger": "Send this to the coffee drinker who has never looked closely.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "audio": "Quiet kitchen ambience, no music bed - the spoken line carries it.",
+        "loop_ending": "Ends on the granules in close up, which is how it opens - the last frame reads as the first.",
+        "angle": "EDUCATE",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "carousel",
+        "hook": "Crystals or powder: what your granules tell you",
+        "title": "Crystals or powder: what your granules tell you",
+        "slides": [
+            {"slide": 1, "heading": "Tip some into your palm",
+             "body": "Before the water goes in, look at what you are actually holding.",
+             "visual": "Granules poured into an open palm"},
+            {"slide": 2, "heading": "Crystals mean freeze dried",
+             "body": "Irregular, glassy pieces that catch the light.",
+             "visual": "Macro shot of coffee crystals"},
+            {"slide": 3, "heading": "Fine powder means spray dried",
+             "body": "Even, dusty and uniform, because hot air made it.",
+             "visual": "Macro shot of fine coffee powder"},
+            {"slide": 4, "heading": "Why the method matters",
+             "body": "Freeze drying works cold, so more of the aroma survives.",
+             "visual": "Steam rising from a fresh cup"},
+            {"slide": 5, "heading": "It is on the pack",
+             "body": "The method is usually printed on the label. Look for it.",
+             "visual": "Label with the drying method in frame"},
+            {"slide": 6, "heading": "What ours says",
+             "body": "Purity Beans is freeze dried arabica. 100% coffee, zero chicory. p3online.in",
+             "visual": "Purity Beans jar, label facing camera"},
+        ],
+        "caption": "Tip some granules into your palm before the water goes in.\n\nCrystals mean freeze dried. Fine powder means spray dried, which uses hot air.\n\nPurity Beans is freeze dried arabica. 100% coffee, zero chicory.\n\np3online.in",
+        "cta": "Look at your granules, then shop at p3online.in",
+        "comment_trigger": "Crystals or powder in your jar?",
+        "save_trigger": "Save this and check your jar tonight.",
+        "share_trigger": "Send this to someone who has never looked closely.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
+    {
+        "type": "instagram_post",
+        "hook": "Two jars of instant coffee can look completely different in your palm.",
+        "body": "Irregular glassy crystals mean freeze dried. Even fine powder means spray dried, which uses hot air. Purity Beans is freeze dried arabica. 100% coffee, zero chicory.",
+        "caption": "Tip some into your palm before the water goes in.\n\nCrystals mean freeze dried. Fine powder means spray dried, made with hot air.\n\nPurity Beans is freeze dried arabica. 100% coffee, zero chicory.\n\np3online.in",
+        "cta": "Look at your granules, then shop at p3online.in",
+        "comment_trigger": "Crystals or powder in your jar?",
+        "save_trigger": "Save this and check your jar tonight.",
+        "share_trigger": "Send this to someone who has never looked closely.",
+        "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #ZeroChicory #CoffeeIndia",
+        "source": "evergreen_template",
+    },
 ]
 
 _DISTRIBUTOR_TEMPLATES: list[dict] = [
@@ -267,22 +569,45 @@ def _from_best_historical(day_number: int) -> dict | None:
         return None
 
 
-def _from_evergreen(day_number: int) -> dict:
-    """Guaranteed fallback using static evergreen templates."""
-    shuffle = list(_EVERGREEN)
-    random.shuffle(shuffle)
+def _of_type(kind: str) -> list[dict]:
+    return [p for p in _EVERGREEN if p.get("type") == kind]
 
-    reels = [p for p in shuffle if p["type"] == "reel"][:2]
-    # Pad to 2 reels if needed
-    while len(reels) < 2:
-        reels.append(_EVERGREEN[0])
+
+def _pick(kind: str, day_number: int, offset: int = 0) -> dict | None:
+    """Deterministic day-indexed pick, so consecutive days differ and any day is reproducible."""
+    pool = _of_type(kind)
+    if not pool:
+        return None
+    return pool[(int(day_number or 0) + offset) % len(pool)]
+
+
+def _from_evergreen(day_number: int) -> dict:
+    """
+    Guaranteed fallback using static evergreen templates, rotated by day.
+
+    This used to random.shuffle() the template list and take the first of each
+    type. With one template per type that was a shuffle of a single-element
+    list: every fallback day produced byte-identical content. Since no day has
+    ever produced real generation, that is every post the account has ever made
+    — the same reel, the same carousel, the same caption, for weeks.
+
+    Rotation is now indexed by day rather than randomised, which:
+      - guarantees consecutive days differ, where shuffling only made it likely
+      - makes any given day reproducible, so a bad post can be traced to a
+        template instead of an unrecoverable RNG draw
+      - offsets reel_2 from reel_1 so the two reels in a day are never the same
+    """
+    reels = [r for r in (_pick("reel", day_number), _pick("reel", day_number, 1)) if r]
+    while len(reels) < 2 and _of_type("reel"):
+        reels.append(_of_type("reel")[0])
 
     payload = {
         "day_number":     day_number,
         "reels":          reels,
-        "carousel":       next((p for p in shuffle if p["type"] == "carousel"), _EVERGREEN[1]),
-        "instagram_post": next((p for p in shuffle if p["type"] == "instagram_post"), _EVERGREEN[2]),
-        "linkedin_post":  _DISTRIBUTOR_TEMPLATES[0],
+        "carousel":       _pick("carousel", day_number) or _EVERGREEN[1],
+        "instagram_post": _pick("instagram_post", day_number) or _EVERGREEN[2],
+        "linkedin_post":  _DISTRIBUTOR_TEMPLATES[
+                              int(day_number or 0) % len(_DISTRIBUTOR_TEMPLATES)],
         "_source":        "emergency_fallback_evergreen",
         "_recycled":      True,
     }
