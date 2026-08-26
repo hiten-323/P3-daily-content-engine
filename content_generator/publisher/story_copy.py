@@ -1,0 +1,123 @@
+"""
+Daily Instagram story copy.
+
+Stories were shipping the same two hardcoded lines every day
+("REAL COFFEE. ZERO CHICORY." / "Reply and tell me how you take your coffee")
+because:
+
+  - story generation is an extended-content LLM task
+  - evergreen fallback never emitted a stories key
+  - post_story treated missing story_1 as a brand slogan
+
+This module resolves a headline + reply line from today's approved copy
+(or a day-rotated label-safe bank) so the jar can change AND the words can.
+"""
+from __future__ import annotations
+
+STORY_COPY_BANK: list[tuple[str, str]] = [
+    ("READ THE BACK", "What does the label on your jar say?"),
+    ("ONE INGREDIENT", "Coffee. That is the whole list."),
+    ("TURN THE JAR", "The recipe is on the back, not the front."),
+    ("COUNT THE LINES", "Coffee needs one. What does yours list?"),
+    ("FRONT IS MARKETING", "Check the back before you buy."),
+    ("CHECK THE ORDER", "First ingredient is the bulk of the pack."),
+    ("YOUR KITCHEN TEST", "Turn the jar around tonight."),
+    ("NOTHING ADDED", "Reply if you read the label today."),
+]
+
+# The pair that printed identically for weeks. Tests ban it as a default.
+_BANNED_DEFAULT_HEADLINE = "REAL COFFEE. ZERO CHICORY."
+_BANNED_DEFAULT_SUB = "Reply and tell me how you take your coffee"
+
+
+def _clean_line(value, max_words: int = 12) -> str:
+    text = " ".join(str(value or "").replace("\n", " ").split())
+    if not text:
+        return ""
+    lower = text.lower()
+    if lower.startswith("slide ") or lower.startswith("frame "):
+        return ""
+    words = text.split()
+    if len(words) > max_words:
+        text = " ".join(words[:max_words])
+    return text.strip(" -–—")
+
+
+def _primary_piece(content: dict) -> tuple[dict, str]:
+    reels = content.get("reels") or []
+    if isinstance(reels, list) and reels and isinstance(reels[0], dict):
+        return reels[0], "reel"
+    carousel = content.get("carousel")
+    if isinstance(carousel, dict) and (carousel.get("hook") or carousel.get("title")):
+        return carousel, "carousel"
+    post = content.get("instagram_post")
+    if isinstance(post, dict) and (post.get("hook") or post.get("caption")):
+        return post, "instagram_post"
+    return {}, ""
+
+
+def resolve_story_copy(content: dict | None, day: int = 0) -> dict:
+    """
+    Return {headline, sub, source} for the daily 9:16 story frame.
+
+    Priority:
+      1. Generated stories.story_1 headline / subtext / poll
+      2. Today's reel overlay, then hook + comment trigger
+      3. Today's carousel / feed hook + comment trigger
+      4. Day-rotated STORY_COPY_BANK (label-safe, no offers, no stats)
+    """
+    content = content if isinstance(content, dict) else {}
+    stories = content.get("stories") if isinstance(content.get("stories"), dict) else {}
+    s1 = stories.get("story_1") if isinstance(stories.get("story_1"), dict) else {}
+
+    headline = _clean_line(s1.get("headline"), max_words=6)
+    sub = _clean_line(s1.get("subtext") or "", max_words=12)
+    if not sub:
+        poll = _clean_line(s1.get("poll_question"), max_words=12)
+        if poll and poll.lower() != headline.lower():
+            sub = poll
+    source = "stories.story_1"
+
+    if not headline:
+        piece, origin = _primary_piece(content)
+        overlay = _clean_line(piece.get("hook_text_overlay"), max_words=5)
+        hook = _clean_line(
+            piece.get("hook") or piece.get("hook_text") or piece.get("title"),
+            max_words=8,
+        )
+        comment = _clean_line(piece.get("comment_trigger"), max_words=12)
+        bank_h, bank_s = STORY_COPY_BANK[int(day or 0) % len(STORY_COPY_BANK)]
+        if overlay:
+            headline = overlay
+            sub = comment or hook or bank_s
+            source = f"{origin}.overlay"
+        elif hook:
+            headline = hook
+            sub = comment or bank_s
+            source = f"{origin}.hook"
+        else:
+            headline, sub, source = bank_h, bank_s, "story_bank"
+    elif not sub:
+        sub = STORY_COPY_BANK[int(day or 0) % len(STORY_COPY_BANK)][1]
+
+    # Last-ditch only — still not the banned slogan pair.
+    if not headline:
+        headline, sub = STORY_COPY_BANK[int(day or 0) % len(STORY_COPY_BANK)]
+        source = "story_bank"
+
+    return {"headline": headline, "sub": sub, "source": source}
+
+
+def stories_block_from_content(content: dict, day: int = 0) -> dict:
+    """Attach a stories object so fallback days have the same shape as LLM days."""
+    copy = resolve_story_copy(content, day=day)
+    return {
+        "story_1": {
+            "type": "poll",
+            "headline": copy["headline"],
+            "subtext": copy["sub"],
+            "poll_question": copy["sub"],
+            "option_a": "Haven't checked",
+            "option_b": "Read the back",
+        }
+    }
