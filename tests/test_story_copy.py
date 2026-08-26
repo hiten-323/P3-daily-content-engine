@@ -61,8 +61,15 @@ def main():
     copy = resolve_story_copy(evergreen, day=237)
     check("not the banned headline", copy["headline"].upper() != banned_h, copy["headline"])
     check("not the banned sub", copy["sub"] != banned_s, copy["sub"])
-    check("uses overlay READ THE BACK", copy["headline"].upper() == "READ THE BACK", copy["headline"])
-    check("uses reel comment as sub", "label" in copy["sub"].lower(), copy["sub"])
+    # These two previously asserted the evergreen overlay ("READ THE BACK") was
+    # used verbatim. That was the intended tier order, but evergreen content is
+    # the same every day, so it guaranteed one story line forever — nine
+    # consecutive fallback days measured identical. Recycled days now take the
+    # day-rotated bank instead; the tier order still holds for real content.
+    check("recycled day uses the rotating bank", copy["source"] == "story_bank.recycled", copy["source"])
+    check("recycled day varies by day",
+          resolve_story_copy(evergreen, day=238)["headline"] != copy["headline"],
+          f'237={copy["headline"]!r} 238={resolve_story_copy(evergreen, day=238)["headline"]!r}')
 
     print("\nEmpty content rotates the bank instead of a slogan:")
     a = resolve_story_copy({}, day=1)

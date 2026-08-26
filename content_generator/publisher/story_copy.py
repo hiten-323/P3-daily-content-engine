@@ -78,6 +78,24 @@ def resolve_story_copy(content: dict | None, day: int = 0) -> dict:
             sub = poll
     source = "stories.story_1"
 
+    # Recycled days take the bank, ahead of "today's" overlay.
+    #
+    # Evergreen fallback content is IDENTICAL every day — same reel, same
+    # overlay, same comment trigger. Deriving story copy from it therefore
+    # reprints one line forever: the same defect the hardcoded slogan had,
+    # moved one tier up. Measured on this tree before this change, nine
+    # consecutive fallback days all produced
+    #   READ THE BACK / What does the label on your jar actually say?
+    # because tier 2 always won, _attach_stories then wrote that into tier 1,
+    # and the 8-line bank was unreachable on exactly the days it exists for —
+    # which is every day, since no day has ever produced real generation.
+    #
+    # "Today's content" is only worth preferring when today's content is
+    # actually today's. Genuinely generated days are untouched below.
+    if not headline and _is_recycled(content):
+        bank_h, bank_s = STORY_COPY_BANK[int(day or 0) % len(STORY_COPY_BANK)]
+        return {"headline": bank_h, "sub": bank_s, "source": "story_bank.recycled"}
+
     if not headline:
         piece, origin = _primary_piece(content)
         overlay = _clean_line(piece.get("hook_text_overlay"), max_words=5)
@@ -106,6 +124,16 @@ def resolve_story_copy(content: dict | None, day: int = 0) -> dict:
         source = "story_bank"
 
     return {"headline": headline, "sub": sub, "source": source}
+
+
+
+def _is_recycled(content: dict) -> bool:
+    """True for emergency-fallback / recycled days, whose own copy is a constant."""
+    if not isinstance(content, dict):
+        return False
+    if content.get("_recycled"):
+        return True
+    return str(content.get("_source") or "").startswith("emergency_fallback")
 
 
 def stories_block_from_content(content: dict, day: int = 0) -> dict:
