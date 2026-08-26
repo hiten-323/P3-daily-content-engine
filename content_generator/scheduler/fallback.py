@@ -196,19 +196,19 @@ def emergency_content_set(day_number: int = 0) -> dict:
     if content:
         logger.info("[fallback] Using yesterday's snapshot as base")
         _send_fallback_alert("yesterday_snapshot", day_number)
-        return content
+        return _attach_stories(content, day_number)
 
     # Try last week's best content
     content = _from_best_historical(day_number)
     if content:
         logger.info("[fallback] Using best historical content")
         _send_fallback_alert("historical_best", day_number)
-        return content
+        return _attach_stories(content, day_number)
 
     # Final safety net: evergreen templates
     logger.warning("[fallback] Using evergreen templates (minimum viable output)")
     _send_fallback_alert("evergreen_templates", day_number)
-    return _from_evergreen(day_number)
+    return _attach_stories(_from_evergreen(day_number), day_number)
 
 
 def _from_yesterday_snapshot(day_number: int) -> dict | None:
@@ -277,7 +277,7 @@ def _from_evergreen(day_number: int) -> dict:
     while len(reels) < 2:
         reels.append(_EVERGREEN[0])
 
-    return {
+    payload = {
         "day_number":     day_number,
         "reels":          reels,
         "carousel":       next((p for p in shuffle if p["type"] == "carousel"), _EVERGREEN[1]),
@@ -286,6 +286,23 @@ def _from_evergreen(day_number: int) -> dict:
         "_source":        "emergency_fallback_evergreen",
         "_recycled":      True,
     }
+    return _attach_stories(payload, day_number)
+
+
+def _attach_stories(payload: dict, day_number: int) -> dict:
+    """Give fallback days a stories.story_1 so post_story is not slogan-only."""
+    if not isinstance(payload, dict):
+        return payload
+    stories = payload.get("stories") if isinstance(payload.get("stories"), dict) else {}
+    s1 = stories.get("story_1") if isinstance(stories.get("story_1"), dict) else {}
+    if s1.get("headline") or s1.get("poll_question"):
+        return payload
+    try:
+        from content_generator.publisher.story_copy import stories_block_from_content
+        payload["stories"] = stories_block_from_content(payload, day_number)
+    except Exception as e:
+        logger.debug("[fallback] stories block skipped: %s", e)
+    return payload
 
 
 def _send_fallback_alert(source: str, day_number: int) -> None:
