@@ -70,6 +70,10 @@ jobs:
       - name: Ensure output directory
         run: mkdir -p output
 
+      - name: Mark generate start
+        if: ${{ env.FORCE_SLOT == 'generate' }}
+        run: date +%s > .generate_started_epoch
+
       - name: Clear run lock (if force_run)
         if: ${{ github.event.inputs.force_run == 'true' }}
         run: python -m content_generator.scheduler.daily --unlock
@@ -78,9 +82,7 @@ jobs:
         run: |
           # ONE runner over BOTH styles. Ten suites were pytest-style and
           # invoked by nobody; running them as scripts executes no test
-          # function at all, so they would have passed vacuously. The
-          # script-style suites now expose test_main(), so pytest collects
-          # every suite in tests/ and nothing is silently skipped.
+          # function at all. pytest now collects the complete tests/ tree.
           pytest -q tests/
 
       - name: Meta token soft-check (generate)
@@ -177,7 +179,7 @@ jobs:
           FORCE_SLOT: ${{ env.FORCE_SLOT }}
         run: |
           python - <<'PY'
-          import glob,json,os,re,sys,urllib.request
+          import datetime, json, os, re, sys, urllib.request
           from pathlib import Path
           slot=os.environ.get("FORCE_SLOT","").strip()
           if slot not in {"generate","morning","evening"}: print("::error::No explicit execution slot; refusing wall-clock guessing."); sys.exit(1)
@@ -188,9 +190,32 @@ jobs:
                   try: urllib.request.urlopen(urllib.request.Request(hook,data=json.dumps({"text":msg}).encode(),headers={"Content-Type":"application/json"}),timeout=15)
                   except Exception: pass
           if slot=="generate":
-              files=sorted(glob.glob("output/content_*.json"),key=lambda p:Path(p).stat().st_mtime,reverse=True)
-              if not files: alert("GENERATE completed without a persisted content file."); sys.exit(1)
-              print(f"::notice::GENERATE verified — {files[0]}; no publication expected at 06:00 IST."); sys.exit(0)
+              expected = Path(f"output/content_{datetime.date.today().isoformat()}.json")
+              if not expected.exists():
+                  alert(f"GENERATE completed without today's persisted content file: {expected}")
+                  sys.exit(1)
+              try:
+                  started = int(Path(".generate_started_epoch").read_text().strip())
+              except Exception:
+                  alert("GENERATE verification missing start marker; refusing stale-content success.")
+                  sys.exit(1)
+              if int(expected.stat().st_mtime) < started:
+                  alert(f"GENERATE found today's content file, but it predates this run: {expected}")
+                  sys.exit(1)
+              try:
+                  payload=json.loads(expected.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  alert(f"GENERATE persisted today's content but it is not valid JSON: {type(exc).__name__}")
+                  sys.exit(1)
+              if not isinstance(payload, dict) or payload.get("day_number") in (None, 0):
+                  alert("GENERATE persisted today's file without a valid day_number.")
+                  sys.exit(1)
+              generation_id = str(payload.get("generation_id") or "").strip()
+              if not generation_id:
+                  alert("GENERATE persisted today's file without generation_id; refusing ambiguous state.")
+                  sys.exit(1)
+              print(f"::notice::GENERATE verified — {expected} | day={payload.get('day_number')} | generation_id={generation_id}; no publication expected at 06:00 IST.")
+              sys.exit(0)
           raw=Path("run_result.json").read_text(encoding="utf-8",errors="ignore")
           m=re.search(r"\{.*\}\s*$",raw,re.S)
           if not m: alert(f"{slot.upper()} produced no parseable publish result."); sys.exit(1)
@@ -224,22 +249,12 @@ jobs:
           set -euo pipefail
           git config user.name "Purity Beans Engine"
           git config user.email "engine@puritybeans.auto"
-          # Synchronize BEFORE staging generated state. Remote Git is authoritative.
           git pull --rebase --autostash
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/ 2>/dev/null || true
-          # Creative MUST be committed. Each slot is a separate workflow run on a
-          # separate runner, so images written by the 00:30 generate run do not
-          # exist on the 04:30 publish runner unless Git carries them. 0d20beb
-          # added this line when timed slots landed, for exactly that reason;
-          # c345418 removed it to keep media out of Git, and every Instagram
-          # image post has failed "no_images" since. The 7-day prune below is
-          # what bounds repo growth — you only prune what you keep.
-          # Prune on the date in the FILENAME, not mtime. Every run starts with a
-          # fresh checkout, which stamps every file's mtime as "now", so
-          # `find -mtime +7` matched nothing on the runner and bounded growth in
-          # theory only. Media from July is still in the tree because of it.
+          # Creative required by a later publish slot is durable Git state because
+          # each timed slot runs on a fresh runner. The filename-date prune bounds it.
           python - <<'PRUNE'
           import datetime, glob, os, re
           cutoff = datetime.date.today() - datetime.timedelta(days=7)
@@ -247,7 +262,7 @@ jobs:
           for path in glob.glob("output/creative/*"):
               m = re.search(r"(\d{4})-(\d{2})-(\d{2})", os.path.basename(path))
               if not m:
-                  continue          # no date in the name: leave it alone
+                  continue
               try:
                   stamped = datetime.date(*(int(g) for g in m.groups()))
               except ValueError:
