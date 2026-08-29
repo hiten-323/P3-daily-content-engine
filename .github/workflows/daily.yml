@@ -46,12 +46,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -230,20 +230,20 @@ jobs:
           alert(verdict["detail"]); sys.exit(1)
           PY
 
-      # Diagnostics and generated media are retained as Actions artifacts only.
-      # Production state is persisted to Git only after the slot result succeeds.
-      - name: Upload run diagnostics and creative artifacts
+      # Diagnostics are best-effort. Production state is persisted to Git and
+      # must never be blocked by exhausted GitHub Actions artifact storage.
+      - name: Upload run diagnostics (best effort)
         if: always()
-        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        uses: actions/upload-artifact@v6
         with:
           name: purity-beans-run-${{ github.run_number }}
           path: |
             run_result.json
-            output/*.json
             output/reports/
-            output/creative/
           if-no-files-found: ignore
-          retention-days: 90
+          retention-days: 3
+          compression-level: 6
 
       - name: Persist validated state to Git
         if: ${{ success() }}
