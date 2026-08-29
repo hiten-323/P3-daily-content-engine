@@ -181,6 +181,7 @@ jobs:
           python - <<'PY'
           import datetime, json, os, re, sys, urllib.request
           from pathlib import Path
+          from zoneinfo import ZoneInfo
           slot=os.environ.get("FORCE_SLOT","").strip()
           if slot not in {"generate","morning","evening"}: print("::error::No explicit execution slot; refusing wall-clock guessing."); sys.exit(1)
           def alert(msg):
@@ -190,7 +191,8 @@ jobs:
                   try: urllib.request.urlopen(urllib.request.Request(hook,data=json.dumps({"text":msg}).encode(),headers={"Content-Type":"application/json"}),timeout=15)
                   except Exception: pass
           if slot=="generate":
-              expected = Path(f"output/content_{datetime.date.today().isoformat()}.json")
+              ist_today = datetime.datetime.now(ZoneInfo("Asia/Kolkata")).date()
+              expected = Path(f"output/content_{ist_today.isoformat()}.json")
               if not expected.exists():
                   alert(f"GENERATE completed without today's persisted content file: {expected}")
                   sys.exit(1)
@@ -273,7 +275,8 @@ jobs:
           print(f"pruned {removed} creative files older than {cutoff}")
           PRUNE
           git add -f output/creative/ 2>/dev/null || true
-          git add -f "output/content_$(date -u +%Y-%m-%d).json" 2>/dev/null || true
+          ist_date=$(TZ=Asia/Kolkata date +%Y-%m-%d)
+          git add -f "output/content_${ist_date}.json" 2>/dev/null || true
           git add -f output/reports/ 2>/dev/null || true
           git add -f output/.running* 2>/dev/null || true
           if ! git diff --staged --quiet; then git commit -m "chore: run ${{ github.run_number }} — validated content + learning data [skip ci]"; fi
