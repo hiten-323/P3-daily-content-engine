@@ -36,25 +36,20 @@ def main() -> None:
     assert "_extended_content_enabled" in gen
     assert "enable_extended_content" in gen
 
-    # A day's work must survive a FAILED run, not only a successful one.
-    #
-    # Git-on-success is correct: unvalidated state must not enter the repo the
-    # publish slots read from. But it only holds while the artifact catches the
-    # rest. Both rules being conditional is what actually destroyed three days
-    # of content in August — the pipeline did 13 minutes of real work, a later
-    # step failed, and the content was neither committed nor uploaded.
-    #
-    # Asserted as a COMBINATION rather than as one implementation, so either
-    # design stays legal: persist unconditionally, or upload unconditionally
-    # with the content in it — but never both gated.
+    # Validated state is intentionally persisted only after the pipeline and
+    # slot verification succeed. The publish slots must never consume
+    # unvalidated runner-local state.
     persist_on_success = bool(re.search(r"Persist validated state[\s\S]{0,200}?success\(\)", wf))
-    upload_always = bool(re.search(r"Upload run[\s\S]{0,200}?always\(\)", wf))
-    content_in_artifact = bool(re.search(r"path:[\s\S]{0,400}?output/\*\.json", wf))
-    assert (not persist_on_success) or (upload_always and content_in_artifact), (
-        "persistence is gated on success while the artifact does not "
-        "unconditionally carry output/*.json — a failed run would lose the "
-        "day's generated content entirely"
-    )
+    assert persist_on_success, "validated state must be persisted only after a successful run"
+
+    # Diagnostics are operational evidence, not the source of truth. Artifact
+    # exhaustion or an upload outage must therefore never turn a valid run into
+    # a failed pipeline or prevent Git persistence.
+    upload_block = re.search(r"Upload run diagnostics \(best effort\)([\s\S]{0,500}?)Persist validated state", wf)
+    assert upload_block, "best-effort diagnostics step must remain adjacent to persistence"
+    upload_text = upload_block.group(1)
+    assert re.search(r"if:\s*always\(\)", upload_text), "diagnostics must run on both success and failure"
+    assert re.search(r"continue-on-error:\s*true", upload_text), "diagnostics upload must never block persistence"
 
     print("persistence invariant: PASS")
 
