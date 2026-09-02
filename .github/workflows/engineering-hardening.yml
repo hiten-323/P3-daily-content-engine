@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHONPATH: .
+
 jobs:
   hardening:
     name: Governance, learning and publishing contracts
@@ -16,12 +19,12 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
           cache: pip
@@ -38,27 +41,8 @@ jobs:
 
       - name: Run governance regression suite
         run: |
-          python tests/test_render_safety.py
-          python tests/test_measurement_integrity.py
-          python tests/test_measurement_windows.py
-          python tests/test_account_funnel.py
-          python tests/test_objective_measurement_integrity.py
-          python tests/test_learning_evidence_guard.py
-          python tests/test_growth_director_spec.py
-          python tests/test_publish_gate.py
-          python tests/test_publish_contract.py
-          python tests/test_psychology_governance.py
-          python tests/test_scroller_psychology.py
-          python tests/test_fallback_safety.py
-          python tests/test_config_drift.py
-          python tests/test_operational_alignment.py
-          python tests/test_workflow_contract.py
-          python tests/test_persistence_invariant.py
+          python -m pytest tests/ -q
 
       - name: Compile Python sources
         run: |
           python -m compileall -q content_generator config tests
-
-      - name: Run pytest
-        run: |
-          python -m pytest tests/ -q
