@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+import pytest
+
+from content_generator.providers import cerebras, deepseek, groq, openrouter
+
+
+class _Response:
+    def __init__(self, status_code: int, body: dict | None = None, text: str = ""):
+        self.status_code = status_code
+        self._body = body or {}
+        self.text = text
+
+    def json(self):
+        return self._body
+
+
+_PROVIDER_CASES = [
+    (groq, "GROQ_MODELS"),
+    (cerebras, "CEREBRAS_MODELS"),
+    (deepseek, "DEEPSEEK_MODELS"),
+    (openrouter, "OPENROUTER_MODELS"),
+]
+
+
+@pytest.mark.parametrize("provider,_env_name", _PROVIDER_CASES)
+def test_model_specific_failure_falls_through(provider, _env_name, monkeypatch):
+    monkeypatch.setattr(provider, "MODELS", ["bad-model", "good-model"])
+    monkeypatch.setenv(
+        {
+            groq: "GROQ_API_KEY",
+            cerebras: "CEREBRAS_API_KEY",
+            deepseek: "DEEPSEEK_API_KEY",
+            openrouter: "OPENROUTER_API_KEY",
+        }[provider],
+        "test-key",
+    )
+
+    good_body = {
+        "choices": [{"message": {"content": '{"ok": true}'}}],
+        "usage": {"prompt_tokens": 1, "completion_tokens": 2},
+    }
+    responses = iter([
+        _Response(404, text="model not found"),
+        _Response(200, good_body),
+    ])
+    calls = []
+
+    def post(*args, **kwargs):
+        calls.append(kwargs["json"]["model"])
+        return next(responses)
+
+    monkeypatch.setattr(provider._http, "post", post)
+    if provider is cerebras:
+        monkeypatch.setattr(provider.time, "sleep", lambda _seconds: None, raising=False)
+
+    text, usage = provider.call("prompt", 100)
+
+    assert text == '{"ok": true}'
+    assert usage["model"] == "good-model"
+    assert calls == ["bad-model", "good-model"]
+
+
+@pytest.mark.parametrize("provider,env_name", _PROVIDER_CASES)
+def test_auth_failure_does_not_waste_calls_on_same_credential(provider, env_name, monkeypatch):
+    monkeypatch.setattr(provider, "MODELS", ["bad-model", "good-model"])
+    monkeypatch.setenv(env_name.replace("_MODELS", "_API_KEY"), "test-key")
+    calls = []
+
+    def post(*args, **kwargs):
+        calls.append(kwargs["json"]["model"])
+        return _Response(401, text="invalid key")
+
+    monkeypatch.setattr(provider._http, "post", post)
+    if provider is cerebras:
+        monkeypatch.setattr(provider.time, "sleep", lambda _seconds: None, raising=False)
+
+    text, usage = provider.call("prompt", 100)
+
+    assert text is None
+    assert usage["status_code"] == 401
+    assert calls == ["bad-model"]
