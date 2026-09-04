@@ -32,6 +32,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   ENABLE_TIMED_SLOTS: "true"
   FORCE_SLOT: ${{ github.event.schedule == '30 0 * * *' && 'generate' || (github.event.schedule == '30 4 * * *' && 'morning' || (github.event.schedule == '30 16 * * *' && 'evening' || github.event.inputs.slot || '')) }}
+  PIP_NO_CACHE_DIR: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
 concurrency:
   group: purity-beans-daily
@@ -54,12 +56,29 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-          cache: pip
+          # Do not cache pip: this job intentionally uses a lean dependency set
+          # and must not consume runner disk with a duplicate package cache.
+          cache: false
 
-      - name: Install dependencies
+      - name: Install dependencies (disk-safe)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          set -euo pipefail
+          # sentence-transformers is deliberately excluded from production requirements.
+          # Its dependency chain installs CUDA-enabled torch and can exhaust the runner.
+          if grep -Eiq '^[[:space:]]*sentence-transformers([<>=!~]|[[:space:]]|$)' requirements.txt; then
+            echo "::error::sentence-transformers must not be installed in CI; use the TF-IDF/ngram fallback instead."
+            exit 1
+          fi
+          python -m pip install --no-cache-dir -r requirements.txt
+          python - <<'PY'
+          import importlib.util, sys
+          forbidden = ("sentence_transformers", "torch")
+          found = [name for name in forbidden if importlib.util.find_spec(name)]
+          if found:
+              print(f"::error::Forbidden heavyweight ML packages present after dependency install: {', '.join(found)}")
+              sys.exit(1)
+          print("::notice::Dependency install verified — no sentence-transformers/torch CUDA chain present.")
+          PY
 
       - name: Install rendering fonts
         run: |
@@ -80,9 +99,6 @@ jobs:
 
       - name: Verify render, measurement, governance and workflow contracts
         run: |
-          # ONE runner over BOTH styles. Ten suites were pytest-style and
-          # invoked by nobody; running them as scripts executes no test
-          # function at all. pytest now collects the complete tests/ tree.
           pytest -q tests/
 
       - name: Meta token soft-check (generate)
@@ -230,8 +246,6 @@ jobs:
           alert(verdict["detail"]); sys.exit(1)
           PY
 
-      # Diagnostics are best-effort. Production state is persisted to Git and
-      # must never be blocked by exhausted GitHub Actions artifact storage.
       - name: Upload run diagnostics (best effort)
         if: always()
         continue-on-error: true
@@ -255,8 +269,6 @@ jobs:
           echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) run #${{ github.run_number }}" >> .last_run
           git add .last_run
           git add -f output/learning/ 2>/dev/null || true
-          # Creative required by a later publish slot is durable Git state because
-          # each timed slot runs on a fresh runner. The filename-date prune bounds it.
           python - <<'PRUNE'
           import datetime, glob, os, re
           cutoff = datetime.date.today() - datetime.timedelta(days=7)
