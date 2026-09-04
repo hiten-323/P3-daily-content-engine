@@ -1,19 +1,4 @@
-"""
-The cascade must say why it failed.
-
-Every committed content file from 2026-08-05 to 2026-08-23 was
-emergency_fallback_evergreen. Not one day has ever come from real generation,
-and the logs could not explain it: the non-retryable branch of _try_provider
-recorded a failure and returned without logging anything, so the most common
-failures were the least visible. The only evidence was one line —
-"All LLM providers failed" — which is equally consistent with a missing key,
-exhausted quota, a decommissioned model, and a network outage.
-
-Two failure modes need opposite fixes and must never be confused:
-
-  A  every provider fails at transport      -> fix credentials/quota/model ids
-  B  a provider answers, the answer is junk -> fix prompts/parsing/validation
-"""
+"""The cascade must say why it failed and keep trying usable fallbacks."""
 from __future__ import annotations
 
 import pytest
@@ -25,7 +10,7 @@ from content_generator.providers import llm_router as router
 def _clean_router():
     router.reset_cascade_log()
     for st in router._STATES.values():
-        st.record_success()          # close every circuit breaker
+        st.record_success()
     yield
     router.reset_cascade_log()
 
@@ -34,8 +19,6 @@ def _all_providers(text, usage):
     """Force every provider in the table to return the same outcome."""
     return [(name, lambda _p, _m, t=text, u=usage: (t, u)) for name, _ in router._PROVIDERS]
 
-
-# ── failure mode A ───────────────────────────────────────────────────────────
 
 def test_auth_rejection_is_named(monkeypatch, caplog) -> None:
     monkeypatch.setattr(router, "_PROVIDERS", _all_providers(
@@ -46,7 +29,7 @@ def test_auth_rejection_is_named(monkeypatch, caplog) -> None:
             router.call("prompt", "carousel")
 
     rows = router.get_cascade_log()
-    assert rows, "no diagnostics recorded at all"
+    assert rows
     assert {r["category"] for r in rows} == {"auth_rejected"}
     assert "the key is present but invalid" in caplog.text
     assert "llama-3.3-70b-versatile" in caplog.text
@@ -84,31 +67,57 @@ def test_quota_is_distinguished(monkeypatch, caplog) -> None:
     assert "quota exhausted" in caplog.text
 
 
-# ── failure mode B ───────────────────────────────────────────────────────────
+def test_unparseable_provider_response_falls_through(monkeypatch, caplog) -> None:
+    calls = []
 
-def test_provider_answering_with_junk_is_not_reported_as_an_outage(monkeypatch, caplog) -> None:
-    """
-    json_repair returns {} for input it cannot make sense of, and {} is a dict,
-    so it passes every downstream check until validation rejects empty content —
-    with nothing anywhere blaming the LLM. The cascade did not fail here.
-    """
-    monkeypatch.setattr(router, "_PROVIDERS",
-                        _all_providers("I'm afraid I can't help with that.", {}))
-    monkeypatch.setattr(router, "extract", lambda raw: {})
-    monkeypatch.setattr(router, "build_system_prompt", lambda: "", raising=False)
+    def first(_prompt, _max_tokens):
+        calls.append("first")
+        return "not json", {"model": "bad-model"}
+
+    def second(_prompt, _max_tokens):
+        calls.append("second")
+        return '{"ok": true}', {"model": "good-model"}
+
+    monkeypatch.setattr(router, "_PROVIDERS", [("groq", first), ("gemini", second)])
+
+    def parse(raw):
+        if raw == "not json":
+            raise ValueError("not JSON")
+        return {"ok": True}
+
+    monkeypatch.setattr(router, "extract", parse)
 
     with caplog.at_level("ERROR"):
         out = router.call("prompt", "carousel")
 
-    assert out == {}
+    assert out == {"ok": True}
+    assert calls == ["first", "second"]
+    assert "continuing to next provider" in caplog.text
+    assert any(r["category"] == "unparseable" for r in router.get_cascade_log())
+
+
+def test_empty_parsed_response_falls_through(monkeypatch, caplog) -> None:
+    calls = []
+
+    def first(_prompt, _max_tokens):
+        calls.append("first")
+        return "{}", {"model": "empty-model"}
+
+    def second(_prompt, _max_tokens):
+        calls.append("second")
+        return '{"ok": true}', {"model": "good-model"}
+
+    monkeypatch.setattr(router, "_PROVIDERS", [("groq", first), ("gemini", second)])
+    monkeypatch.setattr(router, "extract", lambda raw: {} if raw == "{}" else {"ok": True})
+
+    with caplog.at_level("ERROR"):
+        out = router.call("prompt", "carousel")
+
+    assert out == {"ok": True}
+    assert calls == ["first", "second"]
     assert "failure mode B" in caplog.text
-    assert "EMPTY dict" in caplog.text
-    cats = {r["category"] for r in router.get_cascade_log()}
-    assert "parsed_empty" in cats
-    assert "ok" in cats, "the transport attempt succeeded and must be recorded as such"
+    assert any(r["category"] == "parsed_empty" for r in router.get_cascade_log())
 
-
-# ── credentials must never reach a log ───────────────────────────────────────
 
 def test_no_credential_reaches_the_diagnostics(monkeypatch, caplog) -> None:
     leak = "gsk_liveSecretKeyValue123"
@@ -119,15 +128,14 @@ def test_no_credential_reaches_the_diagnostics(monkeypatch, caplog) -> None:
         with pytest.raises(RuntimeError):
             router.call("prompt", "carousel")
 
-    assert leak not in caplog.text, "an API key reached the log"
-    assert all(leak not in str(r) for r in router.get_cascade_log()), \
-        "an API key reached the cascade log"
+    assert leak not in caplog.text
+    assert all(leak not in str(r) for r in router.get_cascade_log())
 
 
 def test_every_attempt_records_the_fields_needed_to_act(monkeypatch) -> None:
     monkeypatch.setattr(router, "_PROVIDERS", _all_providers(
         None, {"status_code": 503, "model": "m", "error": "upstream"}))
-    monkeypatch.setattr(router.time, "sleep", lambda _s: None)   # no real backoff
+    monkeypatch.setattr(router.time, "sleep", lambda _s: None)
     with pytest.raises(RuntimeError):
         router.call("prompt", "carousel")
 

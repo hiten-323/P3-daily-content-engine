@@ -22,14 +22,17 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
     """
     Tries each model in MODELS in order.
     Returns (text | None, usage_dict) for the first successful response.
+    A model-specific failure falls through to the next configured model;
+    authentication failures stop immediately because the same key is shared.
     """
     key = get_key()
     if not key:
         return None, {}
 
     headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    last_failure: dict = {}
 
-    for model in MODELS:
+    for model in (m.strip() for m in MODELS if m.strip()):
         try:
             resp = _http.post(
                 _URL,
@@ -47,17 +50,27 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             continue
 
         if resp.status_code == 200:
-            body  = resp.json()
-            text  = body["choices"][0]["message"]["content"]
-            u     = body.get("usage", {})
-            usage = {
-                "prompt_tokens":     u.get("prompt_tokens"),
+            try:
+                body = resp.json()
+                text = body["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError, ValueError) as e:
+                logger.warning("Groq %s returned malformed success payload: %s", model, e)
+                last_failure = {"status_code": 200, "model": model,
+                                "error": f"malformed success payload: {e}"}
+                continue
+            u = body.get("usage", {})
+            return text, {
+                "prompt_tokens": u.get("prompt_tokens"),
                 "completion_tokens": u.get("completion_tokens"),
+                "model": model,
             }
-            return text, usage
 
+        last_failure = {"status_code": resp.status_code, "model": model,
+                        "error": resp.text}
         logger.warning("Groq %s %s: %s", model, resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code, "model": model,
-                      "error": resp.text}
+        if resp.status_code in (401, 403):
+            return None, last_failure
+        # 429/4xx/5xx can be model-specific; give the next configured model a chance.
+        continue
 
-    return None, {}
+    return None, last_failure

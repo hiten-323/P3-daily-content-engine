@@ -23,6 +23,8 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
     """
     Returns (text | None, usage_dict).
     Tries each model once — retry logic is handled by the router.
+    A model-specific failure falls through to the next configured model;
+    authentication failures stop immediately because the same key is shared.
     """
     key = get_key()
     if not key:
@@ -30,12 +32,13 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
 
     headers = {
         "Authorization": f"Bearer {key}",
-        "Content-Type":  "application/json",
-        "HTTP-Referer":  f"https://{WEBSITE_URL}",
-        "X-Title":       "Purity Beans Social Engine",
+        "Content-Type": "application/json",
+        "HTTP-Referer": f"https://{WEBSITE_URL}",
+        "X-Title": "Purity Beans Social Engine",
     }
+    last_failure: dict = {}
 
-    for model in MODELS:
+    for model in (m.strip() for m in MODELS if m.strip()):
         try:
             resp = _http.post(
                 _URL,
@@ -50,20 +53,31 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             )
         except Exception as e:
             logger.error("OpenRouter %s request exception: %s", model, e)
+            last_failure = {"status_code": 0, "model": model, "error": str(e)}
             continue
 
         if resp.status_code == 200:
-            body  = resp.json()
-            text  = body["choices"][0]["message"]["content"]
-            u     = body.get("usage", {})
-            usage = {
-                "prompt_tokens":     u.get("prompt_tokens"),
+            try:
+                body = resp.json()
+                text = body["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, TypeError, ValueError) as e:
+                logger.warning("OpenRouter %s returned malformed success payload: %s", model, e)
+                last_failure = {"status_code": 200, "model": model,
+                                "error": f"malformed success payload: {e}"}
+                continue
+            u = body.get("usage", {})
+            return text, {
+                "prompt_tokens": u.get("prompt_tokens"),
                 "completion_tokens": u.get("completion_tokens"),
+                "model": model,
             }
-            return text, usage
 
+        last_failure = {"status_code": resp.status_code, "model": model,
+                        "error": resp.text}
         logger.warning("OpenRouter %s %s: %s", model, resp.status_code, resp.text[:200])
-        return None, {"status_code": resp.status_code, "model": model,
-                      "error": resp.text}
+        if resp.status_code in (401, 403):
+            return None, last_failure
+        # 429/4xx/5xx can be model-specific; give the next configured model a chance.
+        continue
 
-    return None, {}
+    return None, last_failure

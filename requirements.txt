@@ -12,9 +12,12 @@ openai>=1.30.0                  # OpenRouter (uses OpenAI SDK) — final fallbac
 # Scheduling
 apscheduler>=3.10.0             # Daemon mode (not needed for GitHub Actions)
 
-# Optional: semantic deduplication (recommended)
-sentence-transformers>=2.7.0   # Best dedup quality
-scikit-learn>=1.4.0             # TF-IDF fallback
+# Optional: semantic deduplication
+# sentence-transformers is deliberately NOT installed in the production/CI
+# environment: its current dependency chain pulls a very large CUDA-enabled
+# torch distribution onto GitHub-hosted runners. semantic.py automatically
+# falls back to scikit-learn TF-IDF, then zero-dependency n-gram Jaccard.
+scikit-learn>=1.4.0             # TF-IDF semantic fallback
 
 # Optional: trend & competitor research
 pytrends>=4.9.2                 # Google Trends
