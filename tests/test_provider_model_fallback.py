@@ -16,25 +16,17 @@ class _Response:
 
 
 _PROVIDER_CASES = [
-    (groq, "GROQ_MODELS"),
-    (cerebras, "CEREBRAS_MODELS"),
-    (deepseek, "DEEPSEEK_MODELS"),
-    (openrouter, "OPENROUTER_MODELS"),
+    (groq, "GROQ_API_KEY"),
+    (cerebras, "CEREBRAS_API_KEY"),
+    (deepseek, "DEEPSEEK_API_KEY"),
+    (openrouter, "OPENROUTER_API_KEY"),
 ]
 
 
-@pytest.mark.parametrize("provider,_env_name", _PROVIDER_CASES)
-def test_model_specific_failure_falls_through(provider, _env_name, monkeypatch):
+@pytest.mark.parametrize("provider,env_name", _PROVIDER_CASES)
+def test_model_specific_failure_falls_through(provider, env_name, monkeypatch):
     monkeypatch.setattr(provider, "MODELS", ["bad-model", "good-model"])
-    monkeypatch.setenv(
-        {
-            groq: "GROQ_API_KEY",
-            cerebras: "CEREBRAS_API_KEY",
-            deepseek: "DEEPSEEK_API_KEY",
-            openrouter: "OPENROUTER_API_KEY",
-        }[provider],
-        "test-key",
-    )
+    monkeypatch.setenv(env_name, "test-key")
 
     good_body = {
         "choices": [{"message": {"content": '{"ok": true}'}}],
@@ -51,8 +43,6 @@ def test_model_specific_failure_falls_through(provider, _env_name, monkeypatch):
         return next(responses)
 
     monkeypatch.setattr(provider._http, "post", post)
-    if provider is cerebras:
-        monkeypatch.setattr(provider.time, "sleep", lambda _seconds: None, raising=False)
 
     text, usage = provider.call("prompt", 100)
 
@@ -64,7 +54,7 @@ def test_model_specific_failure_falls_through(provider, _env_name, monkeypatch):
 @pytest.mark.parametrize("provider,env_name", _PROVIDER_CASES)
 def test_auth_failure_does_not_waste_calls_on_same_credential(provider, env_name, monkeypatch):
     monkeypatch.setattr(provider, "MODELS", ["bad-model", "good-model"])
-    monkeypatch.setenv(env_name.replace("_MODELS", "_API_KEY"), "test-key")
+    monkeypatch.setenv(env_name, "test-key")
     calls = []
 
     def post(*args, **kwargs):
@@ -72,8 +62,6 @@ def test_auth_failure_does_not_waste_calls_on_same_credential(provider, env_name
         return _Response(401, text="invalid key")
 
     monkeypatch.setattr(provider._http, "post", post)
-    if provider is cerebras:
-        monkeypatch.setattr(provider.time, "sleep", lambda _seconds: None, raising=False)
 
     text, usage = provider.call("prompt", 100)
 
