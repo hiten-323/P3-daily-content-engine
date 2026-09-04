@@ -79,7 +79,13 @@ def test_unparseable_provider_response_falls_through(monkeypatch, caplog) -> Non
         return '{"ok": true}', {"model": "good-model"}
 
     monkeypatch.setattr(router, "_PROVIDERS", [("groq", first), ("gemini", second)])
-    monkeypatch.setattr(router, "extract", lambda raw: {} if raw == "not json" else {"ok": True})
+
+    def parse(raw):
+        if raw == "not json":
+            raise ValueError("not JSON")
+        return {"ok": True}
+
+    monkeypatch.setattr(router, "extract", parse)
 
     with caplog.at_level("ERROR"):
         out = router.call("prompt", "carousel")
