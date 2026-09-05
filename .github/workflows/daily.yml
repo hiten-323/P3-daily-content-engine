@@ -56,9 +56,6 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-          # Do not cache pip: this job intentionally uses a lean dependency set
-          # and must not consume runner disk with a duplicate package cache.
-          cache: false
 
       - name: Install dependencies (disk-safe)
         run: |
