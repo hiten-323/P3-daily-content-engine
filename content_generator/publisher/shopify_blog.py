@@ -1,16 +1,9 @@
 """
-Shopify Blog publisher — auto-posts the daily blog to p3online.in/blogs.
+Shopify Blog publisher.
 
-The blog is generated every day but had nowhere to go. This publishes it as a
-Shopify article (SEO-friendly, drives organic search), attaching the day's
-real-jar hero image and the meta description / tags the generator produced.
-
-Requires (same secrets as revenue attribution, one extra scope):
-  SHOPIFY_STORE_DOMAIN  your-store.myshopify.com
-  SHOPIFY_ADMIN_TOKEN   Admin API token with write_content (+ read_content)
-
-Degrades gracefully: not configured, no blog content, or an API error -> skip
-without blocking the rest of the pipeline.
+SAFETY: this engine is not the Purity Beans blog source of truth. Blog publishing
+is therefore disabled by default and requires an explicit SHOPIFY_BLOG_ENABLED=true.
+The separate Cowork blog workflow remains the intended production publisher.
 """
 from __future__ import annotations
 import base64
@@ -22,9 +15,12 @@ import os
 import urllib.request
 
 logger = logging.getLogger(__name__)
-
 from config.api_versions import SHOPIFY_API_VERSION as _API_VERSION
-_TIMEOUT     = 40
+_TIMEOUT = 40
+
+
+def blog_enabled() -> bool:
+    return os.getenv("SHOPIFY_BLOG_ENABLED", "false").strip().lower() == "true"
 
 
 def is_configured() -> bool:
@@ -33,7 +29,7 @@ def is_configured() -> bool:
 
 def _admin(path: str, method: str = "GET", body: dict | None = None) -> dict | None:
     domain = os.getenv("SHOPIFY_STORE_DOMAIN")
-    token  = os.getenv("SHOPIFY_ADMIN_TOKEN")
+    token = os.getenv("SHOPIFY_ADMIN_TOKEN")
     if not domain or not token:
         return None
     url = f"https://{domain}/admin/api/{_API_VERSION}/{path}"
@@ -53,7 +49,6 @@ def _admin(path: str, method: str = "GET", body: dict | None = None) -> dict | N
 
 
 def _resolve_blog_id() -> str | None:
-    """Use SHOPIFY_BLOG_ID if set, else the store's first blog."""
     explicit = os.getenv("SHOPIFY_BLOG_ID")
     if explicit:
         return explicit
@@ -61,12 +56,11 @@ def _resolve_blog_id() -> str | None:
     blogs = (data or {}).get("blogs") or []
     if blogs:
         return str(blogs[0].get("id"))
-    logger.warning("[shopify_blog] No blog found on store — create one in Shopify admin")
+    logger.warning("[shopify_blog] No blog found on store")
     return None
 
 
 def _hero_image_b64() -> str | None:
-    """Today's composed real-jar image as base64 (Shopify article image)."""
     creative = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
     today = datetime.date.today().isoformat()
     for pat in (f"carousel_slide_1_*{today}.jpg", f"*{today}.jpg"):
@@ -81,42 +75,41 @@ def _hero_image_b64() -> str | None:
 
 
 def post_content(content: dict, day: int = 0) -> dict:
-    """Publish today's blog as a Shopify article. Returns a result dict."""
+    """Publish only when explicitly enabled; otherwise make a hard no-write decision."""
+    if not blog_enabled():
+        logger.info("[shopify_blog] Disabled by SHOPIFY_BLOG_ENABLED (default=false); no Shopify write")
+        return {"success": False, "error": "blog_disabled"}
     if not is_configured():
-        logger.info("[shopify_blog] Not configured — set SHOPIFY_STORE_DOMAIN + "
-                    "SHOPIFY_ADMIN_TOKEN (write_content)")
         return {"success": False, "error": "not_configured"}
 
     blog = content.get("blog_post") or {}
     title = str(blog.get("title") or "").strip()
-    body  = str(blog.get("body_html") or "").strip()
+    body = str(blog.get("body_html") or "").strip()
     if not title or not body:
-        logger.info("[shopify_blog] No blog content today — skipping")
+        logger.warning("[shopify_blog] Blog enabled but generation produced no blog content")
         return {"success": False, "error": "no_blog_content"}
 
     blog_id = _resolve_blog_id()
     if not blog_id:
         return {"success": False, "error": "no_blog_id"}
 
-    # Ensure intro + brand/CTA are present in the body
     intro = str(blog.get("intro") or "")
     if intro and intro not in body:
         body = f"<p>{intro}</p>\n{body}"
     website = os.getenv("WEBSITE_URL", "https://p3online.in")
     if "p3online.in" not in body:
-        body += f'\n<p>Explore Purity Beans — 100% coffee, zero chicory: ' \
-                f'<a href="{website}">{website}</a></p>'
+        body += f'\n<p>Explore Purity Beans: <a href="{website}">{website}</a></p>'
 
     tags = blog.get("tags")
     if isinstance(tags, list):
         tags = ", ".join(str(t) for t in tags)
 
     article = {
-        "title":        title,
-        "author":       "Purity Beans",
-        "body_html":    body,
-        "tags":         str(tags or "coffee, instant coffee, purity beans"),
-        "published":    True,
+        "title": title,
+        "author": "Purity Beans",
+        "body_html": body,
+        "tags": str(tags or "coffee, instant coffee, purity beans"),
+        "published": True,
         "summary_html": str(blog.get("meta_description") or "")[:320],
     }
     if blog.get("slug"):
@@ -126,12 +119,11 @@ def post_content(content: dict, day: int = 0) -> dict:
         article["image"] = {"attachment": hero, "alt": str(blog.get("image_alt") or title)}
 
     resp = _admin(f"blogs/{blog_id}/articles.json", method="POST", body={"article": article})
-    art  = (resp or {}).get("article") or {}
+    art = (resp or {}).get("article") or {}
     if art.get("id"):
         domain = os.getenv("SHOPIFY_STORE_DOMAIN", "")
         handle = art.get("handle", "")
         url = f"https://{domain}/blogs/news/{handle}" if handle else ""
         logger.info("[shopify_blog] Published article %s (%s)", art["id"], title)
         return {"success": True, "article_id": str(art["id"]), "url": url, "error": None}
-
     return {"success": False, "error": (resp or {}).get("errors", "publish_failed")}
