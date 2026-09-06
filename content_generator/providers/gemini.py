@@ -5,8 +5,10 @@ import requests as _http
 
 logger = logging.getLogger(__name__)
 
-_BASE  = "https://generativelanguage.googleapis.com/v1beta/models"
-_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
+# Gemini 2.0 Flash was shut down on June 1, 2026. Keep the model configurable,
+# but use the current stable production model by default.
+_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
 
 
 def get_key() -> str:
@@ -14,10 +16,7 @@ def get_key() -> str:
 
 
 def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
-    """
-    Returns (text | None, usage_dict).
-    usage_dict is empty if the provider doesn't return token counts.
-    """
+    """Return (text | None, usage_dict)."""
     key = get_key()
     if not key:
         return None, {}
@@ -29,7 +28,8 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
             headers={"Content-Type": "application/json"},
             json={
                 "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.92},
+                # Gemini 3.8 migration: temperature is intentionally omitted.
+                "generationConfig": {"maxOutputTokens": max_tokens},
             },
             timeout=120,
         )
@@ -38,32 +38,34 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
         return None, {}
 
     if resp.status_code != 200:
-        logger.warning("Gemini %s: %s", resp.status_code, resp.text[:200])
+        logger.warning("Gemini %s model=%s: %s", resp.status_code, _MODEL, resp.text[:200])
         return None, {"status_code": resp.status_code, "model": _MODEL,
                       "error": resp.text}
 
-    data       = resp.json()
+    try:
+        data = resp.json()
+    except ValueError as e:
+        logger.warning("Gemini model=%s returned invalid JSON: %s", _MODEL, e)
+        return None, {"status_code": 200, "model": _MODEL, "error": "invalid JSON response"}
+
     candidates = data.get("candidates", [])
     if not candidates:
-        logger.warning("Gemini returned no candidates")
-        return None, {}
+        logger.warning("Gemini model=%s returned no candidates", _MODEL)
+        return None, {"status_code": 200, "model": _MODEL, "error": "no candidates"}
 
-    text = (
-        candidates[0]
-        .get("content", {})
-        .get("parts", [{}])[0]
-        .get("text")
-    )
+    parts = candidates[0].get("content", {}).get("parts", [])
+    text = "".join(part.get("text", "") for part in parts if isinstance(part, dict)).strip()
 
-    # Gemini returns usageMetadata on the response root
-    meta  = data.get("usageMetadata", {})
+    meta = data.get("usageMetadata", {})
     usage = {
-        "prompt_tokens":     meta.get("promptTokenCount"),
+        "prompt_tokens": meta.get("promptTokenCount"),
         "completion_tokens": meta.get("candidatesTokenCount"),
+        "model": _MODEL,
     }
 
     if not text:
-        logger.warning("Gemini candidate had no text")
+        logger.warning("Gemini model=%s candidate had no text", _MODEL)
+        usage.update({"status_code": 200, "error": "empty content"})
         return None, usage
 
     return text, usage
