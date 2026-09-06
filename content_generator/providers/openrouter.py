@@ -9,9 +9,11 @@ logger = logging.getLogger(__name__)
 
 _URL = "https://openrouter.ai/api/v1/chat/completions"
 
+# OpenRouter's free router is maintained as a current pool rather than pinning a
+# model that can disappear without notice.
 MODELS: list[str] = os.getenv(
     "OPENROUTER_MODELS",
-    "meta-llama/llama-3.3-70b-instruct:free",
+    "openrouter/free",
 ).split(",")
 
 
@@ -20,12 +22,7 @@ def get_key() -> str:
 
 
 def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
-    """
-    Returns (text | None, usage_dict).
-    Tries each model once — retry logic is handled by the router.
-    A model-specific failure falls through to the next configured model;
-    authentication failures stop immediately because the same key is shared.
-    """
+    """Return the first usable response; model-specific failures fall through."""
     key = get_key()
     if not key:
         return None, {}
@@ -77,7 +74,6 @@ def call(prompt: str, max_tokens: int) -> tuple[str | None, dict]:
         logger.warning("OpenRouter %s %s: %s", model, resp.status_code, resp.text[:200])
         if resp.status_code in (401, 403):
             return None, last_failure
-        # 429/4xx/5xx can be model-specific; give the next configured model a chance.
         continue
 
     return None, last_failure
