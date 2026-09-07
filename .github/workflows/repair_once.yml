@@ -18,20 +18,28 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install lightweight verification dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --no-cache-dir pytest
+
       - name: Apply source-level fixes
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
           gen = Path('content_generator/pipeline/generator.py')
           text = gen.read_text(encoding='utf-8')
 
           old = '''def save_content(content_data: dict, output_dir: str = "output") -> str:\n    os.makedirs(output_dir, exist_ok=True)\n    date_str = datetime.date.today().isoformat()\n    filepath = os.path.join(output_dir, f"content_{date_str}.json")\n    with open(filepath, "w", encoding="utf-8") as f:\n        json.dump(content_data, f, indent=2, ensure_ascii=False)\n    logger.info("[pipeline] Saved → %s", filepath)\n    return filepath\n'''
-
-          new = '''def save_content(content_data: dict, output_dir: str = "output") -> str:\n    """Persist a validated content payload with an unambiguous run identity."""\n    os.makedirs(output_dir, exist_ok=True)\n    from zoneinfo import ZoneInfo\n    import uuid\n\n    now_ist = datetime.datetime.now(ZoneInfo("Asia/Kolkata"))\n    date_str = now_ist.date().isoformat()\n    if not isinstance(content_data, dict):\n        raise TypeError("content_data must be a dict")\n    if not str(content_data.get("generation_id") or "").strip():\n        source = str(content_data.get("_source") or content_data.get("source") or "generated").strip()\n        prefix = "fallback" if source.startswith("emergency_fallback") else "gen"\n        content_data["generation_id"] = f"{prefix}_{date_str}_{uuid.uuid4().hex[:8]}"\n        logger.info("[pipeline] assigned missing generation_id=%s", content_data["generation_id"])\n    content_data.setdefault("date_iso", date_str)\n    filepath = os.path.join(output_dir, f"content_{date_str}.json")\n    with open(filepath, "w", encoding="utf-8") as f:\n        json.dump(content_data, f, indent=2, ensure_ascii=False)\n    logger.info("[pipeline] Saved → %s", filepath)\n    return filepath\n'''
-
+          new = '''def save_content(content_data: dict, output_dir: str = "output") -> str:\n    """Persist content with an unambiguous generation identity and IST date."""\n    os.makedirs(output_dir, exist_ok=True)\n    from zoneinfo import ZoneInfo\n    import uuid\n\n    now_ist = datetime.datetime.now(ZoneInfo("Asia/Kolkata"))\n    date_str = now_ist.date().isoformat()\n    if not isinstance(content_data, dict):\n        raise TypeError("content_data must be a dict")\n    if not str(content_data.get("generation_id") or "").strip():\n        source = str(content_data.get("_source") or content_data.get("source") or "generated").strip()\n        prefix = "fallback" if source.startswith("emergency_fallback") else "gen"\n        content_data["generation_id"] = f"{prefix}_{date_str}_{uuid.uuid4().hex[:8]}"\n        logger.info("[pipeline] assigned missing generation_id=%s", content_data["generation_id"])\n    content_data.setdefault("date_iso", date_str)\n    filepath = os.path.join(output_dir, f"content_{date_str}.json")\n    with open(filepath, "w", encoding="utf-8") as f:\n        json.dump(content_data, f, indent=2, ensure_ascii=False)\n    logger.info("[pipeline] Saved → %s", filepath)\n    return filepath\n'''
           if old not in text:
               raise SystemExit('generator.py save_content block not found; refusing blind edit')
           gen.write_text(text.replace(old, new, 1), encoding='utf-8')
@@ -45,12 +53,8 @@ jobs:
 
           fallback = Path('content_generator/scheduler/fallback.py')
           text = fallback.read_text(encoding='utf-8')
-          replacements = {
-              '"body":   "Purity Beans — 100% pure instant coffee. Rs 18/cup.",': '"body":   "Purity Beans — 100% coffee. Zero chicory, no additives.",',
-              '"cta":    "Link in bio.",': '"cta":    "Read the label, then shop at p3online.in",',
-          }
-          for old, new in replacements.items():
-              text = text.replace(old, new)
+          text = text.replace('"body":   "Purity Beans — 100% pure instant coffee. Rs 18/cup.",', '"body":   "Purity Beans — 100% coffee. Zero chicory, no additives.",')
+          text = text.replace('"cta":    "Link in bio.",', '"cta":    "Read the label, then shop at p3online.in",')
           fallback.write_text(text, encoding='utf-8')
 
           test = Path('tests/test_save_content_identity.py')
@@ -61,7 +65,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m py_compile content_generator/pipeline/generator.py content_generator/scheduler/daily.py content_generator/scheduler/fallback.py
-          pytest -q tests/
+          python -m pytest -q tests/
 
       - name: Commit repair and remove one-time workflow
         run: |
