@@ -8,9 +8,15 @@ logger = logging.getLogger(__name__)
 _URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # Env-configurable so models can be updated without a code change
+# 2026-09-07: both llama models returned 404 "does not exist or you do not have
+# access to it". They are NOT decommissioned — Groq still lists them as
+# production — but their free-tier limit now reads ContactSales, so the second
+# half of that error is the operative one. gpt-oss-120b/20b are production AND
+# free-tier (250K TPM / 1K RPM). Never add openai/gpt-oss-safeguard-20b or
+# llama-prompt-guard-*: they are classifiers and answer with a verdict, not content.
 MODELS: list[str] = os.getenv(
     "GROQ_MODELS",
-    "llama-3.3-70b-versatile,llama-3.1-8b-instant",
+    "openai/gpt-oss-120b,openai/gpt-oss-20b",
 ).split(",")
 
 

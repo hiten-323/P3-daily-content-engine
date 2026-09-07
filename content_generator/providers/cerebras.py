@@ -7,9 +7,13 @@ logger = logging.getLogger(__name__)
 
 _URL = "https://api.cerebras.ai/v1/chat/completions"
 
+# zai-glm-4.7 returned 404 model_archived on 2026-09-07; qwen-3.8-27b replaces it.
+# NOTE gpt-oss-120b returned 402 payment_required the same run while the catalogue
+# lists it free-tier — that is an ACCOUNT state, not a model id, and no value here
+# fixes it. Check the Cerebras billing tab if 402s continue.
 MODELS: list[str] = os.getenv(
     "CEREBRAS_MODELS",
-    "gpt-oss-120b,zai-glm-4.7",
+    "gpt-oss-120b,qwen-3.8-27b",
 ).split(",")
 
 

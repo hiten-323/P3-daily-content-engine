@@ -8,7 +8,10 @@ logger = logging.getLogger(__name__)
 _BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 # Gemini 2.0 Flash was shut down on June 1, 2026. Keep the model configurable,
 # but use the current stable production model by default.
-_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+# gemini-3.8-flash is current and not deprecated, but it is absent from the
+# free-tier rate-limit table — which is why 2026-09-07 saw 503 then 429 quota
+# exhausted. Flash-Lite has the largest free TPM allowance and 10k RPD.
+_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 
 
 def get_key() -> str:

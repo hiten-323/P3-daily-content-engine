@@ -11,9 +11,22 @@ _URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # OpenRouter's free router is maintained as a current pool rather than pinning a
 # model that can disappear without notice.
+# Pinned instruct models, NOT the openrouter/free auto-router.
+#
+# The router picks from the whole free pool, which contains
+# nvidia/nemotron-3.5-content-safety (a classifier), several reasoning models,
+# code models and finance/health-tuned models. On 2026-09-07 it answered
+# yt_short with "User Safety: safe" (17 chars) and other labels with reasoning
+# prose — "Let me analyze this complex request carefully..." — because it had
+# routed to a classifier and to reasoning models. Every one of those parsed to
+# nothing and the day fell through to fallback.
+#
+# These four are instruct-tuned and advertise JSON support; nemotron-3-super
+# additionally supports strict structured_outputs.
 MODELS: list[str] = os.getenv(
     "OPENROUTER_MODELS",
-    "openrouter/free",
+    "nvidia/nemotron-3-super-120b-a12b:free,google/gemma-4-31b-it:free,"
+    "google/gemma-4-26b-a4b-it:free,minimax/minimax-m2.7:free",
 ).split(",")
 
 
