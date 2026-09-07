@@ -123,7 +123,19 @@ def _run_generate_slot(day_number: int = None) -> dict:
     from content_generator.pipeline.generator import generate_daily_content, save_content
 
     content: dict = {}
-    with timed_step("content_generation", timeout_s=600):
+    # timeout_s must cover the retry policy or the watchdog fires mid-schedule.
+    # RetryManager backs off 60*2^(n-1) + jitter(0,60), so 3 attempts wait
+    # 180-300s BEFORE counting the attempts themselves. On 2026-09-07 three
+    # attempts plus waits ran 833s against a 600s budget: the timer fired at
+    # 05:18:37 while attempt 3 had not started, and the run continued to 05:22:30.
+    #
+    # fatal=False because of what happened next. The pipeline built the
+    # emergency fallback at 05:22:30 — successfully — and then timed_step's
+    # __exit__ raised the TimeoutError and killed the run, discarding it. Day
+    # 249 has no content file at all. The fallback exists precisely so a bad
+    # provider day still ships; a watchdog that throws it away defeats the
+    # entire mechanism. Same defect class as insights_fetch above.
+    with timed_step("content_generation", timeout_s=1500, fatal=False):
         step = rm.run(
             fn=lambda: generate_daily_content(day_number=day_number, research_context=research),
             label="content_generation",

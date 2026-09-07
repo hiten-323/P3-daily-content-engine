@@ -143,3 +143,45 @@ def test_every_attempt_records_the_fields_needed_to_act(monkeypatch) -> None:
         for field in ("provider", "model", "status", "attempts", "latency_s",
                       "category", "label"):
             assert field in row, f"cascade row missing {field}: {row}"
+
+
+def test_an_answered_response_outranks_a_4xx_elsewhere(monkeypatch, caplog) -> None:
+    """
+    A provider that answered and produced junk is a different problem from one
+    that never connected, and must be named first even when another provider in
+    the same cascade returned a 4xx.
+
+    On 2026-09-07 yt_short was reported as "a decommissioned model id" because
+    cerebras 404'd, when the proximate failure was openrouter answering with
+    reasoning prose instead of JSON. That sends the reader to the wrong fix.
+    """
+    router.reset_cascade_log()
+    for st in router._STATES.values():
+        st.record_success()
+
+    def _providers():
+        out = []
+        for i, (name, _) in enumerate(router._PROVIDERS):
+            if i == 0:                       # a dead model id
+                out.append((name, lambda _p, _m: (None, {
+                    "status_code": 404, "model": "zai-glm-4.7",
+                    "error": "model_archived"})))
+            else:                            # answers, but with prose
+                out.append((name, lambda _p, _m: ("Let me analyze this request...", {})))
+        return out
+
+    monkeypatch.setattr(router, "_PROVIDERS", _providers())
+    monkeypatch.setattr(router, "extract",
+                        lambda raw: (_ for _ in ()).throw(ValueError("No JSON object found")))
+
+    with caplog.at_level("ERROR"):
+        try:
+            router.call("prompt", "yt_short")
+        except Exception:
+            pass
+
+    assert "the response was unusable" in caplog.text, (
+        "verdict blamed a 4xx when a provider had actually answered"
+    )
+    assert "decommissioned" not in caplog.text.split("verdict:")[-1]
+    router.reset_cascade_log()

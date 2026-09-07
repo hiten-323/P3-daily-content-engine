@@ -313,7 +313,17 @@ def _log_cascade_verdict(label: str) -> None:
             r.get("category"), r.get("detail") or "",
         )
     cats = {r.get("category") for r in rows}
-    if cats <= {"no_api_key_or_transport", "circuit_open"}:
+    # Order matters. A provider that ANSWERED and produced junk is a different
+    # problem from one that never connected, and it must be named first even
+    # when some other provider in the cascade also returned a 4xx. On
+    # 2026-09-07 this reported yt_short as "a decommissioned model id" because
+    # cerebras 404'd, when the actual proximate failure was openrouter
+    # answering with reasoning prose instead of JSON — sending the reader to
+    # the wrong fix.
+    if cats & {"unparseable", "parsed_empty"}:
+        hint = ("a provider ANSWERED and the response was unusable — this is not a "
+                "cascade outage; inspect the model's output, the prompt and the schema")
+    elif cats <= {"no_api_key_or_transport", "circuit_open"}:
         hint = "no provider was actually reachable — check keys are set and non-empty"
     elif cats & {"auth_rejected"}:
         hint = "a provider rejected the credential — the key is present but invalid"
@@ -321,8 +331,6 @@ def _log_cascade_verdict(label: str) -> None:
         hint = "quota exhausted — free tiers reset daily; consider staggering the run"
     elif cats & {"client_error"}:
         hint = "4xx from the provider — most often a decommissioned or misspelled model id"
-    elif cats & {"unparseable", "parsed_empty"}:
-        hint = "providers answered but returned unusable content — inspect prompts, model output, and schema"
     else:
         hint = "see per-provider rows above"
     logger.error("[llm]   verdict: %s", hint)
