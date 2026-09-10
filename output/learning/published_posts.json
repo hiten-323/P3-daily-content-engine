@@ -11,9 +11,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -34,9 +35,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -57,9 +59,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -80,9 +83,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -103,9 +107,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -126,9 +131,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -149,9 +155,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -172,9 +179,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -195,9 +203,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -218,9 +227,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -241,9 +251,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -264,9 +275,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -287,9 +299,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -310,9 +323,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -333,9 +347,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -356,9 +371,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -379,9 +395,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -402,9 +419,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -425,9 +443,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -448,9 +467,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -471,9 +491,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -494,9 +515,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -517,9 +539,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -540,9 +563,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -563,9 +587,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -586,9 +611,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -609,9 +635,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -632,9 +659,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -655,9 +683,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -678,9 +707,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -701,9 +731,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -724,9 +755,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -747,9 +779,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -770,9 +803,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -793,9 +827,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -816,9 +851,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -839,9 +875,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -862,9 +899,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -885,9 +923,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -908,9 +947,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -931,9 +971,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -954,9 +995,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -977,9 +1019,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1000,9 +1043,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1023,9 +1067,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1046,9 +1091,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1069,9 +1115,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1092,9 +1139,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1115,9 +1163,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1138,9 +1187,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1161,9 +1211,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1184,9 +1235,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1207,9 +1259,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1230,9 +1283,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1253,9 +1307,10 @@
     "insights_recorded": false,
     "fetch_attempts": 0,
     "fetch_attempts_by_window": {
-      "24h": 10
+      "24h": 11
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h",
       "24h",
@@ -1284,9 +1339,10 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 6
+      "24h": 7
     },
     "failed_windows": [
+      "24h",
       "24h",
       "24h"
     ]
@@ -1311,9 +1367,10 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 5
+      "24h": 6
     },
     "failed_windows": [
+      "24h",
       "24h"
     ]
   },
@@ -1337,8 +1394,11 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 4
-    }
+      "24h": 5
+    },
+    "failed_windows": [
+      "24h"
+    ]
   },
   {
     "media_id": "17957571978223718",
@@ -1360,8 +1420,11 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 4
-    }
+      "24h": 5
+    },
+    "failed_windows": [
+      "24h"
+    ]
   },
   {
     "media_id": "18111134656996561",
@@ -1383,7 +1446,7 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 3
+      "24h": 4
     }
   },
   {
@@ -1406,7 +1469,7 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 3
+      "24h": 4
     }
   },
   {
@@ -1429,7 +1492,7 @@
     "insights_recorded": false,
     "measurement_snapshots": [],
     "fetch_attempts_by_window": {
-      "24h": 2
+      "24h": 3
     }
   }
 ]
