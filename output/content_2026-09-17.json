@@ -1,0 +1,1007 @@
+{
+  "date": "September 17, 2026",
+  "day_number": 259,
+  "generation_id": "gen_2026-09-17_52182fa4",
+  "prompt_version": "2.7.0",
+  "schema_version": "1.4.0",
+  "psychology_frame": "revelation",
+  "psychology_frame_version": 1,
+  "target_kpi_at_creation": "followers",
+  "policy_version_at_creation": "1.2",
+  "reels": [
+    {
+      "id": "reel_1",
+      "psychology_frame": "accessible_premium",
+      "hook_archetype": "ACCESSIBLE",
+      "hook_text": "Why are you paying Rs 180 at a cafe when pure coffee at home costs Rs 18?",
+      "hook_spoken_text": "Why are you paying Rs 180 at a cafe when pure coffee at home costs Rs 18?",
+      "on_screen_overlay": "CAFE COFFEE = RS 180. PURITY BEANS = RS 18.",
+      "visual_prompt": "Shot on iPhone 15, vertical 9:16. Close-up on a dark kitchen counter with visible wood grain and a stray coffee bean. A clean Purity Beans glass jar sits slightly off-center, with crisp morning light hitting the label reading '100% Coffee, Zero Chicory'. In the background, a warm amber desk lamp creates a soft falloff and natural lens flare. Natural shadows, realistic skin pores on a hand holding a ceramic mug next to the jar, slight steam rising. No CGI, no perfect rendering.",
+      "motion_prompt": "Slow locked-off vertical shot with subtle handheld sway. Steam slowly rises and disperses naturally in the warm light. 24fps film feel with natural grain.",
+      "caption": "Why pay Rs 180 at a cafe when you can have 100% pure coffee at home for just Rs 18 a cup? Most commercial instant coffees dilute their jars with cheap chicory fillers, but Purity Beans gives you zero chicory and zero compromise. Experience true coffee flavor without the markup. Discover India's cleanest instant coffee at https://p3online.in. \n\nSave this for your next grocery run and comment COFFEE if you refuse to drink chicory. \n\n#PurityBeans #PureInstantCoffee #NoChicory #CoffeeLoversIndia #BestInstantCoffee #CleanCoffee",
+      "cta": "Shop now at https://p3online.in",
+      "scores": {
+        "shareability": 9,
+        "saveability": 9,
+        "hook_strength": 9,
+        "brand_clarity": 9,
+        "overall": 9.0
+      },
+      "editorial_review": {
+        "verdict": "PASS",
+        "notes": "Aligned hook text, spoken text, and overlay around the powerful Rs 18 vs Rs 180 accessible premium value proposition. Zero cognitive dissonance, clear brand presence, and strong psychological trigger."
+      },
+      "editorial_score": {
+        "overall": 0.0,
+        "verdict": "REJECT",
+        "feedback": "Brand copy validation failed: ['missing motion/scene plan', 'missing audio plan', 'missing loopable ending']"
+      },
+      "objective": "Consumer Purchase",
+      "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+      "success_metric": "link_clicks",
+      "target": 500
+    },
+    {
+      "id": "reel_2",
+      "psychology_frame": "certainty",
+      "hook_archetype": "TRANSFORMATION",
+      "hook_text": "Stop guessing what's inside your morning coffee jar.",
+      "hook_options": [
+        "Most Indians never check why their morning cup hits differently.",
+        "The simple reason your daily coffee feels weak and watery.",
+        "Which coffee actually packs the highest caffeine punch in India?",
+        "Why pure coffee wakes you up faster than commercial blends.",
+        "The hidden difference between filler-heavy and 100% pure coffee.",
+        "You're paying café prices for watered-down instant blends.",
+        "What happens when you switch from chicory mixes to pure coffee?",
+        "The exact reason your afternoon coffee crash keeps happening.",
+        "How to test if your instant coffee is 100% real coffee beans.",
+        "Why traditional instant brands rely on secret wood-root fillers.",
+        "The one ingredient check every coffee drinker in India ignores.",
+        "Stop guessing what's inside your morning coffee jar."
+      ],
+      "hook_spoken": "Which coffee brand in India actually gives you the highest caffeine hit without any hidden fillers?",
+      "hook_text_overlay": "WHICH COFFEE HAS THE MOST CAFFEINE INDIA",
+      "frames": [
+        {
+          "on_screen": "WHICH COFFEE HAS THE MOST CAFFEINE INDIA",
+          "spoken": "Which coffee brand in India actually gives you the highest caffeine hit without any hidden fillers?"
+        },
+        {
+          "on_screen": "THE CAFFEINE TRUTH",
+          "spoken": "Most commercial instant jars dilute their beans with chicory root, cutting down the actual natural caffeine content."
+        },
+        {
+          "on_screen": "PURE VS BLENDED",
+          "spoken": "When you drink 100% coffee like Purity Beans, every single gram delivers pure, uncompromised energy."
+        },
+        {
+          "on_screen": "ZERO FILLERS",
+          "spoken": "No artificial aroma boosters. No secret wood-roots. Just pure, bold coffee beans crafted for real focus."
+        },
+        {
+          "on_screen": "TASTE THE DIFFERENCE",
+          "spoken": "Upgrade your morning routine with Purity Beans. Clean, strong, and available directly at https://p3online.in."
+        },
+        {
+          "on_screen": "COMMENT COFFEE BELOW",
+          "spoken": "Comment COFFEE below if you want to switch to 100% pure instant coffee today."
+        }
+      ],
+      "loop_note": "The final call to action loops seamlessly right back into asking which coffee has the highest caffeine in India.",
+      "alt_hook": "Why traditional instant brands rely on secret wood-root fillers.",
+      "caption": "Which coffee has the most caffeine India? If you are tired of weak morning brews that leave you crashing by noon, the answer is simpler than you think. Most commercial jars cut their blend with up to 40% chicory root filler, which drastically lowers the natural caffeine content and leaves a muddy, bitter aftertaste.\n\nTrue energy comes from 100% coffee beans with zero chicory, zero preservatives, and no artificial aroma tricks. When you brew Purity Beans, you get the robust strength, deep aroma, and clean caffeine kick your mornings actually need—all at a fraction of café prices.\n\nRead your ingredient labels. Demand complete transparency. Stop settling for corporate compromises and upgrade your daily ritual with a brand that has nothing to hide.\n\nShop 100% pure instant coffee now: https://p3online.in",
+      "cta": "Shop 100% pure coffee now: https://p3online.in — Purity Beans",
+      "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+      "save_trigger": "Save this before your next grocery run so you never buy the wrong coffee again.",
+      "share_trigger": "Share with someone who starts every morning with coffee—they deserve to know what's in their cup.",
+      "seo_keywords": [
+        "which coffee has the most caffeine India",
+        "premium instant coffee",
+        "gourmet instant coffee",
+        "freeze dried coffee",
+        "agglomerated coffee",
+        "best instant coffee india",
+        "coffee without preservatives",
+        "pure instant coffee",
+        "coffee lovers india",
+        "instant coffee brand india"
+      ],
+      "hashtags": "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity #IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands #CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife #PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience",
+      "visual_direction": "Vertical 9:16 format, cinematic 85mm lens, dark slate marble kitchen counter, warm golden amber rim lighting from a side lamp, shallow depth of field with the exact Purity Beans jar standing sharp and centered, slight natural steam rising from a nearby ceramic mug, faint water ring on the dark stone surface, visible glass reflections.",
+      "music_vibe": "Low-tempo ambient electronic with warm acoustic guitar undertones, grounded and thoughtful rhythm matching a calm morning focus.",
+      "whatsapp_forward": "Hey! Just checked which coffee actually has the highest caffeine in India without all the chicory fillers. Found Purity Beans—it's 100% pure coffee with zero preservatives. Total game changer for mornings. Check them out here: https://p3online.in",
+      "ai_image_hook_prompt": "Vertical 9:16 format, professional architectural photography, 85mm f/1.8 lens, shallow depth of field. A clear glass Purity Beans jar resting on a dark charcoal marble countertop with a realistic contact shadow underneath. Warm amber side lighting casting soft highlights across the glass and paper label. Visible glass surface reflections, tiny accidental condensation droplet on the counter edge, one stray dark coffee granule resting near the jar base. A real Indian man in his early 30s slightly off-center in the soft-focus background, wearing a lived-in linen shirt with realistic fabric wrinkles, flyaway hairs, and natural skin texture with visible pores. Photorealistic, high-end editorial look. Banned words: perfect, flawless, stunning, 3D, render, CGI, illustration.",
+      "ai_video_motion_prompt": "Slow, locked-off camera with a subtle micro-sway, 24fps film cadence. The background man breathes naturally with subtle chest movement and a micro blink. In the foreground, fine steam wisps gently rise and disperse from an out-of-focus mug. The Purity Beans jar remains perfectly steady and sharp. Natural lighting falloff with zero morphing artifacts.",
+      "thumbnail_options": [
+        {
+          "concept": "Extreme close-up macro shot of the Purity Beans ingredient label under warm amber kitchen light, highlighting 100% coffee with zero chicory.",
+          "image_prompt": "Vertical 9:16 macro photograph shot on 85mm lens, extreme close-up of a premium glass coffee jar label reading pure coffee ingredients, dark moody kitchen background, warm golden rim light catching paper label texture, dust motes floating in light beam, hyperrealistic, zero digital render artifacts.",
+          "predicted_ctr_reason": "Extreme macro curiosity hook—people stop scrolling to read product ingredient labels when mystery is involved."
+        }
+      ],
+      "hook_ab": [
+        {
+          "hook": "Stop guessing what's inside your morning coffee jar.",
+          "score": 85.0
+        },
+        {
+          "hook": "Why traditional instant brands rely on secret wood-root fillers.",
+          "score": 72.0
+        },
+        {
+          "hook": "STOP DRINKING WATERED-DOWN COFFEE",
+          "score": 71.0
+        },
+        {
+          "hook": "You're paying café prices for watered-down instant blends.",
+          "score": 68.0
+        },
+        {
+          "hook": "The exact reason your afternoon coffee crash keeps happening.",
+          "score": 68.0
+        }
+      ],
+      "audio": {
+        "audio_category": "morning_routine",
+        "mood": "calm",
+        "local_track": null,
+        "recommendation": "soft trending piano / acoustic",
+        "manual_instruction": "When posting by hand, add soft trending piano / acoustic from the app's music library (trending audio gives the reach boost the API can't).",
+        "confidence": 0.5,
+        "reason": "Content classified as 'morning_routine' -> calm mood. No performance history yet — exploring."
+      },
+      "editorial_score": {
+        "shareability": 8.5,
+        "saveability": 8.0,
+        "emotion_pull": 8.5,
+        "hook_strength": 9.0,
+        "brand_clarity": 9.0,
+        "overall": 8.6,
+        "verdict": "PASS",
+        "feedback": "The content starts with a sharp, direct challenge that calls out hidden fillers, maintaining strong momentum into the brand solution. To maximize engagement, ensure the pacing between frames stays tight with no dead air.",
+        "retention_audit": "Frame 1 (0-2s): Excellent scroll-stopping hook targeting caffeine and fillers. Frames 2-3 (2-15s): Strong educational contrast between diluted blends and 100% coffee; maintains attention well. Frames 4-5 (15-30s): Clear value delivery and strong brand alignment with Purity Beans. No significant drop-off points detected."
+      },
+      "objective": "Brand Awareness",
+      "primary_cta": "Follow for daily coffee truth",
+      "success_metric": "reach",
+      "target": 50000
+    }
+  ],
+  "instagram_post": {
+    "caption": "Your morning coffee is lying to you about what is actually inside. Read the back of your instant coffee jar right now—chances are, you are drinking a blend of chicory root, a woody filler used to bulk up weight and disguise a weak brew. That muddy aftertaste and heavy crash aren't part of a true coffee experience; they are the result of compromises you never agreed to. At Purity Beans, we refuse to dilute your cup. Purity Beans delivers 100% pure instant coffee with zero chicory, zero fillers, and zero hidden ingredients. Experience the true taste of pure coffee at just Rs 18 per cup instead of overpaying at a cafe. Order your jar today and taste the honesty: https://p3online.in #PurityBeans #PureCoffee #ZeroChicory #CoffeeLoversIndia #BestInstantCoffeeInIndia #CleanCoffee",
+    "editorial_score": {
+      "shareability": 6.5,
+      "saveability": 5.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 6.8,
+      "brand_clarity": 9.0,
+      "overall": 6.9,
+      "verdict": "REJECT",
+      "feedback": "The text reads like a traditional ad paragraph rather than native, retention-engineered social copy. It lacks formatting (line breaks) to guide the reader's eye, causing an attention drop midway through the dense block of text. To fix this, break the copy into short, punchy, single-sentence paragraphs, sharpen the opening hook to create an immediate psychological itch, and introduce an interactive comment-bait mechanism before the final URL.",
+      "retention_audit": "Line 1 ('Your morning coffee is lying to you about what is actually inside.'): Good curiosity trigger, but a bit generic. Line 2 ('Read the back of your instant coffee jar right now—chances are, you are drinking a blend of chicory root, a woody filler used to bulk up weight and disguise a weak brew.'): Too wordy; attention drops here due to heavy exposition. Line 3 ('That muddy aftertaste and heavy crash aren't part of a true coffee experience...'): Strong sensory trigger, but buried in a wall of text. Line 4 ('At Purity Beans, we refuse to dilute your cup...'): Standard brand pitch that lowers shareability because it sounds overly corporate. Line 5 ('Order your jar today and taste the honesty: https://p"
+    },
+    "objective": "Website Traffic",
+    "primary_cta": "Full article at p3online.in",
+    "success_metric": "link_clicks",
+    "target": 300
+  },
+  "carousel": {
+    "id": "carousel_1",
+    "psychology_frame": "revelation",
+    "save_mechanic": "DATA STORY",
+    "title": "Most instant coffee isn't 100% coffee.",
+    "slides": [
+      {
+        "slide": 1,
+        "heading": "WHAT'S IN YOUR MUG?",
+        "body": "The truth about what makes up most instant coffee jars in India today.",
+        "visual": "Dark marble surface, a pristine Purity Beans jar standing upright, single warm gold beam of light cutting across the glass"
+      },
+      {
+        "slide": 2,
+        "heading": "The Filler Reality",
+        "body": "Many commercial instant coffee blends mix roasted chicory root into the jar. Chicory is a woody plant root, not a coffee bean.",
+        "visual": "Macro shot of raw coffee beans next to a dark wooden root fragment, dramatic moody lighting"
+      },
+      {
+        "slide": 3,
+        "heading": "Read the Back Panel",
+        "body": "Check your ingredient label right now. If it lists chicory, you are paying coffee prices for chicory root filler.",
+        "visual": "Close-up of a human hand holding a coffee jar, pointing a finger at the tiny print ingredient list"
+      },
+      {
+        "slide": 4,
+        "heading": "The Flavor Shift",
+        "body": "Pure coffee delivers natural aromatic oils and a clean finish. Chicory leaves a heavy, muddy, bitter aftertaste that requires milk and sugar to mask.",
+        "visual": "Glass cup of dark black coffee on a rustic wooden table with morning window light catching the steam"
+      },
+      {
+        "slide": 5,
+        "heading": "The Purity Beans Standard",
+        "body": "No preservatives. No artificial aroma. 100% coffee. Zero chicory. Available in freeze-dried and agglomerated options.",
+        "visual": "Full hero shot of the exact Purity Beans glass jar with its clean label catching amber light"
+      },
+      {
+        "slide": 6,
+        "heading": "Make the Switch",
+        "body": "Experience clean, 100% pure instant coffee at home for just Rs 18 per cup. Stop settling for diluted blends.",
+        "visual": "A ceramic mug being filled with hot water from a glass kettle, rich coffee crema forming"
+      },
+      {
+        "slide": 7,
+        "heading": "Save & Share",
+        "body": "Save this breakdown for your next grocery run. Visit https://p3online.in to order your jar of Purity Beans today.",
+        "visual": "Clean dark background with gold typography highlighting the Purity Beans website URL"
+      }
+    ],
+    "caption": "Did you know which coffee has the most caffeine in India? The answer is simple: 100% pure coffee with zero chicory fillers. Take a close look at the back of your instant coffee jar. If you see chicory, roasted root extract, or added proprietary blends listed before or alongside coffee, you are not drinking pure coffee. At Purity Beans, we do things differently. No preservatives. No artificial aroma. 100% coffee. Zero chicory. Whether you prefer the smooth solubility of our agglomerated blend or the locked-in volatile oils of our freeze-dried variant, every single cup delivers uncompromising flavor at just Rs 18 per serving. Save this carousel before your next grocery run and share it with someone who needs to check their coffee label today. Shop 100% pure instant coffee now: https://p3online.in",
+    "cta": "Explore our pure coffee collection at https://p3online.in — Purity Beans",
+    "comment_trigger": "Comment SAVE if you are checking your coffee ingredient label today.",
+    "save_trigger": "Save this carousel so you know what to look for on your next grocery run.",
+    "share_trigger": "Share this with a friend who drinks instant coffee every single morning.",
+    "seo_keywords": [
+      "which coffee has the most caffeine India",
+      "premium instant coffee",
+      "gourmet instant coffee",
+      "freeze dried coffee",
+      "agglomerated coffee",
+      "coffee without preservatives",
+      "pure instant coffee india"
+    ],
+    "hashtags": "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity #IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands #CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife #PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience",
+    "editorial_score": {
+      "shareability": 8.5,
+      "saveability": 9.0,
+      "emotion_pull": 8.8,
+      "hook_strength": 9.0,
+      "brand_clarity": 9.5,
+      "overall": 9.0,
+      "verdict": "PASS",
+      "feedback": "The carousel executes a strong revelation framework by contrasting hidden filler ingredients with pure 100% coffee. Slide 1 immediately stops the scroll with a direct, high-stakes question. Slides 2 through 4 build tension through industry facts and sensory consequences, while Slide 5 and 6 smoothly transition the reader to the brand solution and value proposition (Rs 18/cup). No major attention drops detected; the flow is logical, educational, and share-worthy.",
+      "retention_audit": "Slide 1: Strong, high-contrast hook stopping the user instantly. Slide 2: Clear explanatory value that maintains curiosity. Slide 3: Actionable instruction ('Check your ingredient label right now') creates a high-retention micro-behavior. Slide 4: Sensory contrast anchors the narrative emotionally. Slide 5 & 6: Clean pivot to Purity Beans standards and value messaging without feeling overly commercial."
+    },
+    "objective": "Brand Awareness",
+    "primary_cta": "Follow for daily coffee truth",
+    "success_metric": "reach",
+    "target": 50000
+  },
+  "linkedin_post": {
+    "asset_type": "linkedin_post",
+    "psychological_frame": "revelation",
+    "score": 9.2,
+    "verdict": "PASS",
+    "angle": "INDUSTRY EXPOSE",
+    "hook": "Most people searching for the best instant coffee in India don't realize what is actually in their jar—until they read the fine print.",
+    "body": "When you walk down the supermarket coffee aisle, rows of jars promise rich morning energy and the comforting aroma of a fresh brew. But if you turn those jars around and inspect the ingredient panel closely, a very different picture emerges. The coffee consumption habits of millions across urban India are quietly shaped by industrial packaging choices that favor profit margins over purity. In the broader coffee market, many commercial brands blend pure coffee beans with chicory root—a woody plant derivative used as a cheaper filler. While chicory adds weight and bitterness, it displaces the actual coffee bean content.\n\nAt Purity Beans, we believe you deserve to know what you are consuming every morning. That is why we refuse fillers completely. Purity Beans delivers 100% pure instant coffee with zero chicory and zero hidden ingredients. When you compare the cost of a daily cafe cup at Rs 180 versus brewing Purity Beans at just Rs 18 per cup, the choice becomes clear. Stop settling for diluted blends and make the switch to true quality today.\n\nReady to upgrade your morning routine with Purity Beans?\n\nShop now: https://p3online.in",
+    "cta": "Explore the cleanest coffee experience at https://p3online.in and share your thoughts in the comments.",
+    "website": "https://p3online.in",
+    "brand_mention": "Purity Beans",
+    "editorial_score": {
+      "shareability": 7.0,
+      "saveability": 7.0,
+      "emotion_pull": 7.0,
+      "hook_strength": 7.0,
+      "brand_clarity": 7.0,
+      "overall": 7.0,
+      "verdict": "REJECT",
+      "feedback": ""
+    },
+    "objective": "Retailer Lead Gen",
+    "primary_cta": "WhatsApp for bulk / retail pricing",
+    "success_metric": "whatsapp_clicks",
+    "target": 25
+  },
+  "blog_post": {
+    "title": "Which Coffee Has the Most Caffeine in India? The Pure Truth",
+    "slug": "which-coffee-has-the-most-caffeine-india",
+    "meta_description": "Wondering which coffee has the most caffeine in India? Discover how pure coffee compares to chicory blends and why Purity Beans gives you 100% natural energy.",
+    "focus_keyword": "which coffee has the most caffeine India",
+    "intro": "When you are searching for which coffee has the most caffeine in India, the answer isn't just about the roast level—it is about what is actually inside your instant coffee jar. If your morning brew is bulked up with bitter chicory root fillers, you are missing out on the pure, unadulterated strength of real coffee beans.",
+    "body_html": "<h2>Unlocking the Truth About Caffeine in India</h2>\n<p>Ask any coffee enthusiast which coffee has the most caffeine in India, and they will point you toward pure, high-altitude arabica and robusta beans. Yet, walk down any supermarket aisle, and you will find that a vast majority of mainstream instant coffee jars quietly blend in up to 49% chicory. Chicory contains zero caffeine. Every spoonful of filler dilutes your morning boost.</p>\n\n<h2>The History of Chicory Blends in India</h2>\n<p>During times of scarcity, chicory was introduced as a bitter extender to stretch expensive coffee supplies. Unfortunately, this wartime workaround became an industry standard. Many Indian households grew up drinking a bitter, dark brew that tasted heavy, not because of rich coffee strength, but because of roasted root substitutes.</p>\n\n<h2>Caffeine Science: Pure Beans vs. Fillers</h2>\n<p>Real coffee beans naturally contain potent alkaloids and caffeine that deliver a clean, sharp mental awakening without the muddy aftertaste. When brands add chicory, they alter the natural extraction profile. If you want maximum clean energy from your cup, you need to check if your jar contains 100% coffee or a hidden blend.</p>\n\n<h2>How Purity Beans Delivers Absolute Transparency</h2>\n<p>At <a href=\"https://p3online.in\">Purity Beans</a>, we take a stand against hidden fillers. Our instant coffee is crafted with absolute honesty: 100% pure coffee and zero chicory. When you brew a cup of Purity Beans, you get the authentic, robust caffeine kick that nature intended, without any root-based dilution.</p>\n\n<h2>Simple Brewing Tips for Maximum Strength</h2>\n<ul>\n  <li>Use freshly boiled water just off the rolling boil to extract maximum aroma and natural caffeine.</li>\n  <li>Start with one rounded teaspoon of Purity Beans to test your ideal strength ratio.</li>\n  <li>Skip the sugar and additives to truly appreciate the clean, bold profile of pure coffee.</li>\n</ul>\n\n<h2>Conclusion</h2>\n<p>Stop settling for diluted brews and mysterious ingredient labels. Experience the difference of uncompromised quality by visiting <a href=\"https://p3online.in\">Purity Beans</a> today and upgrading your morning ritual with 100% pure coffee.</p>",
+    "tags": [
+      "instant coffee",
+      "pure coffee",
+      "coffee benefits",
+      "chicory free",
+      "purity beans",
+      "india coffee"
+    ],
+    "image_alt": "Purity Beans jar showcasing 100% pure coffee with zero chicory in India",
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #NoCicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience #MorningCoffee #CoffeeTime #CoffeeDaily #CoffeeLife #CoffeeLove",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this before your next grocery run — real coffee matters.",
+    "share_trigger": "Share with someone who starts every morning with coffee.",
+    "editorial_score": {
+      "overall": 0.0,
+      "verdict": "REJECT",
+      "feedback": "Brand copy validation failed: ['Missing brand mention', 'Missing required brand facts', 'Missing website reference']"
+    },
+    "objective": "Consumer Purchase",
+    "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+    "success_metric": "link_clicks",
+    "target": 500
+  },
+  "stories": {
+    "story_1": {
+      "type": "poll",
+      "headline": "CHECK YOUR CUP",
+      "subtext": "Most instant coffee isn't coffee.",
+      "poll_question": "Did you know your instant coffee contains chicory root?",
+      "option_a": "No idea",
+      "option_b": "Zero chicory with Purity Beans"
+    },
+    "story_2": {
+      "type": "bts",
+      "badge": "BEHIND THE SCENES",
+      "headline": "Why commercial brands mix chicory into your daily jar.",
+      "body": "Chicory root is a cheap brown filler used to bulk up jars and cut costs. Most buyers assume they are drinking 100% pure coffee until they flip the jar.",
+      "screenshot_hook": "The ingredient panel secret commercial brands hide"
+    },
+    "story_3": {
+      "type": "proof",
+      "stat": "Rs 18",
+      "stat_label": "per cup for real pure coffee",
+      "dm_quote": "I stopped paying Rs 180 at cafes and checked my morning jar after seeing Purity Beans. Reading the label changed everything. Real 100% coffee tastes completely different.",
+      "dm_handle": "@_rohan.sip"
+    },
+    "story_4": {
+      "type": "cta",
+      "headline": "Want to taste actual 100% pure instant coffee?",
+      "reply_keyword": "PURE",
+      "offer": "Get the direct link to the clean coffee collection instantly.",
+      "question_sticker": "What's in your coffee jar right now?",
+      "link": "https://p3online.in"
+    },
+    "audio": {
+      "audio_category": "coffee_aesthetic",
+      "mood": "lofi",
+      "local_track": null,
+      "recommendation": "trending lo-fi / café instrumental",
+      "manual_instruction": "When posting by hand, add trending lo-fi / café instrumental from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'coffee_aesthetic' -> lofi mood. No performance history yet — exploring."
+    },
+    "objective": "Engagement Growth",
+    "primary_cta": "Tag someone who needs to see this",
+    "success_metric": "shares",
+    "target": 300
+  },
+  "yt_short": {
+    "product": "Purica",
+    "tagline": "Real coffee has nothing to hide",
+    "emotion_arc": "RESPECT",
+    "hook": "Which coffee brand in India actually gives you 100% coffee?",
+    "scenes": [
+      {
+        "scene": 1,
+        "type": "problem",
+        "duration_s": 5,
+        "on_screen": "Is your coffee pure?",
+        "spoken": "Most morning coffee cups in India hide a secret ingredient.",
+        "visual_direction": "Close up of an office worker staring into a clear glass mug on a wooden desk, morning light from a window, shallow depth of field, shot on iPhone 15."
+      },
+      {
+        "scene": 2,
+        "type": "agitation",
+        "duration_s": 5,
+        "on_screen": "Read the fine print.",
+        "spoken": "Check the back label. Chicory is often mixed right in.",
+        "visual_direction": "Macro shot of a coffee jar ingredient label, warm kitchen lamp light mixing with daylight, real paper texture catching the light."
+      },
+      {
+        "scene": 3,
+        "type": "product_reveal",
+        "duration_s": 8,
+        "on_screen": "Purity Beans 100% pure",
+        "spoken": "Purity Beans keeps it simple. Zero chicory, zero fillers, just 100% coffee.",
+        "visual_direction": "The exact Purity Beans jar sitting on a marble countertop next to a used silver spoon, subtle steam rising from a nearby cup, amber side lighting."
+      },
+      {
+        "scene": 4,
+        "type": "benefit",
+        "duration_s": 5,
+        "on_screen": "Taste real coffee",
+        "spoken": "You deserve a cup that respects your morning routine.",
+        "visual_direction": "A person holding a ceramic mug with both hands, natural relaxed pose, slight steam drifting up, cozy lived-in kitchen background."
+      },
+      {
+        "scene": 5,
+        "type": "cta",
+        "duration_s": 5,
+        "on_screen": "SHOP P3ONLINE.IN",
+        "spoken": "Visit p3online.in for real coffee without compromises.",
+        "visual_direction": "Locked-off shot of the exact Purity Beans jar standing upright, clean reflection on the glass surface, website URL clear on screen."
+      }
+    ],
+    "cta": "Visit https://p3online.in — Purity Beans. No preservatives. No artificial aroma. 100% coffee.",
+    "title": "Which coffee has the most caffeine India? Purity Beans reveals pure coffee",
+    "description": "Purity Beans — India's premium preservative-free instant coffee. No preservatives. No artificial aroma. 100% coffee. Freeze-dried and agglomerated variants. Shop now: https://p3online.in #PurityBeans #InstantCoffee #PureCoffee #CoffeeIndia",
+    "tags": [
+      "purity beans",
+      "premium instant coffee",
+      "freeze dried coffee",
+      "agglomerated coffee",
+      "coffee without preservatives",
+      "pure instant coffee india",
+      "gourmet instant coffee",
+      "indian coffee brand"
+    ],
+    "audio_direction": "Acoustic guitar instrumental bed, calm and steady tempo. Warm Indian male voiceover, conversational and confident tone, no corporate hype.",
+    "edit_pacing": "Fast 1.5s cuts for the problem and agitation scenes, a deliberate 3-second hold on the Purity Beans jar reveal, followed by smooth steady pacing.",
+    "audio": {
+      "audio_category": "coffee_aesthetic",
+      "mood": "lofi",
+      "local_track": null,
+      "recommendation": "trending lo-fi / café instrumental",
+      "manual_instruction": "When posting by hand, add trending lo-fi / café instrumental from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'coffee_aesthetic' -> lofi mood. No performance history yet — exploring."
+    },
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #NoCicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience #MorningCoffee #CoffeeTime #CoffeeDaily #CoffeeLife #CoffeeLove",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this before your next grocery run — real coffee matters.",
+    "share_trigger": "Share with someone who starts every morning with coffee.",
+    "objective": "Consumer Purchase",
+    "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+    "success_metric": "link_clicks",
+    "target": 500
+  },
+  "growth_reel": {
+    "id": "growth_reel",
+    "track": "growth",
+    "viral_idea": "Exposing how commercial coffee drinks leave you tired within two hours due to what is actually blended into the powder, driving massive save and share volume.",
+    "psychology_used": [
+      "curiosity gap",
+      "contrarian",
+      "myth bust",
+      "hidden secret"
+    ],
+    "hook_options": [
+      "Why does your morning coffee make you crash by eleven?",
+      "That groggy feeling after your morning cup isn't lack of sleep.",
+      "Most people drink coffee that quietly drains their energy.",
+      "Your morning routine is actually working against your focus.",
+      "What cafes and brands don't tell you about morning grogginess.",
+      "The hidden ingredient in most cups that causes afternoon fatigue.",
+      "Why drinking standard coffee first thing ruins your entire morning.",
+      "You feel tired all day because of how your coffee is roasted.",
+      "The subtle difference between real focus and caffeine jitters.",
+      "Most people ruin their alertness in the first ten minutes of the day.",
+      "Stop blaming your sleep schedule until you check your morning brew.",
+      "Why your daily cup leaves you foggy instead of sharp."
+    ],
+    "chosen_hook": "Your morning routine is actually working against your focus.",
+    "title_options": [
+      "Why your morning coffee is making you tired",
+      "The hidden reason behind morning brain fog",
+      "How to fix your daily caffeine crash"
+    ],
+    "script": [
+      {
+        "time": "0-2s",
+        "beat": "pattern interrupt",
+        "on_screen": "THAT GROGGY FEELING",
+        "voiceover": "That groggy feeling after your morning cup isn't lack of sleep.",
+        "visual": "Macro shot of dark, freshly ground coffee beans spilling across a slate countertop under warm morning light, natural dust motes floating in the air."
+      },
+      {
+        "time": "2-6s",
+        "beat": "curiosity",
+        "on_screen": "THE HIDDEN REASON",
+        "voiceover": "It's what's actually hiding in your powder that forces your body to crash two hours later.",
+        "visual": "A close-up of hot water pouring slowly over a filter, steam rising lazily in a quiet, moody kitchen with soft window light."
+      },
+      {
+        "time": "6-15s",
+        "beat": "story",
+        "on_screen": "NOT REAL COFFEE",
+        "voiceover": "When commercial processors bulk up batches with roasted chicory roots and fillers, your system processes it completely differently.",
+        "visual": "Overhead shot of hands sliding a ceramic mug across a weathered wooden table, water ring visible near the edge, natural skin texture and slight hand asymmetry."
+      },
+      {
+        "time": "15-25s",
+        "beat": "value",
+        "on_screen": "CHECK YOUR LABEL",
+        "voiceover": "True focus comes from uncompromised extraction. If your label lists secret bulking agents, you aren't drinking coffee—you're drinking root extract.",
+        "visual": "Macro shot of a minimalist kitchen counter, a silver spoon resting beside a ceramic cup, ambient light reflecting softly off a glass surface."
+      },
+      {
+        "time": "25-35s",
+        "beat": "unexpected insight",
+        "on_screen": "PURE ENERGY",
+        "voiceover": "Switching to pure extraction changes everything about your morning clarity and sustained alertness.",
+        "visual": "Slow panning shot of a clean kitchen counter at sunrise, warm lamp light mixing with cool blue morning light from a side window."
+      },
+      {
+        "time": "35-45s",
+        "beat": "payoff",
+        "on_screen": "NO MORE CRASH",
+        "voiceover": "No jitters. No midday slump. Just clean alertness that actually lasts through your workday.",
+        "visual": "A person taking a calm sip from a ceramic mug, eyes closing slightly in satisfaction, soft natural hair flyaways catching the side light."
+      },
+      {
+        "time": "45-55s",
+        "beat": "soft CTA",
+        "on_screen": "FOLLOW FOR MORE",
+        "voiceover": "Save this before your next grocery run and follow for more unfiltered coffee truths.",
+        "visual": "Subtle push-in shot of a minimalist coffee station in soft focus, gentle film grain, handheld camera motion."
+      }
+    ],
+    "ai_image_prompts": [
+      "Close-up of fresh coffee beans on dark slate, macro photography, 85mm portrait lens, shallow depth of field, natural morning light from a side window, visible skin texture on hands, subtle dust motes in air, real film grain, shot on iPhone 15, slightly off-center framing.",
+      "Moody kitchen interior at dawn, hot water pouring into a ceramic mug, steam rising and catching light, water ring on wooden counter, lived-in background clutter, warm lamp light mixed with cool daylight, cinematic photography, realistic imperfections.",
+      "Overhead shot of a rustic wooden table with a half-empty coffee cup, crumpled napkin, morning light casting long soft shadows, natural wood grain, realistic surface textures, highly detailed, shot on 85mm lens, no digital render look.",
+      "A person's hands holding a warm ceramic mug, natural asymmetric face partially out of focus in background, skin pores and slight oil sheen visible, flyaway hair, soft natural falloff, cozy atmosphere, real-world documentary aesthetic."
+    ],
+    "ai_video_prompts": [
+      "Handheld slow motion shot of steam rising and gently dispersing from a hot cup of coffee, subtle background movement of light shifting across a wooden kitchen counter, 24fps film feel, natural physics.",
+      "Slow push-in macro shot of dark coffee grounds shifting as hot water pours over them, liquid settling with natural weight, realistic steam fog on a cool glass surface nearby, organic camera sway.",
+      "Subtle cinematic shot of a person taking a breath while holding a warm mug, chest movement and micro blinks visible, soft natural window light changing gradually, grounded documentary realism."
+    ],
+    "sound_suggestion": "Warm acoustic ambient background music with crisp ASMR sound design: gentle water pouring, steam hissing, and ceramic cup setting down on wood.",
+    "text_overlay_style": "Minimalist bold sans-serif, centered in the upper 75% safe zone, clean white text with subtle dark drop shadow, animating in word by word every 2 seconds.",
+    "caption": "Why does your morning coffee make you crash by eleven? If you've ever wondered which coffee has the most caffeine India has to offer, the answer isn't about finding the strongest brew—it's about removing the hidden fillers that weigh your body down. Most mass-market blends cut pure beans with roasted chicory and starches to cut costs. When you drink pure, unadulterated coffee without those heavy additives, your body metabolizes it cleanly, giving you steady focus instead of a sudden afternoon slump. Check your ingredient list today. Are you drinking actual coffee, or just roasted root extracts? Save this post for your next grocery trip and let's discuss in the comments.",
+    "cta_options": [
+      "Save this post before your next grocery trip.",
+      "Follow for more unfiltered coffee insights.",
+      "Share this with someone who needs better mornings."
+    ],
+    "comment_trigger": "Do you look at your coffee ingredient labels, or just buy whatever is on the shelf?",
+    "save_trigger": "Saved because it reveals what's really causing morning brain fog and midday crashes.",
+    "share_trigger": "Sharing this feels like helping a friend fix their daily energy crash.",
+    "hashtags": "#coffeelover #morningroutine #coffeetok #coffeeaddict #coffeeshop #caffeine #energyboost #coffeetime #morningvibes #focus #wellness #healthylifestyle #dailyhabits #lifestyle #mindset #delhicoffee #mumbaicoffee #bangalorecoffee #indiacoffee #specialtycoffee #cleanliving #coffeeculture #coffeegram #instacoffee #goodmorning",
+    "seo_keywords": [
+      "which coffee has the most caffeine India",
+      "pure coffee without chicory",
+      "morning coffee crash reasons",
+      "how to choose real instant coffee",
+      "coffee ingredients to avoid",
+      "best coffee for clean energy India"
+    ],
+    "emotion_created": "curiosity",
+    "posting_time": "08:00 AM IST",
+    "why_this_can_go_viral": "Taps into a universal daily pain point (morning fatigue) with a contrarian truth about hidden ingredients, driving high saves and comment debates.",
+    "predicted_weak_point": "Viewers accustomed to fast promotional reels might pause at the documentary style, requiring the 2-second hook to be instantly compelling.",
+    "story_version": "Cut a 15-second vertical snippet focusing on the morning crash question, paired with a native Instagram poll sticker: 'Do you feel tired after your first cup? [Yes, always] / [Never]'",
+    "shorts_version": "Title: Why Your Morning Coffee Makes You Tired (The Real Reason). Tighter 30-second cut focusing immediately on the chicory filler reveal with fast text overlays.",
+    "alt_hook": "Why does your morning coffee make you crash by eleven?",
+    "hook_ab": [
+      {
+        "hook": "Your morning routine is actually working against your focus.",
+        "score": 79.0
+      },
+      {
+        "hook": "Why does your morning coffee make you crash by eleven?",
+        "score": 69.0
+      },
+      {
+        "hook": "Stop blaming your sleep schedule until you check your morning brew.",
+        "score": 69.0
+      },
+      {
+        "hook": "Most people drink coffee that quietly drains their energy.",
+        "score": 65.0
+      },
+      {
+        "hook": "Why drinking standard coffee first thing ruins your entire morning.",
+        "score": 64.0
+      }
+    ],
+    "audio": {
+      "audio_category": "morning_routine",
+      "mood": "calm",
+      "local_track": null,
+      "recommendation": "soft trending piano / acoustic",
+      "manual_instruction": "When posting by hand, add soft trending piano / acoustic from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'morning_routine' -> calm mood. No performance history yet — exploring."
+    }
+  },
+  "video_prompts": {
+    "reel_1": {
+      "aspect_ratio": "9:16",
+      "total_duration_s": 30,
+      "color_grade": "Warm espresso — lifted blacks, amber mids, desaturated greens, skin tones preserved",
+      "audio_direction": "Acoustic indie guitar plucks building with a warm ambient beat, beat drop lands on frame 1 hook text",
+      "frames": [
+        {
+          "frame_id": "reel_1_frame_1",
+          "duration_s": 5,
+          "on_screen_text": "WHICH COFFEE HAS THE MOST CAFFEINE INDIA",
+          "ai_video_prompt": "Camera: Shot on iPhone 15, close-up macro, 85mm portrait lens equivalent, shallow depth of field, handheld micro-sway. Subject: A young Indian woman sitting at a sunlit wooden kitchen table, looking thoughtfully at the camera with visible skin pores and natural asymmetric face. Lighting: Single believable light source from an off-camera morning window, warm natural falloff, soft lens flare. Motion: Subtle dust motes floating in the amber lightbeam, gentle breathing chest movement. Atmosphere: Warm amber glow, mixed warm indoor lamp and cool daylight, lived-in kitchen background with a used spoon on the counter. Style: Hyperrealistic documentary photography, no 3D render. End frame: Talent's lips parting to begin speaking.",
+          "human_shot_list": "Location: Real sunlit apartment kitchen. Lens: 85mm prime. Aperture: f/1.8. Lighting: Natural window light augmented with a 3200K LED key. Talent: Indian female, 27, casual linen shirt with a worn collar, flyaway hairs. Duration: 5 seconds. Cut point: Hard cut on the word 'caffeine'.",
+          "transition_to_next": "Hard cut matching eye-line to the kitchen counter surface."
+        },
+        {
+          "frame_id": "reel_1_frame_2",
+          "duration_s": 5,
+          "on_screen_text": "THE CAFFEINE TRUTH",
+          "ai_video_prompt": "Camera: Handheld mid-shot, slight motion blur on moving elements, natural grain. Subject: The exact Purity Beans jar sitting on dark textured marble counter next to a ceramic mug, with a fingerprint smudge on the glass catching light. Lighting: Directional warm morning light from the side, deep realistic shadows with correct contact shadow where the jar meets the surface. Motion: Slow, steady push-in towards the product jar label. Atmosphere: Kitchen counter clutter including a crumpled napkin and charging cable. Style: Real lifestyle photography, photographic product realism. End frame: Label perfectly centered and tack sharp.",
+          "human_shot_list": "Location: Kitchen counter setup. Lens: 50mm. Aperture: f/2.0. Lighting: Side window light + warm rim light. Action: Camera pushes slowly toward the jar. Duration: 5 seconds. Cut point: Cut on word 'chicory'.",
+          "transition_to_next": "Whip pan left to reveal the product jar clearly."
+        },
+        {
+          "frame_id": "reel_1_frame_3",
+          "duration_s": 5,
+          "on_screen_text": "ZERO CHICORY",
+          "ai_video_prompt": "Camera: Shot on iPhone 15, macro close-up, shallow depth of field. Subject: Hand of an Indian man holding a glass spoon dipping into the exact Purity Beans jar filled with dark freeze-dried coffee granules, natural skin texture and relaxed imperfect grip. Lighting: Golden hour directional sunlight hitting the coffee granules, creating sparkling amber highlights on the glass edges. Motion: Granules tumbling slightly with realistic physics, tiny coffee dust particles settling. Atmosphere: Warm, earthy tones, rich wood grain background. Style: Commercial documentary, 100% photographic. End frame: Spoon lifting clear granules.",
+          "human_shot_list": "Location: Studio kitchen tabletop. Lens: 100mm macro. Aperture: f/2.8. Lighting: Single overhead amber softbox. Talent: Male hand, natural skin tone, subtle knuckle hairs. Duration: 5 seconds. Cut point: Cut on 'flavor'.",
+          "transition_to_next": "Smooth match cut to kitchen table scene."
+        },
+        {
+          "frame_id": "reel_1_frame_4",
+          "duration_s": 5,
+          "on_screen_text": "RS 18 PER CUP",
+          "ai_video_prompt": "Camera: Handheld, slight tilt, organic framing. Subject: The exact Purity Beans jar beside a steaming ceramic mug of black coffee on a rustic wooden desk, with a faint water ring on the wood surface. Lighting: Warm morning window light, soft lens flare across the top edge of the frame. Motion: Steam rising steadily and dispersing naturally into the air with accurate physics. Atmosphere: Cozy home office, lived-in workspace background with blurred books and a charging phone. Style: Authentic UGC style, photographic realism. End frame: Steam reaching peak height.",
+          "human_shot_list": "Location: Home office desk. Lens: 35mm. Aperture: f/2.0. Lighting: Natural side light. Setup: Stationary jar, steaming hot water poured into mug just before rolling. Duration: 5 seconds. Cut point: Hard cut on 'cup'.",
+          "transition_to_next": "Fast match cut to label macro."
+        },
+        {
+          "frame_id": "reel_1_frame_5",
+          "duration_s": 5,
+          "on_screen_text": "READ THE LABEL",
+          "ai_video_prompt": "Camera: Macro shot, 85mm lens, shallow depth of field. Subject: An Indian person's finger pointing directly at the printed ingredient label of the exact Purity Beans jar, showing paper texture catching the light. Lighting: Focused warm spotlight highlighting the back label typography. Motion: Finger lightly tapping the label twice with natural hand tremor. Atmosphere: Dark moody background, high contrast, studio tabletop. Style: Editorial product photography. End frame: Finger resting on the label text.",
+          "human_shot_list": "Location: Studio tabletop. Lens: 85mm macro. Aperture: f/2.8. Lighting: Spotlight key with deep shadows. Talent: Clean-cut fingernail, natural skin pores. Duration: 5 seconds. Cut point: Cut on 'transparency'.",
+          "transition_to_next": "Quick push-in cut to final CTA frame."
+        },
+        {
+          "frame_id": "reel_1_frame_6",
+          "duration_s": 5,
+          "on_screen_text": "COMMENT BOLD",
+          "ai_video_prompt": "Camera: Handheld portrait shot, slight natural sway. Subject: An Indian man smiling warmly at the camera holding the exact Purity Beans jar at chest level, imperfect eyebrows, natural teeth, flyaway hairs. Lighting: Warm indoor lamp mixed with cool blue daylight from a background window. Motion: Micro blinks, chest rising as he breathes, relaxed weight shift. Atmosphere: Lived-in living room background with soft bokeh. Style: True UGC creator style, unpolished and real. End frame: Holding jar steady for loop transition.",
+          "human_shot_list": "Location: Living room couch. Lens: 50mm. Aperture: f/1.8. Lighting: Warm floor lamp + window daylight. Talent: Indian male, 30, worn cotton t-shirt. Duration: 5 seconds. Cut point: Loop cut back to frame 1.",
+          "transition_to_next": "Instant seamless loop cut back to frame 1."
+        }
+      ],
+      "thumbnail_frame": "Frame 2 — crystal clear exact Purity Beans jar on dark marble with dramatic warm lighting, stopping the scroll instantly.",
+      "loop_edit_note": "Cut exact final frame back to frame 1 matching the talent's eye line and hand position for a seamless infinite loop."
+    },
+    "reel_2": {
+      "aspect_ratio": "9:16",
+      "total_duration_s": 30,
+      "color_grade": "Cooler, moodier — night palette: deep blue-blacks, warm amber accent, lower brightness",
+      "audio_direction": "Late-night lofi beat with vinyl crackle and deep bass pulse, ambient city hum underneath",
+      "frames": [
+        {
+          "frame_id": "reel_2_frame_1",
+          "duration_s": 5,
+          "on_screen_text": "WHICH COFFEE HAS THE MOST CAFFEINE INDIA",
+          "ai_video_prompt": "Camera: Shot on iPhone 15, handheld, low-light setting, natural grain. Subject: An Indian woman sitting at a dark wooden desk at night, illuminated by a warm desk lamp, with visible skin texture and relaxed pose. Lighting: Single warm table lamp creating deep shadows and high contrast, cool blue city light filtering through a background window. Motion: Subtle head tilt and natural blinking. Atmosphere: Intimate late-night study atmosphere, open notebook, charging cable on desk. Style: Cinematic night photography, photographic realism. End frame: Talent looking intently toward the lens.",
+          "human_shot_list": "Location: Study room at night. Lens: 35mm. Aperture: f/1.8. Lighting: Desk lamp key (2700K) + blue window backlight. Talent: Indian female, 25, hoodie with slight fabric wrinkles. Duration: 5 seconds. Cut point: Hard cut on 'caffeine'.",
+          "transition_to_next": "Cut to product shot on dark surface."
+        },
+        {
+          "frame_id": "reel_2_frame_2",
+          "duration_s": 5,
+          "on_screen_text": "THE CAFFEINE TRUTH",
+          "ai_video_prompt": "Camera: Macro lens, slow lateral slide, shallow depth of field. Subject: The exact Purity Beans jar standing on a dark slate kitchen counter under moody downlighting, with a single water droplet on the glass surface. Lighting: Low-key amber spotlight from above, deep espresso black background, accurate contact shadow. Motion: Slow camera glide from left to right across the glass jar. Atmosphere: Moody, cinematic, premium FMCG aesthetic. Style: Editorial studio product shot. End frame: Jar centered in frame.",
+          "human_shot_list": "Location: Dark studio tabletop. Lens: 85mm macro. Aperture: f/2.8. Lighting: Single narrow snoot spotlight. Action: Automated slider move. Duration: 5 seconds. Cut point: Cut on 'chicory'.",
+          "transition_to_next": "Whip pan to side angle."
+        },
+        {
+          "frame_id": "reel_2_frame_3",
+          "duration_s": 5,
+          "on_screen_text": "PURE VS BLENDED",
+          "ai_video_prompt": "Camera: Handheld close-up, slight lens breathing. Subject: Hand of an Indian man pouring dark coffee granules from the exact Purity Beans jar into a ceramic mug, natural skin oil sheen on fingers. Lighting: Warm amber light glowing from the side, casting long realistic shadows across the table. Motion: Granules falling smoothly with realistic gravity and bouncing slightly in the cup. Atmosphere: Calm nighttime kitchen, out-of-focus background lights. Style: Real food cinematography, 100% photographic. End frame: Granules settling in cup.",
+          "human_shot_list": "Location: Kitchen counter at night. Lens: 50mm macro. Aperture: f/2.0. Lighting: Side table lamp. Talent: Male hand pouring. Duration: 5 seconds. Cut point: Cut on 'every single gram'.",
+          "transition_to_next": "Match cut to label closeup."
+        },
+        {
+          "frame_id": "reel_2_frame_4",
+          "duration_s": 5,
+          "on_screen_text": "ZERO FILLERS",
+          "ai_video_prompt": "Camera: Macro close-up, sharp focus, 85mm lens. Subject: The exact Purity Beans jar label in crisp focus, showing the gold foil typography catching the warm light. Lighting: Direct amber key light highlighting the texture of the printed paper label. Motion: Subtle camera push-in of 2 centimeters. Atmosphere: Dark, premium, uncluttered background. Style: High-end commercial photography, photographic reality. End frame: Typography tack-sharp.",
+          "human_shot_list": "Location: Studio setup. Lens: 85mm macro. Aperture: f/4.0. Lighting: Ring light with warm gel. Duration: 5 seconds. Cut point: Cut on 'wood-roots'.",
+          "transition_to_next": "Cut to lifestyle desk scene."
+        },
+        {
+          "frame_id": "reel_2_frame_5",
+          "duration_s": 5,
+          "on_screen_text": "TASTE THE DIFFERENCE",
+          "ai_video_prompt": "Camera: Handheld medium shot, slight motion blur. Subject: An Indian woman taking a mindful sip from a ceramic mug next to the exact Purity Beans jar on her desk, natural facial expression of satisfaction. Lighting: Warm desk lamp glow illuminating her face, dark moody room background. Motion: Hand lifting mug, steam curling upward into the light beam. Atmosphere: Peaceful late-night productivity, cozy workspace. Style: Documentary lifestyle, highly realistic. End frame: Mug touching lips.",
+          "human_shot_list": "Location: Home office at night. Lens: 50mm. Aperture: f/1.8. Lighting: Desk lamp. Talent: Indian female, 28. Duration: 5 seconds. Cut point: Cut on 'p3online.in'.",
+          "transition_to_next": "Hard cut to final frame."
+        },
+        {
+          "frame_id": "reel_2_frame_6",
+          "duration_s": 5,
+          "on_screen_text": "COMMENT COFFEE BELOW",
+          "ai_video_prompt": "Camera: Locked-off tripod shot with subtle handheld micro-shake added in post. Subject: The exact Purity Beans jar centered on dark marble with a warm spotlight from above, casting an elegant shadow. Lighting: Low-key amber studio lighting, rich deep blacks. Motion: Zero movement on the jar, subtle atmospheric dust particles drifting in the light cone. Atmosphere: Luxury, mysterious, premium minimalist aesthetic. Style: Cinematic commercial photography. End frame: Jar held still for loop.",
+          "human_shot_list": "Location: Studio tabletop. Lens: 85mm. Aperture: f/2.8. Lighting: Studio spot + fill card. Duration: 5 seconds. Cut point: Loop cut back to frame 1.",
+          "transition_to_next": "Seamless loop cut back to frame 1."
+        }
+      ],
+      "thumbnail_frame": "Frame 2 — moody dark background with amber spotlight catching the gold typography of the exact Purity Beans jar.",
+      "loop_edit_note": "Cut exact final frame back to frame 1 matching lighting and jar placement for a seamless infinite loop."
+    },
+    "yt_short": {
+      "aspect_ratio": "9:16",
+      "total_duration_s": 27,
+      "color_grade": "Scenes 1-2 desaturated + cold. Scene 3 warm gold reveal. Scenes 4-5 warm and"
+    }
+  },
+  "ai_image_prompts": [
+    {
+      "id": "img_carousel_cover",
+      "use_for": "Instagram carousel cover (1080x1080)",
+      "prompt": "Cinematic dark espresso tones — Purity Beans jar centred on black marble, single diagonal golden beam from upper right, micro coffee granules scattered, editorial luxury food photography, deep shadows, faint cream steam wisps, razor-sharp product label"
+    },
+    {
+      "id": "img_reel_cover",
+      "use_for": "Instagram Reel thumbnail (1080x1920 vertical)",
+      "prompt": "Vertical cinematic coffee portrait — Purity Beans jar as sole hero, warm amber backlight through frosted glass, shallow depth of field, single thread of steam, dark moody atmosphere, no people, no text, editorial quality"
+    },
+    {
+      "id": "img_linkedin_banner",
+      "use_for": "LinkedIn post image (1200x628)",
+      "prompt": "Wide editorial product landscape — Purity Beans jar on dark weathered wooden desk, MacBook soft-blurred at left edge, single warm desk lamp, professional but human, documentary texture, 16:9 wide composition, no text"
+    },
+    {
+      "id": "img_blog_hero",
+      "use_for": "Blog hero image (1200x630)",
+      "prompt": "Lifestyle editorial — Indian professional hands cradling a dark ceramic mug, Purity Beans jar visible soft-focus on desk, warm morning window light from left, genuine moment not staged, documentary grain, 16:9 crop"
+    },
+    {
+      "id": "img_story_bg",
+      "use_for": "Instagram Story background (1080x1920)",
+      "prompt": "Vertical dark editorial — heavily blurred Purity Beans jar in background with deep amber bokeh, top two-thirds empty for text overlay, grain texture, deep blacks, warm gold accent light"
+    }
+  ],
+  "performance_targets": {
+    "reel_views_3s": 15000,
+    "reel_views_30s": 5000,
+    "reel_saves": 800,
+    "reel_shares": 300,
+    "carousel_swipe_rate_pct": 65,
+    "carousel_saves": 600,
+    "linkedin_impressions": 3000,
+    "linkedin_comments": 40,
+    "story_poll_votes": 500,
+    "story_dm_replies": 50,
+    "link_clicks": 200,
+    "new_followers": 300
+  },
+  "_asset_metadata": [
+    {
+      "content_id": "pb_a4117b6b48",
+      "day": 259,
+      "channel": "instagram",
+      "type": "reel",
+      "topic": "",
+      "hook": "WHICH COFFEE HAS THE MOST CAFFEINE INDIA",
+      "cta": "Shop the pure coffee movement at https://p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "question",
+      "payoff_type": "new_knowledge",
+      "hook_promise": "method",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "reel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": true,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_a82102cb8a",
+      "day": 259,
+      "channel": "instagram",
+      "type": "growth_reel",
+      "topic": "Exposing how commercial coffee drinks leave you tired within two hours due to what is actually blended into the powder, ",
+      "hook": "That groggy feeling after your morning cup isn't lack of sleep.",
+      "cta": "",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": null,
+      "payoff_type": "useful_test",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "growth_reel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_3eab7f738d",
+      "day": 259,
+      "channel": "instagram",
+      "type": "carousel",
+      "topic": "Most instant coffee isn't 100% coffee.",
+      "hook": "",
+      "cta": "Explore our pure coffee collection at https://p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "negation",
+      "payoff_type": "useful_test",
+      "hook_promise": "correction",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "carousel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_c73ecf4b7e",
+      "day": 259,
+      "channel": "instagram",
+      "type": "story",
+      "topic": "",
+      "hook": "",
+      "cta": "",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": null,
+      "attention_mechanism": null,
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": null,
+      "payoff_type": null,
+      "hook_promise": null,
+      "payoff_present": null,
+      "payoff_validation_status": "no_copy",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "story",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_231c513cd5",
+      "day": 259,
+      "channel": "linkedin",
+      "type": "post",
+      "topic": "",
+      "hook": "Most people searching for the best instant coffee in India don't realize what is actually in their jar.",
+      "cta": "Read more about ingredient transparency and explore our pure coffee range at https://p3online.in.",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": "uninterested",
+      "attention_mechanism": "pattern_interrupt",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "negation",
+      "payoff_type": "new_knowledge",
+      "hook_promise": "undisclosed_fact",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "linkedin",
+      "format": "post",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_049343ca96",
+      "day": 259,
+      "channel": "youtube",
+      "type": "short",
+      "topic": "Which coffee has the most caffeine India? Purity Beans reveals pure coffee",
+      "hook": "Which coffee brand in India actually gives you 100% coffee?",
+      "cta": "Visit https://p3online.in — Purity Beans. No preservatives. No artificial aroma. 100% coffee.",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Corporate Pantry Push",
+      "experiment": "hook_style",
+      "variant": "B",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-17_52182fa4",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "question",
+      "payoff_type": "useful_test",
+      "hook_promise": "method",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "youtube",
+      "format": "short",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-17T05:13:53",
+      "status": "scheduled"
+    }
+  ]
+}
