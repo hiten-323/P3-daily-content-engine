@@ -2602,5 +2602,165 @@
       }
     ],
     "emergency": false
+  },
+  {
+    "ts": "2026-09-24T05:18:42",
+    "date": "2026-09-24",
+    "day_number": 266,
+    "generation_ms": 190119,
+    "validation_ms": 0,
+    "publish_ms": 2281,
+    "assets_generated": 7,
+    "assets_valid": 2,
+    "throughput": 7,
+    "avg_editorial_score": 7.68,
+    "min_editorial_score": 6.0,
+    "max_editorial_score": 8.9,
+    "avg_confidence": 0.5,
+    "schema_failure_rate": 0.0,
+    "brand_failure_rate": 0.0,
+    "editorial_reject_rate": 0.286,
+    "retry_count": 0,
+    "providers_used": [
+      {
+        "label": "carousel",
+        "provider": "gemini",
+        "prompt_tokens": 9838,
+        "completion_tokens": 1072
+      },
+      {
+        "label": "linkedin_post",
+        "provider": "gemini",
+        "prompt_tokens": 9092,
+        "completion_tokens": 420
+      },
+      {
+        "label": "instagram_post",
+        "provider": "gemini",
+        "prompt_tokens": 9123,
+        "completion_tokens": 598
+      },
+      {
+        "label": "reel_1",
+        "provider": "gemini",
+        "prompt_tokens": 10349,
+        "completion_tokens": 1619
+      },
+      {
+        "label": "growth_reel",
+        "provider": "gemini",
+        "prompt_tokens": 8563,
+        "completion_tokens": 2315
+      },
+      {
+        "label": "blog_post",
+        "provider": "gemini",
+        "prompt_tokens": 8837,
+        "completion_tokens": 742
+      },
+      {
+        "label": "reel_2",
+        "provider": "gemini",
+        "prompt_tokens": 10350,
+        "completion_tokens": 1743
+      },
+      {
+        "label": "stories",
+        "provider": "gemini",
+        "prompt_tokens": 9061,
+        "completion_tokens": 401
+      },
+      {
+        "label": "yt_short",
+        "provider": "gemini",
+        "prompt_tokens": 9426,
+        "completion_tokens": 875
+      },
+      {
+        "label": "video_prompts",
+        "provider": "gemini",
+        "prompt_tokens": 7710,
+        "completion_tokens": 3496
+      },
+      {
+        "label": "editorial_reel_1",
+        "provider": "gemini",
+        "prompt_tokens": 6699,
+        "completion_tokens": 312
+      },
+      {
+        "label": "regen_reel_1",
+        "provider": "gemini",
+        "prompt_tokens": 7288,
+        "completion_tokens": 514
+      },
+      {
+        "label": "editorial_reel_2",
+        "provider": "gemini",
+        "prompt_tokens": 6714,
+        "completion_tokens": 295
+      },
+      {
+        "label": "regen_reel_2",
+        "provider": "gemini",
+        "prompt_tokens": 7295,
+        "completion_tokens": 771
+      },
+      {
+        "label": "editorial_carousel",
+        "provider": "gemini",
+        "prompt_tokens": 6696,
+        "completion_tokens": 244
+      },
+      {
+        "label": "editorial_instagram_post",
+        "provider": "gemini",
+        "prompt_tokens": 6623,
+        "completion_tokens": 285
+      },
+      {
+        "label": "regen_instagram_post",
+        "provider": "gemini",
+        "prompt_tokens": 7265,
+        "completion_tokens": 254
+      },
+      {
+        "label": "editorial_instagram_post",
+        "provider": "openrouter",
+        "prompt_tokens": 6488,
+        "completion_tokens": 350
+      },
+      {
+        "label": "editorial_linkedin_post",
+        "provider": "gemini",
+        "prompt_tokens": 6591,
+        "completion_tokens": 346
+      },
+      {
+        "label": "regen_linkedin_post",
+        "provider": "gemini",
+        "prompt_tokens": 7272,
+        "completion_tokens": 310
+      },
+      {
+        "label": "editorial_linkedin_post",
+        "provider": "gemini",
+        "prompt_tokens": 6454,
+        "completion_tokens": 258
+      },
+      {
+        "label": "regen_blog_post",
+        "provider": "gemini",
+        "prompt_tokens": 7198,
+        "completion_tokens": 598
+      },
+      {
+        "label": "editorial_blog_post",
+        "provider": "gemini",
+        "prompt_tokens": 6607,
+        "completion_tokens": 300
+      }
+    ],
+    "emergency": false
   }
 ]
