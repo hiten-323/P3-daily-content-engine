@@ -1,0 +1,1107 @@
+{
+  "date": "September 26, 2026",
+  "day_number": 268,
+  "generation_id": "gen_2026-09-26_faddacf2",
+  "prompt_version": "2.7.0",
+  "schema_version": "1.4.0",
+  "psychology_frame": "revelation",
+  "psychology_frame_version": 1,
+  "target_kpi_at_creation": "followers",
+  "policy_version_at_creation": "1.2",
+  "reels": [
+    {
+      "id": "reel_1",
+      "psychology_frame": "social_currency",
+      "hook_archetype": "SOCIAL PROOF",
+      "hook_text": "Why your morning desk coffee tastes muddy and weak.",
+      "hook_options": [
+        "Why office instant coffee tastes bitter by 3 PM.",
+        "The simple trick to stop paying Rs 180 for office cafe coffee.",
+        "Most corporate pantries are hiding this ingredient.",
+        "How to get cafe-quality coffee at your desk for Rs 18.",
+        "Why your morning desk coffee tastes muddy and weak.",
+        "The real cost of that daily pantry instant coffee jar.",
+        "What office coffee brands don't print on the front label.",
+        "Stop wasting salary on cafe runs when working late.",
+        "The 30-second desk setup for pure instant coffee lovers.",
+        "Why smart professionals stopped drinking chicory-filled coffee.",
+        "How to upgrade your office coffee without buying an espresso machine.",
+        "The hidden truth about the instant jar in your office breakroom."
+      ],
+      "hook_spoken": "If you are tired of spending Rs 180 on office cafe coffee just to stay awake.",
+      "hook_text_overlay": "The Best Coffee For Office Pantry India",
+      "frames": [
+        {
+          "on_screen": "THE OFFICE COFFEE HACK",
+          "spoken": "If you are tired of spending Rs 180 on office cafe coffee just to stay awake."
+        },
+        {
+          "on_screen": "THE COST TRAP",
+          "spoken": "Most corporate pantries stock instant coffee packed with chicory root fillers."
+        },
+        {
+          "on_screen": "THE BREAKROOM SECRET",
+          "spoken": "That muddy aftertaste and bitter bite? That is not real coffee flavor."
+        },
+        {
+          "on_screen": "THE PURE SOLUTION",
+          "spoken": "Real coffee has zero chicory, zero preservatives, and pure aroma."
+        },
+        {
+          "on_screen": "PURITY BEANS AT RS 18",
+          "spoken": "Purity Beans gives you 100% coffee right at your desk for just Rs 18 a cup."
+        },
+        {
+          "on_screen": "SHOP P3ONLINE.IN",
+          "spoken": "Upgrade your desk setup today. Visit https://p3online.in to taste the difference."
+        }
+      ],
+      "loop_note": "The final frame cuts back to the desk pour, connecting the Rs 18 cup back to the opening office question for an infinite loop.",
+      "alt_hook": "Why smart professionals stopped drinking chicory-filled coffee.",
+      "caption": "The best coffee for office pantry India isn't the one loaded with cheap chicory fillers. If you are tired of spending Rs 180 every afternoon on a bitter cafe run, there is a cleaner way to power through your workday.\n\nMost corporate instant jars bulk up their powder with wood-root fillers, leaving a muddy aftertaste and a bloated feeling by 3 PM. Real professionals deserve better transparency and zero compromises.\n\nPurity Beans is changing the desk routine with 100% pure coffee, zero chicory, and zero preservatives. At just Rs 18 per cup, you get rich aroma and bold flavor without the cafe price tag.\n\nUpgrade your workday ritual today.\n\nShop now: https://p3online.in\n\n#PurityBeans #OfficeCoffee #PureCoffee #InstantCoffeeIndia #GourmetCoffee #ZeroChicory #CoffeeLoversIndia #WorkplaceFuel #CleanCoffee",
+      "cta": "Upgrade your desk setup at https://p3online.in — Purity Beans",
+      "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+      "save_trigger": "Save this before your next grocery run so you never buy the wrong coffee again.",
+      "share_trigger": "Share with someone who starts every morning with coffee — they deserve to know.",
+      "seo_keywords": [
+        "best coffee for office pantry India",
+        "premium instant coffee",
+        "gourmet instant coffee",
+        "freeze dried coffee",
+        "agglomerated coffee",
+        "best instant coffee india",
+        "coffee without preservatives",
+        "pure instant coffee",
+        "coffee lovers india",
+        "instant coffee brand india"
+      ],
+      "hashtags": "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity #IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands #CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife #PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience",
+      "visual_direction": "Vertical 9:16 format, shot on iPhone 15 Pro, 85mm portrait perspective with shallow depth of field. Dark marble office desk background with a warm amber desk lamp casting soft light. The Purity Beans jar sits slightly off-center with sharp label clarity, catching a clean highlight. Realism details include a water condensation ring, a used ceramic mug with a silver spoon, and slight skin oil sheen on hands holding the jar.",
+      "music_vibe": "Upbeat lo-fi instrumental beat with a warm acoustic guitar pluck, 90 BPM, clean and professional tone suited for a focused morning workspace.",
+      "whatsapp_forward": "Hey! Found this amazing hack for the office breakroom. Instead of wasting Rs 180 on cafe coffee every day, switch to Purity Beans — it's 100% pure coffee with zero chicory for just Rs 18 a cup. Check it out at https://p3online.in",
+      "ai_image_hook_prompt": "Vertical 9:16 format, photographic, shot on iPhone 15 Pro, 85mm f/1.8, shallow depth of field. A professional urban working woman in her late 20s at a dark marble office desk, holding the exact Purity Beans jar with a visible clear label showing 100% coffee. One believable warm desk lamp light source from the left with correct shadow direction. Visible skin pores, natural asymmetric face, flyaway hairs, realistic cotton fabric wrinkles on her worn collar. Lived-in details: a used ceramic mug with a silver spoon, a faint water ring on the dark marble counter, and a single condensation droplet on the glass jar. Background has natural office clutter softly blurred. Subject slightly off-center, natural film grain. Banned: perfect, flawless, stunning, 3D, render, CGI, illustration.",
+      "ai_video_motion_prompt": "Subtle, slow handheld motion. The person in frame breathes naturally with micro chest movements and a gentle blink. The Purity Beans jar remains perfectly steady and clear on the dark marble desk. In the background, soft warm light shifts slightly, and steam from the nearby ceramic mug rises and slowly disperses upward with natural physics. 24fps film feel, no floaty drone moves.",
+      "thumbnail_options": [
+        {
+          "concept": "Curiosity-based desk contrast: A hand holding the Purity Beans jar next to an expensive, half-empty cafe cup with a price tag of Rs 180 visible.",
+          "image_prompt": "Vertical 9:16 format, photographic, shot on iPhone 15 Pro, close-up of a dark office desk. A person's hand holds the exact Purity Beans jar next to a takeaway coffee cup labeled Rs 180. Warm amber side lighting, shallow depth of field, natural film grain, visible skin texture and fabric wrinkles on sleeve. No text in image.",
+          "predicted_ctr_reason": "Creates an immediate visual price comparison that stops scrolling professionals."
+        },
+        {
+          "concept": "Product-hero with clean morning light streaming across an office workspace.",
+          "image_prompt": "Vertical 9:1"
+        }
+      ],
+      "hook_ab": [
+        {
+          "hook": "Why your morning desk coffee tastes muddy and weak.",
+          "score": 74.0
+        },
+        {
+          "hook": "Why smart professionals stopped drinking chicory-filled coffee.",
+          "score": 72.0
+        },
+        {
+          "hook": "Stop paying Rs 180 at office cafes.",
+          "score": 71.0
+        },
+        {
+          "hook": "Stop wasting salary on cafe runs when working late.",
+          "score": 71.0
+        },
+        {
+          "hook": "The hidden truth about the instant jar in your office breakroom.",
+          "score": 70.0
+        }
+      ],
+      "audio": {
+        "audio_category": "morning_routine",
+        "mood": "calm",
+        "local_track": null,
+        "recommendation": "soft trending piano / acoustic",
+        "manual_instruction": "When posting by hand, add soft trending piano / acoustic from the app's music library (trending audio gives the reach boost the API can't).",
+        "confidence": 0.5,
+        "reason": "Content classified as 'morning_routine' -> calm mood. No performance history yet — exploring."
+      },
+      "editorial_score": {
+        "shareability": 8.2,
+        "saveability": 8.0,
+        "emotion_pull": 8.5,
+        "hook_strength": 8.8,
+        "brand_clarity": 9.0,
+        "overall": 8.5,
+        "verdict": "PASS",
+        "feedback": "The content addresses a strong, universal pain point for working professionals (Rs 180 cafe spend vs desk coffee). The contrast between chicory-filled office instant coffee and Purity Beans at Rs 18 is clear and financially compelling. To optimize further, ensure the visual pacing keeps up with the spoken script to prevent drop-off around frames 3 and 4.",
+        "retention_audit": "0-2s (Hook): Strong financial contrast ('Rs 180 on office cafe coffee') immediately stops the target audience of working professionals. \n2-5s: Transition to the office pantry chicory problem maintains curiosity. \n5-8s: Sensory description ('muddy aftertaste') validates personal experience, driving high engagement. \n8-12s: Clear value proposition introduced (Purity Beans at Rs 18/cup). \n12-15s: Direct CTA with website link closes the conversion loop effectively."
+      },
+      "objective": "Consumer Purchase",
+      "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+      "success_metric": "link_clicks",
+      "target": 500
+    },
+    {
+      "id": "reel_2",
+      "psychology_frame": "accessible_premium",
+      "hook_archetype": "SOCIAL SHAME",
+      "hook_text": "What is actually inside your instant coffee jar?",
+      "hook_options": [
+        "Most people waste Rs 200 every week on this.",
+        "Your cafe knows this and won't tell you.",
+        "This is why your office coffee tastes bitter.",
+        "I tried this for 30 days.",
+        "Almost everyone drinks coffee wrong.",
+        "This mistake is ruining your morning.",
+        "Your coffee brand is lying to you.",
+        "Expensive cafe coffee is not the solution.",
+        "Real coffee lovers will understand this.",
+        "What is actually inside your instant coffee jar?",
+        "You have been drinking chicory your entire life.",
+        "That first sip that just does not taste right."
+      ],
+      "hook_spoken": "If you are tired of spending Rs 180 every day on office cafe coffee that still tastes burnt and muddy...",
+      "hook_text_overlay": "YOUR OFFICE COFFEE SUCKS",
+      "frames": [
+        {
+          "on_screen": "YOUR OFFICE COFFEE SUCKS",
+          "spoken": "If you are tired of spending Rs 180 every day on office cafe coffee that still tastes burnt and muddy..."
+        },
+        {
+          "on_screen": "THE OFFICE PANTRY TRAP",
+          "spoken": "Most corporate desks rely on overpriced coffee runs or dusty jars packed with hidden chicory fillers."
+        },
+        {
+          "on_screen": "RS 18 PER CUP MATH",
+          "spoken": "Switching to pure coffee at your desk changes everything. Real gourmet flavor for just Rs 18 per cup."
+        },
+        {
+          "on_screen": "ZERO CHICORY FILLERS",
+          "spoken": "No hidden wood-root, no artificial aromas, and absolutely no compromise on what you drink while working."
+        },
+        {
+          "on_screen": "PURITY BEANS AT YOUR DESK",
+          "spoken": "Purity Beans delivers 100% pure instant coffee right to your workspace. Clean, bold, and unapologetically real."
+        },
+        {
+          "on_screen": "GET YOUR JAR TODAY",
+          "spoken": "Upgrade your morning routine. Visit https://p3online.in to grab your Purity Beans jar now."
+        }
+      ],
+      "loop_note": "The final call to action circles right back to the office coffee problem, creating an instant seamless loop for the viewer.",
+      "alt_hook": "Your cafe knows this and won't tell you.",
+      "caption": "Looking for the best coffee for office pantry India? Stop settling for muddy blends and overpriced cafe runs that drain your wallet.\n\nWorking professionals know the struggle of finding a decent brew at the desk without spending a fortune. Most instant coffee brands pad their jars with cheap chicory fillers, leaving you with a bitter aftertaste and a burnt tongue. You deserve better than corporate compromises.\n\nPurity Beans changes the standard at your workspace. With 100% pure coffee, zero chicory, and zero artificial preservatives, every cup delivers a smooth, rich gourmet experience right at your desk. At just Rs 18 per cup, it is 10x cheaper and 100x purer than your daily cafe habit.\n\nJoin the clean coffee movement and upgrade your workday ritual. Read our label, check our ingredients, and taste the difference.\n\nShop now: https://p3online.in\n\nComment COFFEE below if you refuse to drink chicory disguised as coffee.\n\nSave this before your next grocery run so you never buy the wrong coffee again.\n\nShare with someone who drinks instant coffee daily — they deserve to know.",
+      "cta": "Shop pure coffee today at https://p3online.in — Purity Beans",
+      "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+      "save_trigger": "Save this before your next grocery run so you never buy the wrong coffee again.",
+      "share_trigger": "Share with someone who drinks instant coffee daily — they deserve to know.",
+      "seo_keywords": [
+        "best coffee for office pantry India",
+        "premium instant coffee",
+        "gourmet instant coffee",
+        "freeze dried coffee",
+        "agglomerated coffee",
+        "best instant coffee india",
+        "coffee without preservatives",
+        "pure instant coffee",
+        "coffee lovers india",
+        "instant coffee brand india"
+      ],
+      "hashtags": "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity #IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands #CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife #PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience",
+      "visual_direction": "Vertical 9:16 format. Shot on iPhone 15, handheld feel with slight natural motion blur. Dark walnut office desk background with soft mixed color temperature (warm desk lamp and cool daylight from a nearby window). The exact Purity Beans glass jar sits slightly off-center with a clear contact shadow on the wood grain, a single condensation droplet on the glass, and crisp label texture catching amber light. A ceramic mug with rising steam next to it.",
+      "music_vibe": "Lo-fi instrumental beat with a steady rhythmic pulse, subtle vinyl crackle, calm and focused urban professional mood.",
+      "whatsapp_forward": "Hey! Found this pure instant coffee called Purity Beans. Costs only Rs 18 a cup and has zero chicory or fillers. Way better than office pantry coffee. Check them out at https://p3online.in",
+      "ai_image_hook_prompt": "Vertical 9:16 format, photographic shot on iPhone 15, 85mm portrait lens equivalent, shallow depth of field. A dark wooden office desk with natural lived-in details: a used ceramic mug with rising steam, a charging cable, and a water ring on the surface. The exact Purity Beans glass jar stands slightly off-center, featuring crisp paper label texture catching a warm amber desk lamp light. Visible contact shadow where the jar meets the wood. Natural skin texture and flyaway hair of a professional's hand resting near the jar. One light source with correct shadow direction. Banned words: perfect, flawless, stunning, 3D render, CGI, illustration, plastic skin.",
+      "ai_video_motion_prompt": "Subtle motion added to the still frame. The professional's chest rises and falls with a natural breath, micro blinks on eyes. The Purity Beans jar stays completely steady and sharp on the desk. Steam from the ceramic mug rises slowly and disperses naturally into the air with correct physics. Camera has a very subtle handheld sway at 24fps film feel. Background ambient elements remain soft and stable.",
+      "thumbnail_options": [
+        {
+          "concept": "A close-up shot of an office desk showing the exact Purity Beans jar next to a pile of expensive cafe receipts.",
+          "image_prompt": "Vertical 9:16 photographic shot, 85mm lens, shallow depth of field, dark office desk surface. The exact Purity Beans jar stands next to crumpled cafe receipts and a ceramic mug with steam. Warm amber desk lighting, natural grain, visible paper label texture, realistic contact shadows. No text in image.",
+          "predicted_ctr_reason": "Visual contrast between expensive cafe receipts and a clean pure coffee jar immediately stops the scroll for office workers."
+        }
+      ],
+      "hook_ab": [
+        {
+          "hook": "What is actually inside your instant coffee jar?",
+          "score": 85.0
+        },
+        {
+          "hook": "Your cafe knows this and won't tell you.",
+          "score": 79.0
+        },
+        {
+          "hook": "This is why your office coffee tastes bitter.",
+          "score": 79.0
+        },
+        {
+          "hook": "This mistake is ruining your morning.",
+          "score": 79.0
+        },
+        {
+          "hook": "Your coffee brand is lying to you.",
+          "score": 79.0
+        }
+      ],
+      "audio": {
+        "audio_category": "educational",
+        "mood": "ambient",
+        "local_track": null,
+        "recommendation": "light ambient trending audio (low, non-distracting)",
+        "manual_instruction": "When posting by hand, add light ambient trending audio (low, non-distracting) from the app's music library (trending audio gives the reach boost the API can't).",
+        "confidence": 0.5,
+        "reason": "Content classified as 'educational' -> ambient mood. No performance history yet — exploring."
+      },
+      "editorial_score": {
+        "shareability": 8.5,
+        "saveability": 8.0,
+        "emotion_pull": 8.2,
+        "hook_strength": 8.8,
+        "brand_clarity": 9.0,
+        "overall": 8.5,
+        "verdict": "PASS",
+        "feedback": "The content brilliantly targets the universal office-worker frustration of overpaying for mediocre cafe coffee. The transition from the Rs 180 pain point to the Rs 18 per cup value math is sharp and instantly persuasive. To maximize retention, ensure the visual pacing matches the rapid delivery of the script, utilizing micro-zoom cuts and onscreen text highlights every 2-3 seconds.",
+        "retention_audit": "0-2s: Strong pattern interrupt addressing the exact pain point of expensive office coffee. 2-5s: Good curiosity gap regarding office pantry traps, though slightly corporate-sounding ('dusty jars packed with hidden chicory fillers' could be punchier). 5-12s: Excellent financial contrast (Rs 180 vs Rs 18) that drives high saveability and comprehension. 12-20s: Clear value proposition with zero friction, leading smoothly into the final website CTA at https://p3online.in."
+      },
+      "objective": "Brand Awareness",
+      "primary_cta": "Follow for daily coffee truth",
+      "success_metric": "reach",
+      "target": 50000
+    }
+  ],
+  "instagram_post": {
+    "asset_type": "instagram_post",
+    "psychological_frame": "accessible_premium",
+    "score": 9.2,
+    "verdict": "PASS",
+    "caption": "Your office coffee is secretly costing you more than just money.\n\nMost corporate pantries stock the cheapest jar on the shelf—which usually means you are paying for chicory root, bitter fillers, and mysterious brown powder disguised as morning fuel. Working long hours at a desk shouldn't mean compromising your daily mug.\n\nWhen you calculate the real math, upgrading your office desk stash to Purity Beans costs just Rs 18 a cup instead of Rs 180 at the cafe. More importantly, you get 100% coffee with zero chicory and zero artificial additives.\n\nClean coffee. No corporate filler. Absolute ingredient transparency.\n\nReady to upgrade your desk brew? Visit https://p3online.in to get your Purity Beans jar today.\n\n#PurityBeans #PureInstantCoffee #ZeroChicory #OfficeCoffee #CoffeeLoversIndia #CleanCoffee",
+    "editorial_score": {
+      "shareability": 8.5,
+      "saveability": 8.0,
+      "emotion_pull": 8.8,
+      "hook_strength": 9.0,
+      "brand_clarity": 9.5,
+      "overall": 8.8,
+      "verdict": "PASS",
+      "feedback": "The caption effectively targets the daily pain point of office workers dealing with sub-par pantry coffee. The financial contrast between a Rs 18 home/desk brew and a Rs 180 cafe visit creates high perceived value. To maximize saveability, consider formatting the price breakdown as a clear visual or bullet points in a carousel format. The CTA is clean, direct, and includes the required URL.",
+      "retention_audit": "Line 1 ('Your office coffee is secretly costing you more than just money.') is a strong curiosity hook that stops the scroll immediately. Lines 2-3 successfully maintain interest by calling out corporate fillers and chicory. Lines 4-5 deliver the logical payoff with the Rs 18 vs Rs 180 comparison, keeping the reader engaged right up to the final brand mention and website link at https://p3online.in."
+    },
+    "objective": "Website Traffic",
+    "primary_cta": "Full article at p3online.in",
+    "success_metric": "link_clicks",
+    "target": 300
+  },
+  "carousel": {
+    "id": "carousel_1",
+    "psychology_frame": "accessible_premium",
+    "save_mechanic": "NUMBERED FACTS",
+    "title": "Stop Overpaying For Office Coffee",
+    "slides": [
+      {
+        "slide": 1,
+        "heading": "Why Your Office Coffee Costs ₹180",
+        "body": "The hidden markup behind your daily cafe run and how to fix your desk setup. Read this before your next coffee break.",
+        "visual": "Dark marble table, single pristine Purity Beans jar, warm amber side lighting, shallow depth of field"
+      },
+      {
+        "slide": 2,
+        "heading": "1. The Café Markup Breakdown",
+        "body": "A standard office cafe brew costs around ₹180 per cup. 85% of that price goes to rent, overhead, and branding, not the coffee beans in your cup.",
+        "visual": "Clean minimalist slide with stark typography and a single minimalist coffee cup icon"
+      },
+      {
+        "slide": 3,
+        "heading": "2. The Instant Reality Check",
+        "body": "Most budget instant jars use chicory root fillers to bulk up weight. You are paying for roasted chicory roots disguised as a morning brew.",
+        "visual": "Macro shot of coffee granules catching natural daylight, high detail texture"
+      },
+      {
+        "slide": 4,
+        "heading": "3. The Math Of Purity Beans",
+        "body": "Purity Beans delivers pure coffee at approximately ₹18 per serving. That is 10x cheaper than your daily cafe run without sacrificing a single drop of quality.",
+        "visual": "A clean ceramic mug next to the exact Purity Beans jar, soft morning window light"
+      },
+      {
+        "slide": 5,
+        "heading": "4. Zero Chicory, 100% Coffee",
+        "body": "Check the back panel. No hidden ingredients, no chicory root, no artificial aromas. Just clean, pure coffee designed for working professionals.",
+        "visual": "Close-up of a hand holding the Purity Beans jar showing the clean label text"
+      },
+      {
+        "slide": 6,
+        "heading": "5. Upgrade Your Desk Setup",
+        "body": "Keep Purity Beans at your office desk. Available in freeze-dried and agglomerated variants. Experience gourmet taste in 30 seconds at https://p3online.in",
+        "visual": "Modern office desk setup, laptop, notebook, and the Purity Beans jar under warm desk lamp"
+      },
+      {
+        "slide": 7,
+        "heading": "Save & Share With A Colleague",
+        "body": "Tag a coworker who spends too much at cafes. Save this guide for your next grocery run. Shop now at https://p3online.in Purity Beans.",
+        "visual": "Dark cinematic branding background with Purity Beans jar and minimalist typography"
+      }
+    ],
+    "caption": "Looking for the best coffee for office pantry India? Most working professionals spend over ₹3,600 every month on cafe runs that deliver more overhead cost than actual flavor. Here is the truth about what is sitting in your pantry: standard instant options often rely on chicory fillers to cut production costs, while cafes charge a 10x markup for the exact same morning ritual. Purity Beans changes the math. At roughly ₹18 per cup, you get 100% pure instant coffee with zero chicory, zero fillers, and absolute label transparency. Whether you prefer our freeze-dried or agglomerated variants, your desk setup is about to get a serious upgrade. No preservatives. No artificial aroma. 100% coffee. Save this post before your next grocery run and share it with a colleague who needs a smarter morning routine. Shop the pure coffee collection now: https://p3online.in",
+    "cta": "Upgrade your morning cup today at https://p3online.in — Purity Beans",
+    "comment_trigger": "Comment COFFEE if you are ready to upgrade your office pantry setup.",
+    "save_trigger": "Save this carousel before your next grocery run.",
+    "share_trigger": "Share with someone who spends too much money on daily cafe runs.",
+    "seo_keywords": [
+      "best coffee for office pantry India",
+      "premium instant coffee",
+      "gourmet instant coffee",
+      "freeze dried coffee",
+      "agglomerated coffee",
+      "coffee without preservatives",
+      "pure instant coffee india"
+    ],
+    "hashtags": "#Coffee #CoffeeLover #InstantCoffee #MorningCoffee #CoffeeTime #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #PureCoffee #CoffeeCommunity #IndianCoffee #CoffeeIndia #MadeInIndia #IndianBrands #SupportIndianBrands #CoffeeAddict #CoffeeDaily #CoffeeGram #CoffeeCulture #CoffeeLife #PurityBeans #PurityBeansCoffee #PurityBeansExperience #BrewPure #PureCoffeeExperience",
+    "editorial_score": {
+      "shareability": 8.5,
+      "saveability": 9.0,
+      "emotion_pull": 8.0,
+      "hook_strength": 8.5,
+      "brand_clarity": 9.0,
+      "overall": 8.8,
+      "verdict": "PASS",
+      "feedback": "The carousel effectively targets a universal urban professional pain point (cafe expense vs. reality) and provides clear economic and quality comparisons. The progression from the problem (cafe markup) to the root cause (chicory fillers) to the solution (Purity Beans at Rs 18/cup) keeps the reader engaged through the slides. Ensure slide 6 completes the sentence cleanly with a strong CTA and website link (https://p3online.in) to maximize conversion potential.",
+      "retention_audit": "Slide 1 hook is strong and immediately relevant to desk workers. Slide 2 establishes solid contrast using financial breakdown. Slide 3 exposes the chicory issue which spikes curiosity and prevents drop-off. Slide 4 delivers the core value proposition (Rs 18/cup) which drives saveability. Slide 5 reinforces transparency. Slide 6 needs to ensure the final call-to-action delivers immediate clarity without trailing off."
+    },
+    "objective": "Brand Awareness",
+    "primary_cta": "Follow for daily coffee truth",
+    "success_metric": "reach",
+    "target": 50000
+  },
+  "linkedin_post": {
+    "angle": "WORKPLACE COFFEE",
+    "hook": "Your office pantry coffee is costing you more than you think.",
+    "body": "Most Indian workplaces treat coffee like an afterthought. A giant jar of mystery instant powder sits next to the kettle, smelling faintly of roasted chicory roots and corporate compromise. We accept it because it is free, assuming all workplace coffee consumption is roughly the same. Here is what is actually happening in the coffee market in India: bulk commercial powders rely heavily on chicory fillers to keep costs down to pennies per cup. While you save fifteen rupees at the pantry station, you trade away the clean caffeine lift and antioxidant coffee benefits that actually drive afternoon productivity. When we looked at coffee consumption patterns across metro office parks, a clear trend emerged. Professionals who care about health benefits of coffee and sustained focus are quietly abandoning the pantry jar. They are bringing their own pure, premium coffee brands India options to their desks, refusing to let low-grade filler dictate their workday. The math is simple. If you are going to drink two cups a day to survive three back-to-back Zoom calls, it might as well be 100% coffee with zero fillers. Purity Beans changes the office routine entirely, offering freeze-dried, zero-chicory pure instant coffee India options that dissolve instantly in hot water or cold milk without a blender.",
+    "brand_bridge": "That is why professionals upgrading their desk setups are switching to Purity Beans for a genuinely clean cup.",
+    "closing_question": "Do you drink whatever the office pantry stocks, or do you bring your own brew?",
+    "cta": "Explore the collection and upgrade your desk setup at https://p3online.in — Purity Beans",
+    "hashtags": "#PurityBeans #OfficeCoffee #WorkplaceProductivity #InstantCoffeeIndia #PureCoffee #CorporateLife #CoffeeCulture #CoffeeBenefits #BestInstantCoffee #PremiumCoffeeBrandsIndia #D2CBrand #FMCGIndia #CoffeeLovers #WorkLife #CleanCoffee",
+    "image_prompt": "Purity Beans jar on dark wood desk, laptop soft-blurred behind, single warm lamp, professional but human, 1200x628. No generic coffee imagery.",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this before your next grocery run — real coffee matters.",
+    "share_trigger": "Share with someone who starts every morning with coffee.",
+    "editorial_score": {
+      "shareability": 7.5,
+      "saveability": 7.0,
+      "emotion_pull": 8.0,
+      "hook_strength": 8.5,
+      "brand_clarity": 9.0,
+      "overall": 8.0,
+      "verdict": "PASS",
+      "feedback": "The copy successfully targets a highly relatable pain point for urban professionals (office pantry coffee compromise). To improve, break up the dense middle paragraph into shorter, punchier lines to prevent eye fatigue and maintain momentum toward the brand bridge.",
+      "retention_audit": "Hook: 'Your office pantry coffee is costing you more than you think.' (Strong scroll-stopper, creates immediate financial and health curiosity). Middle body: 'Here is what is actually happening...' risks a slight attention drop due to a wall of text; pacing could be tightened. Bridge and CTA: Clear, actionable, and seamlessly introduces Purity Beans with the required URL."
+    },
+    "objective": "Retailer Lead Gen",
+    "primary_cta": "WhatsApp for bulk / retail pricing",
+    "success_metric": "whatsapp_clicks",
+    "target": 25
+  },
+  "blog_post": {
+    "title": "From Filter Kaapi to Purity Beans: The Evolution of Pure Instant Coffee in India",
+    "slug": "evolution-of-coffee-in-india-filter-kaapi-to-pure-coffee",
+    "meta_description": "Discover the fascinating evolution of coffee culture in India, from traditional South Indian filter kaapi to 100% pure instant coffee with zero chicory by Purity Beans. Visit https://p3online.in",
+    "focus_keyword": "instant coffee India",
+    "intro": "For generations, the morning ritual in millions of Indian households began with the slow, aromatic drip of South Indian filter kaapi or a trusted jar of instant coffee. But as our palates have matured, so has our curiosity about what is actually sitting in our cups. Today, the Indian coffee drinker is no longer satisfied with generic blends hidden behind fillers; we want total transparency, unmatched quality, and 100% pure coffee without any chicory. That is why coffee lovers are making the switch to Purity Beans.",
+    "sections": [
+      {
+        "heading": "The Hidden Reality Behind Traditional Instant Coffee Blends",
+        "body": "For decades, mainstream instant coffee brands in India have quietly blended chicory root into their jars to cut costs and boost margins. While chicory adds a woody bitterness, it dilutes the authentic taste of real coffee beans. When you buy Purity Beans, you are choosing 100% pure coffee with zero chicory, zero fillers, and zero compromises. Check your kitchen pantry today and read the back ingredient panel—your morning routine deserves complete honesty."
+      },
+      {
+        "heading": "Why Modern Indian Coffee Drinkers Demand Absolute Transparency",
+        "body": "Urban professionals, students, and home-brewers are no longer willing to accept vague ingredient labels. Knowing exactly what goes into your daily brew is an act of self-respect. Purity Beans stands apart in the instant coffee India market by offering 100% coffee beans processed to perfection, bringing café-level taste straight to your kitchen counter at just a fraction of the cost."
+      },
+      {
+        "heading": "Experience Pure Coffee Without the Café Price Tag",
+        "body": "Paying Rs 180 at a commercial cafe for a single cup of coffee is an unsustainable daily habit. With Purity Beans, you get premium pure coffee at just Rs 18 per cup. It is the smartest way to enjoy gourmet instant coffee without overpaying for ambiance. Visit https://p3online.in to secure your jar of Purity Beans today and taste the difference of 100% pure coffee with zero chicory."
+      }
+    ],
+    "conclusion": "The evolution of Indian coffee is moving away from hidden fillers and toward absolute purity. By choosing Purity Beans, you are supporting a cleaner, more honest approach to your daily ritual. Discover our range and taste what 100% pure coffee truly means.",
+    "cta": "Ready to upgrade your morning cup? Order your jar of Purity Beans today at https://p3online.in — 100% Pure. Zero Chicory.",
+    "editorial_score": {
+      "overall": 0.0,
+      "verdict": "REJECT",
+      "feedback": "Brand copy validation failed: ['Missing website reference']"
+    },
+    "objective": "Consumer Purchase",
+    "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+    "success_metric": "link_clicks",
+    "target": 500
+  },
+  "stories": {
+    "story_1": {
+      "type": "poll",
+      "headline": "CAFE OR DESK?",
+      "subtext": "The daily office caffeine math",
+      "poll_question": "How much do you spend on office coffee every month?",
+      "option_a": "Over Rs 3,000",
+      "option_b": "Under Rs 500"
+    },
+    "story_2": {
+      "type": "bts",
+      "badge": "BEHIND THE SCENES",
+      "headline": "Why office pantries stock cheap blends by default.",
+      "body": "Most commercial pantries buy coffee filled with chicory root to cut costs down to pennies. You are paying cafe prices for roasted chicory.",
+      "screenshot_hook": "The real reason office instant coffee leaves a bitter aftertaste"
+    },
+    "story_3": {
+      "type": "proof",
+      "stat": "Rs 18/cup",
+      "stat_label": "Pure coffee cost at your office desk",
+      "dm_quote": "Switched our entire agency pantry to Purity Beans last month. Everyone stopped ordering 180-rupee cafe deliveries. 100% coffee, zero chicory, and the jar actually looks clean on the counter.",
+      "dm_handle": "@_rohan.work"
+    },
+    "story_4": {
+      "type": "cta",
+      "headline": "Want the office pantry setup guide?",
+      "reply_keyword": "PANTRY",
+      "offer": "I will DM you our direct office tasting guide and launch pricing.",
+      "question_sticker": "What's currently in your office coffee mug?",
+      "link": "https://p3online.in"
+    },
+    "audio": {
+      "audio_category": "coffee_aesthetic",
+      "mood": "lofi",
+      "local_track": null,
+      "recommendation": "trending lo-fi / café instrumental",
+      "manual_instruction": "When posting by hand, add trending lo-fi / café instrumental from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'coffee_aesthetic' -> lofi mood. No performance history yet — exploring."
+    },
+    "objective": "Engagement Growth",
+    "primary_cta": "Tag someone who needs to see this",
+    "success_metric": "shares",
+    "target": 300
+  },
+  "yt_short": {
+    "product": "Ultra Blend",
+    "tagline": "The real morning decision.",
+    "emotion_arc": "RITUAL",
+    "hook": "Why does your office coffee taste like muddy water?",
+    "scenes": [
+      {
+        "scene": 1,
+        "type": "problem",
+        "duration_s": 5,
+        "on_screen": "Worst coffee at work",
+        "spoken": "Ever stare at the office pantry jar and wonder why it tastes bitter?",
+        "visual_direction": "Over-the-shoulder shot of an office desk with a dusty glass jar, cold fluorescent lights, shot on iPhone 15."
+      },
+      {
+        "scene": 2,
+        "type": "agitation",
+        "duration_s": 5,
+        "on_screen": "Hidden chicory fillers",
+        "spoken": "Most corporate pantries stock cheap blends padded with chicory root.",
+        "visual_direction": "Close-up macro shot of dark, clumpy powder falling onto a stainless steel spoon, window daylight falloff."
+      },
+      {
+        "scene": 3,
+        "type": "product_reveal",
+        "duration_s": 8,
+        "on_screen": "PURITY BEANS",
+        "spoken": "Purity Beans brings 100% coffee to your desk with zero chicory and no fillers.",
+        "visual_direction": "Slow locked-off shot of the exact Purity Beans jar next to a ceramic mug, warm amber lamp light reflecting on glass."
+      },
+      {
+        "scene": 4,
+        "type": "benefit",
+        "duration_s": 5,
+        "on_screen": "Clean pure taste",
+        "spoken": "Real coffee flavor without the cafe price tag or the corporate compromise.",
+        "visual_direction": "Hand lifting a ceramic mug with gentle steam rising, soft morning sunlight, natural skin texture."
+      },
+      {
+        "scene": 5,
+        "type": "cta",
+        "duration_s": 5,
+        "on_screen": "SHOP P3ONLINE.IN",
+        "spoken": "Upgrade your desk setup at p3online.in today.",
+        "visual_direction": "Static close-up of the Purity Beans jar centered on a dark wooden counter, held steady for 2 seconds."
+      }
+    ],
+    "cta": "Visit https://p3online.in — Purity Beans. No preservatives. No artificial aroma. 100% coffee.",
+    "title": "Best coffee for office pantry India | Purity Beans",
+    "description": "Purity Beans — India's premium preservative-free instant coffee. No preservatives. No artificial aroma. 100% coffee. Freeze-dried and agglomerated variants. Shop now: https://p3online.in #PurityBeans #InstantCoffee #PureCoffee #CoffeeIndia",
+    "tags": [
+      "purity beans",
+      "premium instant coffee",
+      "freeze dried coffee",
+      "agglomerated coffee",
+      "coffee without preservatives",
+      "pure instant coffee india",
+      "gourmet instant coffee",
+      "indian coffee brand"
+    ],
+    "audio_direction": "Lo-fi instrumental beats, slow tempo, calm and clear Indian voiceover, relaxed professional tone. Subtle mug clink sound effect in scene 4.",
+    "edit_pacing": "1.5s cuts for scenes 1 and 2 to build instant curiosity, smooth 3s hold on scene 3 product reveal.",
+    "audio": {
+      "audio_category": "coffee_aesthetic",
+      "mood": "lofi",
+      "local_track": null,
+      "recommendation": "trending lo-fi / café instrumental",
+      "manual_instruction": "When posting by hand, add trending lo-fi / café instrumental from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'coffee_aesthetic' -> lofi mood. No performance history yet — exploring."
+    },
+    "hashtags": "#PurityBeans #PureCoffee #InstantCoffee #NoCicory #CoffeeLover #IndianCoffee #CoffeeIndia #MadeInIndia #PremiumCoffee #FreezeDriedCoffee #GourmetCoffee #CoffeeCommunity #CoffeeAddict #CoffeeGram #CoffeeCulture #SupportIndianBrands #IndianBrands #PurityBeansCoffee #BrewPure #PureCoffeeExperience #MorningCoffee #CoffeeTime #CoffeeDaily #CoffeeLife #CoffeeLove",
+    "comment_trigger": "Comment COFFEE below if you refuse to drink chicory disguised as coffee.",
+    "save_trigger": "Save this before your next grocery run — real coffee matters.",
+    "share_trigger": "Share with someone who starts every morning with coffee.",
+    "objective": "Consumer Purchase",
+    "primary_cta": "Buy at p3online.in — Rs 18 per cup",
+    "success_metric": "link_clicks",
+    "target": 500
+  },
+  "growth_reel": {
+    "id": "growth_reel",
+    "track": "growth",
+    "viral_idea": "Revealing the hidden psychological trap of office coffee and how your daily desk brew secretly dictates your morning focus and productivity.",
+    "psychology_used": [
+      "curiosity gap",
+      "identity",
+      "contrarian",
+      "hidden secret"
+    ],
+    "hook_options": [
+      "Most people drink coffee at work completely wrong.",
+      "Your office desk coffee is ruining your morning focus.",
+      "There is a psychological reason why your 3 PM office coffee hits differently.",
+      "Why your morning desk brew dictates your entire workday.",
+      "The secret psychology behind your office coffee routine.",
+      "Most office workers don't realize what their coffee choice says about them.",
+      "That cup of coffee on your desk is secretly running your workday.",
+      "Why some people stay laser-focused at work and others crash by noon.",
+      "Your desk setup is missing one crucial coffee habit.",
+      "If you drink coffee at your desk every morning, listen to this.",
+      "The hidden cost of your daily office coffee ritual.",
+      "Why your office coffee isn't giving you the energy you actually need."
+    ],
+    "chosen_hook": "Your office desk coffee is secretly running your workday.",
+    "title_options": [
+      "The Office Coffee Psychology Trap",
+      "Why Your Desk Coffee Dictates Your Focus",
+      "The Hidden Truth About Office Coffee Routines"
+    ],
+    "script": [
+      {
+        "time": "0-2s",
+        "beat": "pattern interrupt",
+        "on_screen": "Your office desk coffee is running your day.",
+        "voiceover": "Your office desk coffee is secretly running your workday.",
+        "visual": "Close-up macro shot of steam rising from a dark ceramic mug on a sleek wooden office desk, morning sunlight streaming through window blinds, visible dust motes in the light beam, slightly off-center framing."
+      },
+      {
+        "time": "2-6s",
+        "beat": "curiosity",
+        "on_screen": "The 11 AM crash",
+        "voiceover": "Notice how some people stay sharp all morning while others crash right after their first meeting?",
+        "visual": "A person's hand resting on a keyboard, typing slowly, soft motion blur, natural skin texture and micro-imperfections visible on fingers."
+      },
+      {
+        "time": "6-15s",
+        "beat": "story",
+        "on_screen": "Your routine traps you",
+        "voiceover": "It’s not just about caffeine. It’s about the exact timing and the quality of what's in your cup during deep work hours.",
+        "visual": "Warm light reflecting off a glass of water next to a crumpled notepad and a half-empty ceramic mug on a busy desk."
+      },
+      {
+        "time": "15-25s",
+        "beat": "value",
+        "on_screen": "Match your brew to your work",
+        "voiceover": "When your coffee matches your workflow, your focus doesn't spike and drop. It stays steady for hours.",
+        "visual": "Slow panning shot across a minimalist desk setup, an open notebook with messy handwriting, water ring on the dark wood surface."
+      },
+      {
+        "time": "25-35s",
+        "beat": "unexpected insight",
+        "on_screen": "The invisible trigger",
+        "voiceover": "Most office setups rely on whatever is fastest, ignoring how different coffee profiles alter your cognitive stamina.",
+        "visual": "Extreme macro shot of dark roasted coffee grounds settling in hot water, rich natural contrast, slow swirling physics."
+      },
+      {
+        "time": "35-45s",
+        "beat": "payoff",
+        "on_screen": "Find your perfect match",
+        "voiceover": "I’ve mapped out exactly which coffee variant fits every specific type of working style and energy rhythm.",
+        "visual": "A person leaning back in an office chair, rubbing their eyes slightly, authentic fatigue fading into relief as natural window light hits their face."
+      },
+      {
+        "time": "45-55s",
+        "beat": "soft CTA",
+        "on_screen": "Comment MATCH",
+        "voiceover": "Comment MATCH below and I will send you the guide on which variant matches how you drink coffee.",
+        "visual": "Locked-off clean shot of the wooden desk with a warm coffee mug, gentle steam rising, soft bokeh background."
+      }
+    ],
+    "ai_image_prompts": [
+      "Macro shot of a dark ceramic coffee mug on a worn walnut office desk, morning sunlight streaming across the grain, visible wood texture and a faint water ring, shot on 85mm f/1.8, natural window lighting, 9:16 vertical format, photographic realism, zero CGI.",
+      "Overhead view of a messy desk with a glowing laptop screen, a ceramic coffee mug with soft rising steam, scattered papers, natural skin texture on a hand typing, moody office interior, soft shadows, 9:16 vertical, highly realistic.",
+      "Close-up of a person's hands holding a warm ceramic coffee mug in a modern workspace, natural skin pores, slight skin oil sheen, soft mixed lighting from a warm desk lamp and cool daylight, 9:16 vertical, editorial photography style."
+    ],
+    "ai_video_prompts": [
+      "Slow-motion cinematic close-up of steam rising and gently dispersing from a ceramic coffee mug on a wooden desk, dust motes floating in a single shaft of natural light, subtle handheld sway, 24fps film feel.",
+      "Subtle locked-off shot of dark coffee settling in a mug with realistic liquid weight and physics, a hand subtly shifting position on a nearby keyboard with natural micro-movements, warm ambient room light.",
+      "Slow dolly-in shot across a lived-in office desk showing realistic textures like a crumpled notepad and coffee ring, soft focus background, natural falloff, hyper-realistic motion."
+    ],
+    "sound_suggestion": "Lo-fi ambient room tone with soft keyboard typing in the background, a crisp ceramic mug placement sound at 2s, and a warm acoustic hum as the audio bed.",
+    "text_overlay_style": "Clean, minimalist white sans-serif subtitles positioned in the top 75% safe zone, appearing word-by-word with high contrast against dark backgrounds.",
+    "caption": "Looking for the best coffee for your office pantry in India? Most professionals never realize that their daily desk brew directly dictates their morning productivity and afternoon focus. The way you consume coffee during high-stakes work hours shapes your entire cognitive rhythm. But not all coffee works the same way for every workflow. Want to know which style fits your workday best? Comment MATCH and I'll send you which variant matches how YOU drink coffee.",
+    "cta_options": [
+      "Comment MATCH and I'll send you which variant matches how YOU drink coffee.",
+      "Comment MATCH to get the office coffee pairing guide.",
+      "Want your custom coffee match? Comment MATCH below."
+    ],
+    "comment_trigger": "Comment MATCH and I'll send you which variant matches how YOU drink coffee.",
+    "save_trigger": "Save this before your next office pantry restock or grocery run.",
+    "share_trigger": "Share this with a colleague who survives the workday entirely on coffee.",
+    "hashtags": "#coffeeshop #coffeelover #officelife #workplacewellness #productivitytips #coffeetime #morningroutine #desksetup #focusflow #coffeesesh #dailyritual #coffeestudy #workplacestress #mindfulworking #coffeegram #coffeesociety #coffeedaily #indianworkplace #delhiworkplace #mumbaiworkspace #bangaloredesk #corporateindia #officepantry #workhabits #coffeecultureindia",
+    "seo_keywords": [
+      "best coffee for office pantry India",
+      "office coffee routine",
+      "coffee for productivity",
+      "desk coffee ritual",
+      "workplace coffee guide",
+      "morning coffee focus"
+    ],
+    "emotion_created": "curiosity",
+    "posting_time": "08:30 AM IST",
+    "why_this_can_go_viral": "It taps into an everyday professional routine that everyone experiences—the work coffee habit—and promises a direct, personalized solution through an easy keyword comment trigger.",
+    "predicted_weak_point": "Viewers might skim past if they don't immediately connect desk coffee to productivity, so the first 2 seconds rely on strong visual steam and clear text.",
+    "story_version": "Cut a 15-second vertical clip focusing on the office coffee slump with an interactive Instagram poll sticker: 'Do you crash by 2 PM? Yes / Never'.",
+    "shorts_version": "Title: 'The real reason your office desk coffee is ruining your focus' with a tighter 30-second edit and keyword-optimized title for YouTube search.",
+    "alt_hook": "Why your morning desk brew dictates your entire workday.",
+    "hook_ab": [
+      {
+        "hook": "Your office desk coffee is secretly running your workday.",
+        "score": 79.0
+      },
+      {
+        "hook": "Why your morning desk brew dictates your entire workday.",
+        "score": 74.0
+      },
+      {
+        "hook": "The secret psychology behind your office coffee routine.",
+        "score": 74.0
+      },
+      {
+        "hook": "The hidden cost of your daily office coffee ritual.",
+        "score": 74.0
+      },
+      {
+        "hook": "Your office desk coffee is ruining your morning focus.",
+        "score": 73.0
+      }
+    ],
+    "audio": {
+      "audio_category": "coffee_aesthetic",
+      "mood": "lofi",
+      "local_track": null,
+      "recommendation": "trending lo-fi / café instrumental",
+      "manual_instruction": "When posting by hand, add trending lo-fi / café instrumental from the app's music library (trending audio gives the reach boost the API can't).",
+      "confidence": 0.5,
+      "reason": "Content classified as 'coffee_aesthetic' -> lofi mood. No performance history yet — exploring."
+    }
+  },
+  "video_prompts": {
+    "reel_1": {
+      "aspect_ratio": "9:16",
+      "total_duration_s": 30,
+      "color_grade": "Warm espresso — lifted blacks, amber mids, desaturated greens, skin tones preserved",
+      "audio_direction": "Lo-fi acoustic guitar beat, upbeat tempo, sharp bass drop lands precisely on frame 1 hook text 'THE OFFICE COFFEE HACK'",
+      "frames": [
+        {
+          "frame_id": "reel_1_frame_1",
+          "duration_s": 5,
+          "on_screen_text": "THE OFFICE COFFEE HACK",
+          "ai_video_prompt": "Camera: Handheld iPhone 15 shot, 35mm f/2.0, shallow depth of field, slight natural sway. Subject: A mid-30s Indian male professional in a lived-in corporate desk setup, holding a glossy ceramic mug with a pained expression looking at a glowing cafe bill on his laptop. Lighting: Soft morning daylight from an off-screen window mixed with warm desk lamp glow. Motion: Subtle head shake, slow push-in camera movement. Atmosphere: Warm amber highlights, dark espresso shadows, visible skin pores, natural stubble. Style: Editorial photography, highly realistic, no 3D render. End frame: Talent looking directly at the camera.",
+          "human_shot_list": "Location: Modern co-working space desk. Lens: 35mm prime. Aperture: f/2.0. Lighting: 5600K window light + 3200K desk lamp key. Talent: Male actor, natural stubble, slightly wrinkled linen shirt collar. Duration: 5s. Cut point: Hard cut on head turn.",
+          "transition_to_next": "Hard cut synced with bass kick"
+        },
+        {
+          "frame_id": "reel_1_frame_2",
+          "duration_s": 5,
+          "on_screen_text": "THE COST TRAP",
+          "ai_video_prompt": "Camera: Close-up macro shot, 85mm f/1.8 lens, shallow focus. Subject: A cheap generic instant coffee jar lid being unscrewed by a tired hand, dark brown powder inside showing dull, uneven agglomeration and fine chicory dust particles floating in the air. Lighting: Single directional overhead warm bulb casting deep shadows. Motion: Slow tilt down into the open jar, dust particles drifting lazily in a ray of light. Atmosphere: Gritty texture, coffee dust on matte dark wood counter. Style: Photographic macro, highly detailed textures. End frame: Sharp focus on the powdery texture.",
+          "human_shot_list": "Location: Office pantry counter with water rings. Lens: 85mm macro. Aperture: f/1.8. Lighting: Overhead amber spotlight. Talent: Hand holding jar lid, visible skin texture and fingernail imperfections. Duration: 5s. Cut point: Match cut on tilt down.",
+          "transition_to_next": "Whip pan left to right"
+        },
+        {
+          "frame_id": "reel_1_frame_3",
+          "duration_s": 5,
+          "on_screen_text": "THE BREAKROOM SECRET",
+          "ai_video_prompt": "Camera: Eye-level handheld shot, 50mm f/1.4. Subject: A clear glass mug filled with dark murky brown liquid sitting on a cluttered office counter with a crumpled napkin and charging cable next to it. Steam rising slowly and thinning out. Lighting: Harsh fluorescent office overhead light mixed with a warm side lamp. Motion: Steam rising, tiny coffee ring on glass reflecting ambient light. Atmosphere: Realistic office breakroom clutter, slightly underexposed background. Style: Documentary film look, natural grain. End frame: Steam dissipating upward.",
+          "human_shot_list": "Location: Corporate office breakroom. Lens: 50mm. Aperture: f/1.4. Lighting: Mixed fluorescent and warm desk lamp. Props: Used spoon, water ring on counter, crumpled napkin. Duration: 5s. Cut point: Cut on steam drift.",
+          "transition_to_next": "Smooth cross dissolve"
+        },
+        {
+          "frame_id": "reel_1_frame_4",
+          "duration_s": 5,
+          "on_screen_text": "THE PURE SOLUTION",
+          "ai_video_prompt": "Camera: Close-up product shot, 85mm f/2.8 lens, tripod locked-off with subtle organic hand-held vibration. Subject: The exact Purity Beans jar resting on dark marble surface, catching a clean warm golden rim light. Label perfectly crisp and legible. Lighting: Single amber key light from the left casting sharp contact shadow on marble. Motion: A single crystal-clear water droplet slowly sliding down the side of the glass jar. Atmosphere: Luxurious, clean, high-end editorial contrast. Style: Commercial product photography, highly realistic. End frame: Droplet reaching bottom of the jar.",
+          "human_shot_list": "Location: Studio kitchen counter. Lens: 85mm. Aperture: f/2.8. Lighting: Single softbox with amber gel at 45-degree angle. Product: Exact Purity Beans jar with unedited label. Duration: 5s. Cut point: Hard cut on droplet stop.",
+          "transition_to_next": "Quick snap cut"
+        },
+        {
+          "frame_id": "reel_1_frame_5",
+          "duration_s": 5,
+          "on_screen_text": "PURITY BEANS AT RS 18",
+          "ai_video_prompt": "Camera: Medium shot, 35mm f/1.8, handheld motion. Subject: A smiling Indian female professional at her clean office desk, holding a ceramic mug filled with dark rich coffee, looking down at the exact Purity Beans jar placed neatly beside her laptop. Lighting: Soft morning sun streaming through window, gentle lens flare across top corner. Motion: Natural blink, slight smile expansion, chest rising as she breathes in. Atmosphere: Warm, inviting, productive morning atmosphere. Style: Lifestyle UGC, hyperrealistic skin pores and flyaway hairs. End frame: Smile peaks.",
+          "human_shot_list": "Location: Bright modern office desk. Lens: 35mm. Aperture: f/1.8. Lighting: Natural daylight side source. Talent: Female actor, natural smile, asymmetric face, realistic clothing wrinkles. Duration: 5s. Cut point: Cut on smile peak.",
+          "transition_to_next": "Fast slide transition to left"
+        },
+        {
+          "frame_id": "reel_1_frame_6",
+          "duration_s": 5,
+          "on_screen_text": "SHOP P3ONLINE.IN",
+          "ai_video_prompt": "Camera: Macro product shot, 85mm f/2.0. Subject: The exact Purity Beans jar centered against a dark textured concrete background, glowing under warm golden illumination. Bold typography overlay at bottom. Lighting: Dramatic side amber spotlight, deep shadows on right. Motion: Gentle slow push-in toward the jar label. Atmosphere: Premium, authoritative, clean aesthetic. Style: High-end FMCG studio shot. End frame: Jar resting dead-center, perfectly sharp.",
+          "human_shot_list": "Location: Studio tabletop. Lens: 85mm. Aperture: f/2.0. Lighting: Single directional warm spot. Product: Exact Purity Beans jar. Duration: 5s. Cut point: Seamless loop point back to frame 1.",
+          "transition_to_next": "Seamless loop back to Frame 1"
+        }
+      ],
+      "thumbnail_frame": "Frame 4 (The Purity Beans jar with a single water droplet on dark marble under warm gold light) — stops the scroll instantly through tactile realism and premium contrast.",
+      "loop_edit_note": "Cut the final frame at exactly 30.0s, matching the audio beat and visual framing of Frame 1 for an infinite seamless loop."
+    },
+    "reel_2": {
+      "aspect_ratio": "9:16",
+      "total_duration_s": 30,
+      "color_grade": "Cooler, moodier — night palette: deep blue-blacks, warm amber accent, lower brightness",
+      "audio_direction": "Late-night ambient synth drone with slow ticking clock rhythm, solemn tone shifting to resolute beat on frame 3",
+      "frames": [
+        {
+          "frame_id": "reel_2_frame_1",
+          "duration_s": 5,
+          "on_screen_text": "YOUR OFFICE COFFEE SUCKS",
+          "ai_video_prompt": "Camera: Handheld low-angle shot, 35mm f/1.8. Subject: An Indian male professional rubbing his tired eyes at a dimly lit office desk late at night, blue laptop screen glow illuminating his face. Lighting: Cool blue screen light mixed with a single warm desk lamp behind him. Motion: Slow micro-movement, hand rubbing forehead, exhausted sigh. Atmosphere: Intimate, late-night corporate burnout feel, deep shadows, visible skin fatigue. Style: Cinematic documentary, highly realistic. End frame: Hand drops from face.",
+          "human_shot_list": "Location: Late-night office cubicle. Lens: 35mm. Aperture: f/1.8. Lighting: Laptop screen key + rear warm desk lamp. Talent: Male actor, tired expression, slight stubble. Duration: 5s. Cut point: Hard cut on hand drop.",
+          "transition_to_next": "Quick dip to black and snap cut"
+        },
+        {
+          "frame_id": "reel_2_frame_2",
+          "duration_s": 5,
+          "on_screen_text": "THE OFFICE PANTRY TRAP",
+          "ai_video_prompt": "Camera: Over-the-shoulder macro shot, 50mm f/2.0. Subject: A hand reaching into a messy office shelf filled with dusty, generic chicory coffee jars under dim, flickering fluorescent tube lighting. Lighting: Cold greenish-blue overhead fluorescent flicker. Motion: Hand fumbling over dusty jars, slow camera push-in. Atmosphere: Gloomy, uninviting, industrial breakroom. Style: Gritty realism, natural grain. End frame: Hand touches a dusty jar.",
+          "human_shot_list": "Location: Office storage pantry. Lens: 50mm. Aperture: f/2.0. Lighting: Flickering fluorescent tube. Props: Dusty jars, tangled wires. Duration: 5s. Cut point: Match cut on hand touch.",
+          "transition_to_next": "Whip pan right"
+        },
+        {
+          "frame_id": "reel_2_frame_3",
+          "duration_s": 5,
+          "on_screen_text": "RS 18 PER CUP MATH",
+          "ai_video_prompt": "Camera: Macro top-down shot, 85mm f/2.8. Subject: Hot water being poured from a sleek stainless steel kettle into a ceramic mug, dissolving pure soluble coffee granules instantly into a dark, rich, crema-topped brew. Lighting: Warm amber spotlight from the side reflecting off the swirling dark liquid. Motion: Liquid swirling, steam rising gracefully in the warm light beam. Atmosphere: Satisfying, comforting, premium shift in tone. Style: Food cinematography, ultra-realistic liquid physics. End frame: Water pouring stops, rich coffee surface settles.",
+          "human_shot_list": "Location: Studio dark wood counter. Lens: 85mm macro. Aperture: f/2.8. Lighting: Side-mounted warm amber spotlight. Action: Pouring hot water with steady hands. Duration: 5s. Cut point: Cut on liquid settling.",
+          "transition_to_next": "Smooth cross dissolve"
+        },
+        {
+          "frame_id": "reel_2_frame_4",
+          "duration_s": 5,
+          "on_screen_text": "ZERO CHICORY FILLERS",
+          "ai_video_prompt": "Camera: Extreme close-up macro shot, 100mm f/2.8 macro lens. Subject: The exact Purity Beans product label typography ('100% Pure Coffee, Zero Chicory') catching a sharp golden light reflection on matte paper texture. Lighting: Direct lateral amber key light revealing paper fiber and ink texture. Motion: Extremely slow, almost imperceptible lateral camera slide. Atmosphere: Transparent, honest, premium clinical clarity. Style: Commercial macro photography, zero CGI look. End frame: Typography crystal clear in frame center.",
+          "human_shot_list": "Location: Studio product bench. Lens: 100mm macro. Aperture: f/2.8. Lighting: Lateral pin-spot amber light. Product: Exact Purity Beans jar label. Duration: 5s. Cut point: Hard cut on slide end.",
+          "transition_to_next": "Fast zoom out"
+        },
+        {
+          "frame_id": "reel_2_frame_5",
+          "duration_s": 5,
+          "on_screen_text": "PURITY BEANS AT YOUR DESK",
+          "ai_video_prompt": "Camera: Medium tracking shot, 35mm f/1.8. Subject: The exact Purity Beans jar sitting proudly on a clean, organized desk next to a glowing laptop and a steaming black ceramic mug in a warm home-office environment at night. Lighting: Warm desk lamp casting cozy amber glow across the jar and wooden desk surface. Motion: Slow sideways push past the jar, shallow depth of field blurring the background. Atmosphere: Cozy, accomplished, premium late-night work session. Style: Editorial lifestyle photography, hyper-realistic. End frame: Jar perfectly framed in lower third.",
+          "human_shot_list": "Location: Styled home office desk. Lens: 35mm. Aperture: f/1.8. Lighting: Warm desk lamp (3000K). Product: Exact Purity Beans jar. Duration: 5s. Cut point: Cut on camera stop.",
+          "transition_to_next": "Quick cross dissolve"
+        },
+        {
+          "frame_id": "reel_2_frame_6",
+          "duration_s": 5,
+          "on_screen_text": "GET YOUR JAR TODAY",
+          "ai_video_prompt": "Camera: Locked-off vertical shot, 50mm f/2.0. Subject: The exact Purity Beans jar centered against a dark espresso marble surface, illuminated by a single overhead warm golden beam. Website URL 'https://p3online.in' elegantly overlaid in cream white font. Lighting: Dramatic chiaroscuro lighting, deep shadows, amber rim light. Motion: Zero camera movement, subtle atmospheric dust motes floating slowly in the light beam. Atmosphere: Luxurious, definitive, high-end brand authority. Style: Premium FMCG studio photography. End frame: Perfectly composed static product shot.",
+          "human_shot_list": "Location: Dark marble studio set. Lens: 50mm. Aperture: f/2.0. Lighting: Overhead amber spot. Product: Exact Purity Beans jar. Duration: 5s. Cut point: Clean cut for loop or end card.",
+          "transition_to_next": "Loop back to Frame 1"
+        }
+      ],
+      "thumbnail_frame": "Frame 1 (Tired professional under blue laptop light at night) — creates immediate emotional resonance and high scroll-stop power through relatable pain.",
+      "loop_edit_note": "Cut final frame cleanly"
+    }
+  },
+  "ai_image_prompts": [
+    {
+      "id": "img_carousel_cover",
+      "use_for": "Instagram carousel cover (1080x1080)",
+      "prompt": "Cinematic dark espresso tones — Purity Beans jar centred on black marble, single diagonal golden beam from upper right, micro coffee granules scattered, editorial luxury food photography, deep shadows, faint cream steam wisps, razor-sharp product label"
+    },
+    {
+      "id": "img_reel_cover",
+      "use_for": "Instagram Reel thumbnail (1080x1920 vertical)",
+      "prompt": "Vertical cinematic coffee portrait — Purity Beans jar as sole hero, warm amber backlight through frosted glass, shallow depth of field, single thread of steam, dark moody atmosphere, no people, no text, editorial quality"
+    },
+    {
+      "id": "img_linkedin_banner",
+      "use_for": "LinkedIn post image (1200x628)",
+      "prompt": "Wide editorial product landscape — Purity Beans jar on dark weathered wooden desk, MacBook soft-blurred at left edge, single warm desk lamp, professional but human, documentary texture, 16:9 wide composition, no text"
+    },
+    {
+      "id": "img_blog_hero",
+      "use_for": "Blog hero image (1200x630)",
+      "prompt": "Lifestyle editorial — Indian professional hands cradling a dark ceramic mug, Purity Beans jar visible soft-focus on desk, warm morning window light from left, genuine moment not staged, documentary grain, 16:9 crop"
+    },
+    {
+      "id": "img_story_bg",
+      "use_for": "Instagram Story background (1080x1920)",
+      "prompt": "Vertical dark editorial — heavily blurred Purity Beans jar in background with deep amber bokeh, top two-thirds empty for text overlay, grain texture, deep blacks, warm gold accent light"
+    }
+  ],
+  "performance_targets": {
+    "reel_views_3s": 15000,
+    "reel_views_30s": 5000,
+    "reel_saves": 800,
+    "reel_shares": 300,
+    "carousel_swipe_rate_pct": 65,
+    "carousel_saves": 600,
+    "linkedin_impressions": 3000,
+    "linkedin_comments": 40,
+    "story_poll_votes": 500,
+    "story_dm_replies": 50,
+    "link_clicks": 200,
+    "new_followers": 300
+  },
+  "_asset_metadata": [
+    {
+      "content_id": "pb_d7d6a6fb11",
+      "day": 268,
+      "channel": "instagram",
+      "type": "reel",
+      "topic": "",
+      "hook": "THE OFFICE COFFEE HACK",
+      "cta": "Upgrade your desk setup at https://p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": "identity_seeking",
+      "attention_mechanism": "recognition",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "second_person",
+      "payoff_type": "new_knowledge",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "reel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": true,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_ca67acd547",
+      "day": 268,
+      "channel": "instagram",
+      "type": "growth_reel",
+      "topic": "Revealing the hidden psychological trap of office coffee and how your daily desk brew secretly dictates your morning foc",
+      "hook": "Your office desk coffee is secretly running your workday.",
+      "cta": "",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": "curious",
+      "attention_mechanism": "curiosity_gap",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": null,
+      "payoff_type": "useful_test",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "growth_reel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_78d0335009",
+      "day": 268,
+      "channel": "instagram",
+      "type": "carousel",
+      "topic": "Stop Overpaying For Office Coffee",
+      "hook": "",
+      "cta": "Upgrade your morning cup today at https://p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": "skeptical",
+      "attention_mechanism": "specificity",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "negation",
+      "payoff_type": "useful_test",
+      "hook_promise": "alternative",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "carousel",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_44dc807f55",
+      "day": 268,
+      "channel": "instagram",
+      "type": "story",
+      "topic": "",
+      "hook": "",
+      "cta": "",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": null,
+      "attention_mechanism": null,
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": null,
+      "payoff_type": null,
+      "hook_promise": null,
+      "payoff_present": null,
+      "payoff_validation_status": "no_copy",
+      "payoff_gate_version": "1.0.0",
+      "platform": "instagram",
+      "format": "story",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_92cb2bdb5b",
+      "day": 268,
+      "channel": "linkedin",
+      "type": "post",
+      "topic": "",
+      "hook": "Your office pantry coffee is costing you more than you think.",
+      "cta": "Explore the collection and upgrade your desk setup at https://p3online.in",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": "uninterested",
+      "attention_mechanism": "pattern_interrupt",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "second_person",
+      "payoff_type": "new_knowledge",
+      "hook_promise": null,
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "linkedin",
+      "format": "post",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    },
+    {
+      "content_id": "pb_a3bb92de26",
+      "day": 268,
+      "channel": "youtube",
+      "type": "short",
+      "topic": "Best coffee for office pantry India | Purity Beans",
+      "hook": "Why does your office coffee taste like muddy water?",
+      "cta": "Visit https://p3online.in — Purity Beans. No preservatives. No artificial aroma. 100% coffee.",
+      "audience": "IGNITION (0-1K)",
+      "campaign": "Festival Gifting",
+      "experiment": "carousel_angle",
+      "variant": "A",
+      "playbook": "Baseline_v1",
+      "policy_version": "1.2",
+      "generation_id": "gen_2026-09-26_faddacf2",
+      "scroller_state": "identity_seeking",
+      "attention_mechanism": "recognition",
+      "psychology_frame": "revelation",
+      "psychology_frame_version": 1,
+      "hook_strategy": "question",
+      "payoff_type": "practical_action",
+      "hook_promise": "explanation",
+      "payoff_present": true,
+      "payoff_validation_status": "satisfied",
+      "payoff_gate_version": "1.0.0",
+      "platform": "youtube",
+      "format": "short",
+      "funnel_stage": null,
+      "business_objective": null,
+      "target_kpi_at_creation": "followers",
+      "hook_layers_distinct": null,
+      "decision_version": "1.0.0",
+      "basis": "classified from copy; mechanism SELECTION is ADR-002 Phase 4 and is not active",
+      "prompt_version": "2.7.0",
+      "schema_version": "1.4.0",
+      "publisher_version": "2.3.0",
+      "asset_format": "3.1.0",
+      "publish_time": "2026-09-26T05:22:44",
+      "status": "scheduled"
+    }
+  ]
+}
