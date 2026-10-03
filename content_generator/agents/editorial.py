@@ -58,29 +58,47 @@ Reply ONLY with this JSON (no extra text):
 }}"""
 
 
+class EditorialScoreError(RuntimeError):
+    """The scorer did not return a usable score. Callers must retry or surface this."""
+
+
 def review_content(content: dict, label: str = "content") -> dict:
     """
     Run editorial review on a content piece.
-    Returns a dict with numeric scores + verdict.
-    Always returns a valid dict even on LLM/parse failure.
+
+    Returns numeric scores. A provider or parse failure is retried once, then
+    raised. It is not converted into a 7.0 pass or a 0.0 reject — both of
+    those used to look like a real editorial judgment.
     """
     if not _ENABLED:
         return _pass()
 
-    try:
-        from content_generator.providers.llm_router import call as llm_call
-        snippet      = json.dumps(content, ensure_ascii=False, indent=2)[:2000]
-        prompt       = _PROMPT_TEMPLATE.format(content_json=snippet)
-        raw_result   = llm_call(prompt, label=f"editorial_{label}", max_tokens=350)
-        scores       = _validate(raw_result)
-        logger.info(
-            "[editorial] %s → overall=%.1f  verdict=%s",
-            label, scores["overall"], scores["verdict"],
-        )
-        return scores
-    except Exception as e:
-        logger.warning("[editorial] Review failed for '%s': %s", label, e)
-        return _pass()
+    from content_generator.providers.llm_router import call as llm_call
+    snippet = json.dumps(content, ensure_ascii=False, indent=2)[:4000]
+    prompt = _PROMPT_TEMPLATE.format(content_json=snippet)
+    last_error: Exception | None = None
+    for attempt in range(2):
+        try:
+            raw_result = llm_call(prompt, label=f"editorial_{label}", max_tokens=800)
+            scores = _validate(raw_result)
+            logger.info(
+                "[editorial] %s → overall=%.1f  verdict=%s",
+                label, scores["overall"], scores["verdict"],
+            )
+            return scores
+        except EditorialScoreError as e:
+            last_error = e
+            logger.warning(
+                "[editorial] %s score parse failed (attempt %d/2): %s",
+                label, attempt + 1, e,
+            )
+        except Exception as e:
+            last_error = e
+            logger.warning(
+                "[editorial] %s scoring call failed (attempt %d/2): %s",
+                label, attempt + 1, e,
+            )
+    raise EditorialScoreError(f"scoring failed for {label}: {last_error}")
 
 
 def should_regenerate(review: dict) -> bool:
@@ -95,17 +113,35 @@ def should_regenerate(review: dict) -> bool:
 
 def _validate(result: dict) -> dict:
     dims = ["shareability", "saveability", "emotion_pull", "hook_strength", "brand_clarity"]
+    if not isinstance(result, dict):
+        raise EditorialScoreError(f"score was {type(result).__name__}, not an object")
+    for key in ("editorial_score", "scores", "review"):
+        inner = result.get(key)
+        if isinstance(inner, dict) and any(d in inner for d in dims):
+            result = {**result, **inner}
+            break
 
+    missing = []
     for d in dims:
+        raw = result.get(d)
+        if raw in (None, ""):
+            missing.append(d)
+            continue
         try:
-            result[d] = round(max(0.0, min(10.0, float(result.get(d, 7.0)))), 1)
+            result[d] = round(max(0.0, min(10.0, float(raw))), 1)
         except (TypeError, ValueError):
-            result[d] = 7.0
+            missing.append(d)
+    if missing:
+        raise EditorialScoreError("score missing dimensions: " + ", ".join(missing))
 
-    if not isinstance(result.get("overall"), (int, float)):
+    raw_overall = result.get("overall")
+    if raw_overall in (None, ""):
         result["overall"] = round(sum(result[d] for d in dims) / len(dims), 1)
     else:
-        result["overall"] = round(float(result["overall"]), 1)
+        try:
+            result["overall"] = round(float(raw_overall), 1)
+        except (TypeError, ValueError):
+            raise EditorialScoreError(f"overall is not a number: {raw_overall!r}")
 
     if result.get("verdict") not in ("APPROVE", "REJECT"):
         result["verdict"] = "APPROVE" if result["overall"] >= _MIN_SCORE else "REJECT"
@@ -115,7 +151,7 @@ def _validate(result: dict) -> dict:
 
 
 def _pass() -> dict:
-    """Default pass — used when review is disabled or fails."""
+    """Used only when editorial review is explicitly disabled. Not a measured score."""
     return {
         "shareability": 7.0, "saveability": 7.0, "emotion_pull": 7.0,
         "hook_strength": 7.0, "brand_clarity": 7.0, "overall": 7.0,

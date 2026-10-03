@@ -29,6 +29,7 @@ ABSOLUTE RULES:
 - 'Purity Beans' MUST appear in caption
 - '{WEBSITE_URL}' MUST appear in caption and CTA
 - comment_trigger, save_trigger, share_trigger, hashtags are MANDATORY
+- The first line must stop a scroll in under 2 seconds. A generic how-to title fails that test.
 
 {{
   "caption": "HOOK LINE that stops the scroll (max 12 words, no emoji).\\n\\nShort story or insight coffee lovers relate to. Introduce Purity Beans naturally. Explain why real coffee drinkers should care. Mention: No preservatives. No artificial aroma. 100% coffee. Freeze-dried and agglomerated variants available.\\n\\nShop now: {WEBSITE_URL}\\n\\nThis caption must be 150-250 words. Paste-ready. Emotional storytelling with brand facts woven in naturally.",

@@ -62,7 +62,8 @@ ABSOLUTE RULES:
 - NEVER make medical claims
 - Minimum 6 slides, maximum 8 slides
 - Final slide MUST include CTA + {WEBSITE_URL} + mention of Purity Beans
-- caption MUST be 200-300 words
+- caption MUST be present and 200-300 words. An empty caption is invalid.
+- The cover heading must stop a scroll in under 2 seconds. A generic title fails that test.
 - comment_trigger, save_trigger, share_trigger, hashtags, psychology_frame are MANDATORY
 
 {{

@@ -256,6 +256,16 @@ jobs:
               if not generation_id:
                   alert("GENERATE persisted today's file without generation_id; refusing ambiguous state.")
                   sys.exit(1)
+              from content_generator.core.editorial_engine import approved_assets
+              approved = approved_assets(payload)
+              feed_ok = "carousel" in approved or "instagram_post" in approved
+              reel_ok = any(k in approved for k in ("growth_reel", "reel_1", "reel_2"))
+              if not feed_ok or not reel_ok:
+                  alert(
+                      "GENERATE saved content the morning and evening slots cannot publish: "
+                      f"approved={sorted(approved)}"
+                  )
+                  sys.exit(1)
               print(f"::notice::GENERATE verified — {expected} | day={payload.get('day_number')} | generation_id={generation_id}; no publication expected at 06:00 IST.")
               sys.exit(0)
           raw=Path("run_result.json").read_text(encoding="utf-8",errors="ignore")

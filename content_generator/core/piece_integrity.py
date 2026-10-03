@@ -232,10 +232,40 @@ def _ensure_engagement(piece: dict) -> None:
             piece[field] = default
 
 
+def _plain_text(value: str) -> str:
+    import re
+    text = re.sub(r"<[^>]+>", " ", value)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _alias_blog_fields(piece: dict) -> None:
+    """
+    The blog prompt used to ask for intro / body_html and no conclusion.
+    BlogSchema reads introduction / body / conclusion, so every post failed
+    as three missing fields before the copy was ever read.
+    """
+    if not str(piece.get("introduction") or "").strip():
+        intro = piece.get("intro") or piece.get("introduction_html")
+        if isinstance(intro, str) and intro.strip():
+            piece["introduction"] = _plain_text(intro)
+    body = piece.get("body")
+    if not isinstance(body, str) or len(body.strip()) < 40:
+        html = piece.get("body_html") or piece.get("content_html")
+        if isinstance(html, str) and html.strip():
+            piece["body"] = _plain_text(html)
+    if not str(piece.get("conclusion") or "").strip():
+        for key in ("conclusion_html", "closing", "outro"):
+            closing = piece.get(key)
+            if isinstance(closing, str) and closing.strip():
+                piece["conclusion"] = _plain_text(closing)
+                break
+
+
 def ensure_structural_fields(piece: dict, label: str = "") -> dict:
     """Fill structural gaps in place. Creative copy that is already present stays."""
     if not isinstance(piece, dict):
         return piece
+    _alias_blog_fields(piece)
     label = _canon(label, piece)
     _coerce_hashtags(piece)
     _alias_hooks(piece)
@@ -275,8 +305,12 @@ def merge_regenerated_piece(original: dict, improved: dict) -> dict:
                 logger.info("[editorial] keeping %s — rewrite shortened a structured list", key)
                 continue
         if key in _PRESERVE_IF_SHORTER and isinstance(value, str) and isinstance(prev, str):
-            if len(prev.strip()) >= 50 and len(value.strip()) < max(50, int(len(prev.strip()) * 0.6)):
-                logger.info("[editorial] keeping %s — rewrite was a short substitute", key)
+            # A rewrite may be shorter and still be the better caption. Only a
+            # value under the schema minimum is a drop, which is what used to
+            # wipe the carousel caption and get stored as editorial score 0.
+            minimum = 1000 if key == "body" else 50 if key in ("caption", "introduction") else 10
+            if len(prev.strip()) >= minimum and len(value.strip()) < minimum:
+                logger.info("[editorial] keeping %s — rewrite was below the schema minimum", key)
                 continue
         if key == "editorial_score":
             if not isinstance(value, dict):
