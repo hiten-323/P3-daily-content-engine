@@ -22,6 +22,12 @@ def brand_block() -> str:
     except Exception:
         psych = ""
 
+    try:
+        from content_generator.core.shopify_catalog import format_catalog_for_prompt
+        catalog_block = format_catalog_for_prompt()
+    except Exception:
+        catalog_block = ""
+
     return (
         f"BRAND: {BRAND['name']} (by {BRAND.get('company', 'Pure Pantry Provisions')}) — premium pure instant coffee, India.\n"
         f"USP: {POSITIONING['usp']}\n"
@@ -29,6 +35,8 @@ def brand_block() -> str:
         f"(10x cheaper, 100x purer)\n"
         f"Website: {WEBSITE_URL} | Tagline: \"{BRAND['tagline']}\"\n"
         f"Tone: Premium but human. Honest, not corporate. Indian in DNA.\n"
+        f"\n"
+        f"{catalog_block}\n"
         f"\n"
         f"MANDATORY BRAND RULES — these are non-negotiable:\n"
         f"1. The brand name 'Purity Beans' MUST appear at least once in every caption, hook, body, and CTA.\n"

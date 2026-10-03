@@ -147,3 +147,11 @@ BUSINESS_TARGETS = {
     "retailer_target":        50,         # retail outlets
     "content_pieces_per_day": 6,          # reels + carousel + linkedin + blog + stories + yt
 }
+
+# ── Shopify Product Catalog (Source of Truth for Jars & Pricing) ───────────────
+try:
+    from content_generator.core.shopify_catalog import SHOPIFY_PRODUCTS, get_product
+    PRODUCT_CATALOG = SHOPIFY_PRODUCTS
+except Exception:
+    PRODUCT_CATALOG = {}
+
