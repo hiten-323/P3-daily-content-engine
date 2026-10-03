@@ -29,6 +29,7 @@ from content_generator.prompts import (
 from content_generator.prompts import growth_reel
 from content_generator.prompts.brand import build_avoid_block
 from content_generator.providers.llm_router import call as llm_call, get_usage_log
+from content_generator.core.ist_dates import content_date_iso, today_ist
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +175,7 @@ def generate_daily_content(
     if day_number < 0:
         raise ValueError(f"day_number must be >= 0, got {day_number}")
 
-    todays_date = datetime.date.today().strftime("%B %d, %Y")
+    todays_date = today_ist().isoformat()
     avoid       = build_avoid_block()
 
     # Optimizer-biased selections (falls back to round-robin if no data)
@@ -339,7 +340,7 @@ def generate_daily_content(
     output = {
         "date":           todays_date,
         "day_number":     day_number,
-        "generation_id":  f"gen_{datetime.date.today().isoformat()}_{_uuid.uuid4().hex[:8]}",
+        "generation_id":  f"gen_{today_ist().isoformat()}_{_uuid.uuid4().hex[:8]}",
         "prompt_version": PROMPT_VERSION,
         "schema_version": SCHEMA_VERSION,
         "psychology_frame":         _selected_frame_id(research_context),
@@ -391,7 +392,10 @@ def generate_daily_content(
 
 def save_content(content_data: dict, output_dir: str = "output") -> str:
     os.makedirs(output_dir, exist_ok=True)
-    date_str = datetime.date.today().isoformat()
+    # Filename and the date field are the same IST day. Legacy long-form
+    # dates already in the dict are normalized so later slots can match them.
+    date_str = content_date_iso(content_data.get("date")) or today_ist().isoformat()
+    content_data["date"] = date_str
     filepath = os.path.join(output_dir, f"content_{date_str}.json")
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(content_data, f, indent=2, ensure_ascii=False)

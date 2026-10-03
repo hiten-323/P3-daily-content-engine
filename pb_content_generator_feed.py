@@ -40,7 +40,8 @@ def _output_dir() -> str:
 
 
 def _todays_path() -> str:
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     return os.path.join(_output_dir(), f"content_{date_str}.json")
 
 

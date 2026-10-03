@@ -5,6 +5,33 @@ import re
 BAD_VISIBLE_LABELS = ("slide 1:", "slide 2:", "slide 3:", "headline:", "body_text:")
 BAD_GLYPHS = ("\ufffd", "\u25a1")
 
+# Prompt, schema and quality-gate names for the same idea. A growth reel
+# writes `chosen_hook` / `script` / `sound_suggestion`; a brand reel writes
+# `hook_text` / `frames` / `music_vibe`. Any one of these is enough.
+HOOK_KEYS = ("hook", "hook_text", "chosen_hook", "hook_line")
+MOTION_KEYS = (
+    "motion_plan", "scenes", "ai_video_motion_prompt", "ai_video_prompts",
+    "frames", "script",
+)
+AUDIO_PLAN_KEYS = (
+    "audio_track", "audio_recommendation", "music_vibe", "sound_suggestion",
+    "audio", "audio_plan", "audio_direction",
+)
+LOOP_KEYS = ("loop_ending", "loop_note", "loop_ending_note", "loopable_ending")
+
+
+def _has_any(plan: dict, keys: tuple) -> bool:
+    for key in keys:
+        value = plan.get(key)
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        if isinstance(value, (list, dict)) and len(value) == 0:
+            continue
+        return True
+    return False
+
 def inspect_copy(text: str, surface: str="post") -> dict:
     text=(text or "").strip()
     issues=[]
@@ -22,20 +49,13 @@ def inspect_reel_plan(plan: dict) -> dict:
     duration=float(plan.get("duration_seconds") or 0)
     if duration and duration>35: issues.append("reel too long for discovery-first default")
     
-    # Check for hook (either 'hook', 'hook_text', or 'chosen_hook')
-    if not (plan.get("hook") or plan.get("hook_text") or plan.get("chosen_hook")):
+    if not _has_any(plan, HOOK_KEYS):
         issues.append("missing first-second hook")
-        
-    # Check for motion/scene plan (either 'motion_plan', 'scenes', 'ai_video_motion_prompt', 'ai_video_prompts', 'frames', or 'script')
-    if not (plan.get("motion_plan") or plan.get("scenes") or plan.get("ai_video_motion_prompt") or plan.get("ai_video_prompts") or plan.get("frames") or plan.get("script")):
+    if not _has_any(plan, MOTION_KEYS):
         issues.append("missing motion/scene plan")
-        
-    # Check for audio plan (either 'audio_track', 'audio_recommendation', 'music_vibe', 'sound_suggestion', or 'audio'):
-    if not (plan.get("audio_track") or plan.get("audio_recommendation") or plan.get("music_vibe") or plan.get("sound_suggestion") or plan.get("audio")):
+    if not _has_any(plan, AUDIO_PLAN_KEYS):
         issues.append("missing audio plan")
-        
-    # Check for loopable ending (either 'loop_ending', 'loop_note', or 'loop_ending_note')
-    if not (plan.get("loop_ending") or plan.get("loop_note") or plan.get("loop_ending_note")):
+    if not _has_any(plan, LOOP_KEYS):
         issues.append("missing loopable ending")
         
     return {"ok":not issues,"issues":issues}

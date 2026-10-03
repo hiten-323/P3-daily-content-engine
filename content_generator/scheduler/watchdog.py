@@ -174,11 +174,16 @@ def timed_step_hard(label: str, timeout_s: int = None):
 
 # ── Alert dispatch ────────────────────────────────────────────────────────────
 
-def _alert(message: str) -> None:
-    """Dispatch alert to all configured channels."""
+def alert_failure(message: str) -> None:
+    """Dispatch a failure alert. No-op for channels that are not configured."""
     _alert_console(message)
     _alert_webhook(message)
     _alert_email(message)
+
+
+def _alert(message: str) -> None:
+    """Dispatch alert to all configured channels."""
+    alert_failure(message)
 
 
 def _alert_console(message: str) -> None:
@@ -186,14 +191,16 @@ def _alert_console(message: str) -> None:
 
 
 def _alert_webhook(message: str) -> None:
-    if not _WEBHOOK_URL:
+    # Read at send time. The workflow injects ALERT_WEBHOOK_URL per step, and
+    # a value captured at import is empty when the secret is added later.
+    url = (os.getenv("ALERT_WEBHOOK_URL") or _WEBHOOK_URL or "").strip()
+    if not url:
         return
     try:
         import urllib.request
-        import urllib.error
         payload = json.dumps({"text": f":warning: *Purity Beans Engine Alert*\n{message}"})
         req = urllib.request.Request(
-            _WEBHOOK_URL,
+            url,
             data=payload.encode(),
             headers={"Content-Type": "application/json"},
             method="POST",
@@ -205,26 +212,56 @@ def _alert_webhook(message: str) -> None:
         logger.warning("[watchdog] Webhook alert failed: %s", e)
 
 
+def _smtp_config() -> dict | None:
+    """
+    SMTP settings from the names the workflow actually sets.
+
+    The old path read SUMMARY_EMAIL_FROM and SMTP_PASSWORD, which the daily
+    workflow never provides (it sets SMTP_PASS, SMTP_USER, NURTURE_FROM_EMAIL
+    and ALERT_EMAIL_TO). Configured alerts were therefore dropped.
+    """
+    recipient = (os.getenv("ALERT_EMAIL_TO") or os.getenv("SUMMARY_EMAIL_TO") or "").strip()
+    password = (os.getenv("SMTP_PASS") or os.getenv("SMTP_PASSWORD") or "").strip()
+    user = (os.getenv("SMTP_USER") or os.getenv("SMTP_USERNAME") or "").strip()
+    sender = (
+        os.getenv("ALERT_EMAIL_FROM")
+        or os.getenv("NURTURE_FROM_EMAIL")
+        or os.getenv("SUMMARY_EMAIL_FROM")
+        or user
+    ).strip()
+    host = (os.getenv("SMTP_HOST") or "smtp.gmail.com").strip()
+    try:
+        port = int(os.getenv("SMTP_PORT") or "587")
+    except ValueError:
+        port = 587
+    if not (recipient and password and sender):
+        return None
+    return {
+        "host": host,
+        "port": port,
+        "user": user or sender,
+        "password": password,
+        "sender": sender,
+        "recipient": recipient,
+    }
+
+
 def _alert_email(message: str) -> None:
-    if not _ALERT_EMAIL:
+    cfg = _smtp_config()
+    if not cfg:
         return
     try:
         import smtplib
         from email.mime.text import MIMEText
-        from content_generator.dashboard.weekly_summary import (
-            _EMAIL_FROM, _SMTP_HOST, _SMTP_PORT, _SMTP_PASS,
-        )
-        if not all([_EMAIL_FROM, _SMTP_PASS]):
-            return
-        msg            = MIMEText(message, "plain", "utf-8")
+        msg = MIMEText(message, "plain", "utf-8")
         msg["Subject"] = "ALERT: Purity Beans Content Engine"
-        msg["From"]    = _EMAIL_FROM
-        msg["To"]      = _ALERT_EMAIL
-        with smtplib.SMTP(_SMTP_HOST, _SMTP_PORT) as server:
+        msg["From"] = cfg["sender"]
+        msg["To"] = cfg["recipient"]
+        with smtplib.SMTP(cfg["host"], cfg["port"], timeout=15) as server:
             server.starttls()
-            server.login(_EMAIL_FROM, _SMTP_PASS)
+            server.login(cfg["user"], cfg["password"])
             server.send_message(msg)
-        logger.info("[watchdog] Alert emailed to %s", _ALERT_EMAIL)
+        logger.info("[watchdog] Alert emailed to %s", cfg["recipient"])
     except Exception as e:
         logger.warning("[watchdog] Email alert failed: %s", e)
 

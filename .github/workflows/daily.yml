@@ -205,6 +205,12 @@ jobs:
         if: success()
         env:
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          NURTURE_FROM_EMAIL: ${{ secrets.NURTURE_FROM_EMAIL }}
           FORCE_SLOT: ${{ env.FORCE_SLOT }}
         run: |
           python - <<'PY'
@@ -215,10 +221,15 @@ jobs:
           if slot not in {"generate","morning","evening"}: print("::error::No explicit execution slot; refusing wall-clock guessing."); sys.exit(1)
           def alert(msg):
               print(f"::error::{msg}")
-              hook=os.environ.get("ALERT_WEBHOOK_URL")
-              if hook:
-                  try: urllib.request.urlopen(urllib.request.Request(hook,data=json.dumps({"text":msg}).encode(),headers={"Content-Type":"application/json"}),timeout=15)
-                  except Exception: pass
+              try:
+                  from content_generator.scheduler.watchdog import alert_failure
+                  alert_failure(msg)
+              except Exception as exc:
+                  print(f"::warning::alert dispatch failed: {exc}")
+                  hook=os.environ.get("ALERT_WEBHOOK_URL")
+                  if hook:
+                      try: urllib.request.urlopen(urllib.request.Request(hook,data=json.dumps({"text":msg}).encode(),headers={"Content-Type":"application/json"}),timeout=15)
+                      except Exception: pass
           if slot=="generate":
               ist_today = datetime.datetime.now(ZoneInfo("Asia/Kolkata")).date()
               expected = Path(f"output/content_{ist_today.isoformat()}.json")
@@ -315,8 +326,28 @@ jobs:
         if: failure()
         env:
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          NURTURE_FROM_EMAIL: ${{ secrets.NURTURE_FROM_EMAIL }}
         run: |
-          if [ -n "$ALERT_WEBHOOK_URL" ]; then
-            curl -s -X POST "$ALERT_WEBHOOK_URL" -H "Content-Type: application/json" -d "{\"text\":\"PURITY BEANS PIPELINE FAILED\nRun: ${{ github.run_number }}\nLogs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
-          fi
+          python - <<'PY'
+          import os
+          msg = (
+              "PURITY BEANS PIPELINE FAILED\n"
+              f"Run: {os.environ.get('GITHUB_RUN_NUMBER', '')}\n"
+              f"Logs: {os.environ.get('GITHUB_SERVER_URL', '')}/"
+              f"{os.environ.get('GITHUB_REPOSITORY', '')}/actions/runs/"
+              f"{os.environ.get('GITHUB_RUN_ID', '')}"
+          )
+          try:
+              from content_generator.scheduler.watchdog import alert_failure
+              alert_failure(msg)
+          except Exception as exc:
+              print(f"alert dispatch failed: {exc}")
+              raise
+          print(msg)
+          PY
           echo "Pipeline failed — check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

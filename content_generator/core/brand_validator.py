@@ -238,6 +238,21 @@ def validate_asset(label: str, piece: dict,
             
         is_valid, issues = validate_asset_copy(combined_text, check_brand_facts=True, check_website=True, check_brand_mention=True, check_length=True)
 
+    elif clean_label == "growth_reel" or str(piece.get("track") or "").strip().lower() == "growth":
+        # Growth-track reels are non-branded on purpose. Requiring "Purity Beans"
+        # here rejected every growth reel the prompt is instructed to write.
+        caption = piece.get("caption", "")
+        is_ok, caption_issues = validate_asset_copy(
+            caption,
+            check_brand_facts=False,
+            check_website=False,
+            check_brand_mention=False,
+            check_length=True,
+        )
+        if not is_ok:
+            is_valid = False
+            issues.extend([f"Growth reel caption error: {caption_issues}"])
+
     else:
         # Fallback validation for any other type
         combined_text = " ".join([str(v) for v in piece.values() if isinstance(v, str)])

@@ -572,18 +572,11 @@ def _ensure_engagement_fields(piece: dict) -> None:
     Fields must not just EXIST — the schema enforces min_length=10, so a short
     LLM answer like "Share it" (8 chars) fails validation and sinks the whole
     asset. Anything present-but-too-short is replaced with the default.
+    Structural gaps (audio plan, loop, caption, score subscores, hook aliases)
+    are filled by the same helper the publish gate uses.
     """
-    for field, default, min_len in (
-        ("hashtags",        _DEFAULT_HASHTAGS, 10),
-        ("comment_trigger", _DEFAULT_COMMENT,  10),
-        ("save_trigger",    _DEFAULT_SAVE,     10),
-        ("share_trigger",   _DEFAULT_SHARE,    10),
-    ):
-        val = piece.get(field)
-        if not isinstance(val, str) or len(val.strip()) < min_len:
-            if val:
-                logger.debug("[brand] %s too short (%r) — using default", field, val)
-            piece[field] = default
+    from content_generator.core.piece_integrity import ensure_structural_fields
+    ensure_structural_fields(piece, str(piece.get("id") or piece.get("type") or ""))
 
 
 def _ensure_captions(content: dict) -> None:
@@ -592,25 +585,15 @@ def _ensure_captions(content: dict) -> None:
     Reel: derive from last frame spoken text.
     Carousel: derive from title + CTA.
     """
+    from content_generator.core.piece_integrity import ensure_structural_fields
     reels = content.get("reels") or []
-    for reel in reels:
-        if not isinstance(reel, dict):
-            continue
-        if not reel.get("caption"):
-            frames = reel.get("frames") or []
-            spoken_lines = [f.get("spoken", "") for f in frames if isinstance(f, dict) and f.get("spoken")]
-            if spoken_lines:
-                reel["caption"] = spoken_lines[-1]
-            else:
-                reel["caption"] = f"Purity Beans — 100% coffee, zero chicory. Order at p3online.in"
-
-    carousel = content.get("carousel")
-    if isinstance(carousel, dict) and carousel and not carousel.get("caption"):
-        title = carousel.get("title", "Pure Coffee")
-        carousel["caption"] = (
-            f"{title} — Purity Beans. 100% coffee, zero chicory. "
-            f"India's cleanest instant coffee. Shop at p3online.in"
-        )
+    for i, reel in enumerate(reels):
+        if isinstance(reel, dict) and reel:
+            ensure_structural_fields(reel, f"reel_{i + 1}")
+    for key in ("carousel", "instagram_post", "growth_reel"):
+        piece = content.get(key)
+        if isinstance(piece, dict) and piece:
+            ensure_structural_fields(piece, key)
 
 
 def _inject_jar_creative_into_reels(content: dict, day: int) -> None:
@@ -773,6 +756,7 @@ def _do_editorial(content: dict) -> None:
         ("instagram_post", "instagram_post", None),
         ("linkedin_post",  "linkedin_post",  None),
         ("blog_post",      "blog_post",      None),
+        ("growth_reel",    "growth_reel",    None),
     ]
 
     threshold = get_current_pass_score()
@@ -810,9 +794,14 @@ def _do_editorial(content: dict) -> None:
             else:
                 feedback = f"Brand copy validation failed: {copy_issues}"
                 piece["editorial_score"] = {
+                    "shareability": 0.0,
+                    "saveability": 0.0,
+                    "emotion_pull": 0.0,
+                    "hook_strength": 0.0,
+                    "brand_clarity": 0.0,
                     "overall": 0.0,
                     "verdict": "REJECT",
-                    "feedback": feedback
+                    "feedback": feedback,
                 }
                 logger.warning(
                     "[editorial] %s REJECT (Brand validation failed) | issues: %s | attempt %d/%d",
@@ -823,13 +812,19 @@ def _do_editorial(content: dict) -> None:
                 logger.info("[editorial] Regenerating %s (attempt %d)...", label, attempt + 2)
                 improved = _regenerate_piece(label, piece, feedback, content)
                 if improved:
-                    # Replace in content dict
+                    merged = _apply_regeneration(label, piece, improved)
+                    if merged is None:
+                        logger.warning(
+                            "[editorial] regenerated %s failed schema — keeping original",
+                            label,
+                        )
+                        break
                     if idx is not None:
-                        content[key][idx] = improved
-                        piece = improved
+                        content[key][idx] = merged
+                        piece = merged
                     else:
-                        content[key] = improved
-                        piece = improved
+                        content[key] = merged
+                        piece = merged
                 else:
                     logger.warning("[editorial] Regeneration failed for %s — keeping original", label)
                     break
@@ -838,6 +833,41 @@ def _do_editorial(content: dict) -> None:
                     "[editorial] %s final score below threshold %.1f — keeping as is (will be filtered before publishing)",
                     label, threshold,
                 )
+
+
+def _apply_regeneration(label: str, original: dict, improved: dict) -> dict | None:
+    """
+    Merge a rewrite onto the original and reject it when the schema no longer holds.
+
+    The model often returns a short hook rewrite. Replacing the piece with that
+    object dropped every field the publish gate requires.
+    """
+    from content_generator.core.piece_integrity import (
+        ensure_structural_fields, merge_regenerated_piece,
+    )
+    from content_generator.core.schema_validation import (
+        BlogSchema, CarouselSchema, InstagramSchema, LinkedinSchema, ReelSchema,
+        validate_or_fail,
+    )
+    schemas = {
+        "reel_1": ReelSchema,
+        "reel_2": ReelSchema,
+        "growth_reel": ReelSchema,
+        "carousel": CarouselSchema,
+        "instagram_post": InstagramSchema,
+        "linkedin_post": LinkedinSchema,
+        "blog_post": BlogSchema,
+    }
+    merged = ensure_structural_fields(merge_regenerated_piece(original, improved), label)
+    schema = schemas.get(label)
+    if schema is None:
+        return merged
+    try:
+        validate_or_fail(schema, merged)
+    except Exception as e:
+        logger.warning("[editorial] regenerated %s failed schema: %s", label, e)
+        return None
+    return merged
 
 
 def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> dict | None:
@@ -861,7 +891,9 @@ def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> 
             f"- Score must be {threshold} or higher\n"
             f"- Keep the same format/structure as the original\n"
             f"- Fix the specific issues mentioned in the feedback\n"
-            f"- More scroll-stopping hook, stronger CTA, clearer value\n\n"
+            f"- More scroll-stopping hook, stronger CTA, clearer value\n"
+            f"- Return the FULL object. Do not drop caption, hashtags, triggers, "
+            f"frames, slides, script, audio, loop_note, or editorial_score subscores.\n\n"
             f"Return ONLY the improved JSON object (same keys as original)."
         )
         result = llm_call(regen_prompt, label=f"regen_{label}", max_tokens=1500)

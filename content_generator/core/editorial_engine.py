@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 import datetime
 
+from content_generator.core.piece_integrity import ensure_structural_fields
+
 class EditorialRejectException(Exception):
     """Raised when an asset fails the editorial threshold."""
     pass
@@ -188,7 +190,9 @@ def get_valid_assets(content: dict) -> list[str]:
         try:
             reels = content.get("reels") or []
             reel_1 = reels[0] if len(reels) > 0 else {}
-            if has_copy(reel_1, "hook", "hook_text", "headline", "title"):
+            if isinstance(reel_1, dict) and reel_1:
+                ensure_structural_fields(reel_1, "reel_1")
+            if has_copy(reel_1, "hook", "hook_text", "headline", "title", "chosen_hook"):
                 validate_or_fail(ReelSchema, reel_1)
                 is_brand_ok, _brand_errs = validate_asset("reel_1", reel_1, _governance)
                 if is_brand_ok:
@@ -197,14 +201,16 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "reel_1", _brand_errs)
         except Exception as e:
-            logger.debug("reel_1 validation failed: %s", e)
+            logger.warning("[editorial] reel_1 validation failed: %s", e)
         
     # 2. reel_2
     if "reel_2" in REQUIRED_DAILY_ASSETS:
         try:
             reels = content.get("reels") or []
             reel_2 = reels[1] if len(reels) > 1 else {}
-            if has_copy(reel_2, "hook", "hook_text", "headline", "title"):
+            if isinstance(reel_2, dict) and reel_2:
+                ensure_structural_fields(reel_2, "reel_2")
+            if has_copy(reel_2, "hook", "hook_text", "headline", "title", "chosen_hook"):
                 validate_or_fail(ReelSchema, reel_2)
                 is_brand_ok, _brand_errs = validate_asset("reel_2", reel_2, _governance)
                 if is_brand_ok:
@@ -213,13 +219,33 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "reel_2", _brand_errs)
         except Exception as e:
-            logger.debug("reel_2 validation failed: %s", e)
+            logger.warning("[editorial] reel_2 validation failed: %s", e)
+
+    # 2b. growth_reel — prompt shape (chosen_hook/script), not the brand reel schema.
+    #     It was never passed through this gate, so the evening slot could not
+    #     publish it even when the copy was complete.
+    growth = content.get("growth_reel") or {}
+    if isinstance(growth, dict) and growth:
+        try:
+            ensure_structural_fields(growth, "growth_reel")
+            if has_copy(growth, "hook", "hook_text", "chosen_hook", "caption"):
+                validate_or_fail(ReelSchema, growth)
+                is_brand_ok, _brand_errs = validate_asset("growth_reel", growth, _governance)
+                if is_brand_ok:
+                    _editorial_ok("growth_reel", growth)
+                    valid.append("growth_reel")
+                else:
+                    logger.warning("[editorial] growth_reel REJECTED by brand validation: %s", _brand_errs)
+        except Exception as e:
+            logger.warning("[editorial] growth_reel validation failed: %s", e)
 
     # 3. carousel
     if "carousel" in REQUIRED_DAILY_ASSETS:
         try:
             carousel = content.get("carousel") or {}
-            if has_copy(carousel, "hook", "title", "headline", "slides"):
+            if isinstance(carousel, dict) and carousel:
+                ensure_structural_fields(carousel, "carousel")
+            if has_copy(carousel, "hook", "title", "headline", "slides", "caption"):
                 validate_or_fail(CarouselSchema, carousel)
                 is_brand_ok, _brand_errs = validate_asset("carousel", carousel, _governance)
                 if is_brand_ok:
@@ -228,12 +254,14 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "carousel", _brand_errs)
         except Exception as e:
-            logger.debug("carousel validation failed: %s", e)
+            logger.warning("[editorial] carousel validation failed: %s", e)
 
     # 4. instagram_post
     if "instagram_post" in REQUIRED_DAILY_ASSETS:
         try:
             ig = content.get("instagram_post") or {}
+            if isinstance(ig, dict) and ig:
+                ensure_structural_fields(ig, "instagram_post")
             if has_copy(ig, "caption", "body", "hook"):
                 validate_or_fail(InstagramSchema, ig)
                 is_brand_ok, _brand_errs = validate_asset("instagram_post", ig, _governance)
@@ -243,12 +271,14 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "instagram_post", _brand_errs)
         except Exception as e:
-            logger.debug("instagram_post validation failed: %s", e)
+            logger.warning("[editorial] instagram_post validation failed: %s", e)
 
     # 5. linkedin_post
     if "linkedin_post" in REQUIRED_DAILY_ASSETS:
         try:
             li = content.get("linkedin_post") or {}
+            if isinstance(li, dict) and li:
+                ensure_structural_fields(li, "linkedin_post")
             if has_copy(li, "body", "caption", "hook"):
                 validate_or_fail(LinkedinSchema, li)
                 is_brand_ok, _brand_errs = validate_asset("linkedin_post", li, _governance)
@@ -258,12 +288,14 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "linkedin_post", _brand_errs)
         except Exception as e:
-            logger.debug("linkedin_post validation failed: %s", e)
+            logger.warning("[editorial] linkedin_post validation failed: %s", e)
 
     # 6. blog_post
     if "blog_post" in REQUIRED_DAILY_ASSETS:
         try:
             blog = content.get("blog_post") or {}
+            if isinstance(blog, dict) and blog:
+                ensure_structural_fields(blog, "blog_post")
             if has_copy(blog, "body", "caption", "title"):
                 validate_or_fail(BlogSchema, blog)
                 is_brand_ok, _brand_errs = validate_asset("blog_post", blog, _governance)
@@ -273,12 +305,14 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "blog_post", _brand_errs)
         except Exception as e:
-            logger.debug("blog_post validation failed: %s", e)
+            logger.warning("[editorial] blog_post validation failed: %s", e)
 
     # 7. yt_short
     if "yt_short" in REQUIRED_DAILY_ASSETS:
         try:
             yt = content.get("yt_short") or {}
+            if isinstance(yt, dict) and yt:
+                ensure_structural_fields(yt, "yt_short")
             if yt and isinstance(yt, dict):
                 validate_or_fail(YoutubeShortSchema, yt)
                 is_brand_ok, _brand_errs = validate_asset("yt_short", yt, _governance)
@@ -288,7 +322,7 @@ def get_valid_assets(content: dict) -> list[str]:
                 else:
                     logger.warning("[editorial] %s REJECTED by brand validation: %s", "yt_short", _brand_errs)
         except Exception as e:
-            logger.debug("yt_short validation failed: %s", e)
+            logger.warning("[editorial] yt_short validation failed: %s", e)
         
     return _apply_growth_director_gates(content, valid)
 
@@ -300,6 +334,9 @@ def _piece_for(content: dict, key: str) -> dict:
         return reels[0] if len(reels) > 0 and isinstance(reels[0], dict) else {}
     if key == "reel_2":
         return reels[1] if len(reels) > 1 and isinstance(reels[1], dict) else {}
+    if key == "growth_reel":
+        piece = content.get("growth_reel")
+        return piece if isinstance(piece, dict) else {}
     piece = content.get(key)
     return piece if isinstance(piece, dict) else {}
 

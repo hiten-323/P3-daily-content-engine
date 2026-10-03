@@ -107,8 +107,8 @@ def _find_image(content: dict) -> str | None:
 
     # Look for carousel cover first, then any generated image — today's only
     # (creative files persist 7 days in the repo for the publish slots)
-    import datetime as _dt
-    today = _dt.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    today = today_ist().isoformat()
     patterns = [
         os.path.join(creative_dir, f"carousel_slide_1_*{today}.jpg"),
         os.path.join(creative_dir, f"carousel_cover_*{today}.jpg"),

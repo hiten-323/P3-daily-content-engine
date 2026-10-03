@@ -62,10 +62,14 @@ def main():
     held = build("evening", 1, expected={}, results={},
                  status="held", reason="canonical_validation_failed")
     v = evaluate(held)
-    check("held is ok", v["ok"] and v["status"] == "held")
+    check("unexpected held fails the run", (not v["ok"]) and v["status"] == "held")
     check("held carries its reason", "canonical" in v["detail"], v["detail"])
     check("held is NOT reported as published",
           held["published_platforms"] == [], str(held["published_platforms"]))
+    already = build("evening", 1, expected={}, results={},
+                    status="skipped", reason="already_ran")
+    check("already published today stays green",
+          evaluate(already)["ok"] and evaluate(already)["status"] == "skipped")
 
     # 5. Correlation ids so a publish can be traced back to its generation.
     print("\nRuns are traceable:")
@@ -132,7 +136,7 @@ def main():
     held = sl._held("morning", 0, {}, "no_content_for_today — the generate slot "
                                       "produced nothing; publish slots never generate")
     v = evaluate(held)
-    check("missing content -> held, not published", v["status"] == "held" and v["ok"])
+    check("missing content -> held, and the run fails", v["status"] == "held" and not v["ok"])
     check("held for missing content publishes nothing",
           held["published_platforms"] == [])
     check("the hold names the cause", "no_content_for_today" in v["detail"], v["detail"])
@@ -142,7 +146,7 @@ def main():
     stale = sl._held("evening", 5, {"date": "2026-08-01"},
                      "stale_content — file is dated 2026-08-01, today is 2026-08-09")
     v = evaluate(stale)
-    check("stale content -> held", v["status"] == "held" and v["ok"])
+    check("stale content -> held and fails the run", v["status"] == "held" and not v["ok"])
     check("the hold names both dates",
           "2026-08-01" in v["detail"] and "2026-08-09" in v["detail"], v["detail"])
     check("slots.py compares the content date to today",
