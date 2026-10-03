@@ -84,7 +84,16 @@ def evaluate(contract: dict) -> dict:
     Compare expected against actual.
     Returns {"status": ..., "ok": bool, "missing": [...], "detail": str}
     """
-    if not isinstance(contract, dict) or "expected" not in contract:
+    if not isinstance(contract, dict):
+        return {"status": "missing", "ok": False, "missing": [],
+                "detail": "no publish contract in the run result"}
+
+    if contract.get("_skipped") or contract.get("skipped"):
+        reason = contract.get("reason") or "skipped"
+        return {"status": "skipped", "ok": True, "missing": [],
+                "detail": reason}
+
+    if "expected" not in contract:
         return {"status": "missing", "ok": False, "missing": [],
                 "detail": "no publish contract in the run result"}
 
@@ -108,7 +117,7 @@ def evaluate(contract: dict) -> dict:
         return {"status": "partial", "ok": False, "missing": missing,
                 "detail": "expected but not published: " + "; ".join(missing)}
     return {"status": "published", "ok": True, "missing": [],
-            "detail": f"all {len(expected)} expected platform(s) published"}
+                "detail": f"all {len(expected)} expected platform(s) published"}
 
 
 def format_report(contract: dict) -> str:
@@ -116,6 +125,9 @@ def format_report(contract: dict) -> str:
     ev = evaluate(contract)
     lines = [f"slot={contract.get('slot')} day={contract.get('day')} "
              f"run_id={contract.get('run_id')} -> {ev['status'].upper()}"]
+    if ev["status"] in ("skipped", "held"):
+        lines.append(f"  REASON: {ev['detail']}")
+        return "\n".join(lines)
     expected = contract.get("expected") or {}
     results  = contract.get("results") or {}
     for platform in sorted(set(expected) | set(results)):

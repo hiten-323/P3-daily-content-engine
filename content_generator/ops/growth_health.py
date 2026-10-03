@@ -91,9 +91,17 @@ def meta_preflight() -> dict[str, Any]:
             payload = json.loads(response.read().decode("utf-8"))
         if payload.get("id"):
             return {"status": "ok", "account_id": str(payload["id"])}
-        return {"status": "failed"}
+        return {"status": "failed", "detail": "missing_id_in_response"}
     except Exception as exc:
-        return {"status": "failed", "error_type": type(exc).__name__}
+        res = {"status": "failed", "error_type": type(exc).__name__, "error_detail": str(exc)}
+        if hasattr(exc, "code"):
+            res["status_code"] = exc.code
+        if hasattr(exc, "read"):
+            try:
+                res["response_body"] = exc.read().decode("utf-8", errors="replace")
+            except Exception:
+                pass
+        return res
 
 
 def config_health() -> dict[str, Any]:

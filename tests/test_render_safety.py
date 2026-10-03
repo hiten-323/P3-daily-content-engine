@@ -13,7 +13,12 @@ failures = []
 
 
 def check(name, ok, detail=""):
-    print(f"  {'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if detail and not ok else ""))
+    msg = f"  {'PASS' if ok else 'FAIL'}  {name}" + (f"  [{detail}]" if detail and not ok else "")
+    try:
+        print(msg)
+    except UnicodeEncodeError:
+        encoding = sys.stdout.encoding or "utf-8"
+        print(msg.encode(encoding, errors="replace").decode(encoding))
     if not ok:
         failures.append(name)
 

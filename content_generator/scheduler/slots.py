@@ -180,6 +180,19 @@ def _held(slot: str, day: int, content: dict, reason: str) -> dict:
                  status="held", reason=reason)
 
 
+def _skipped(slot: str, day: int = 0, reason: str = "") -> dict:
+    """
+    A deliberate decision that a publish slot is skipped (e.g. dry-run mode or already ran).
+    Emits a valid publish contract so CI workflow verification passes cleanly.
+    """
+    from content_generator.core.publish_contract import build
+    logger.info("[slots] %s slot SKIPPED — %s", slot, reason)
+    res = build(slot=slot, day=day, expected={}, results={},
+                status="skipped", reason=reason)
+    res["_skipped"] = True
+    return res
+
+
 def run_publish_slot(slot: str) -> dict:
     """
     Execute a publish-only slot (morning or evening).
@@ -194,7 +207,7 @@ def run_publish_slot(slot: str) -> dict:
         if not policy().get("auto_publish", True):
             logger.warning("[slots] auto_publish=false — %s slot generates nothing "
                            "and posts nothing (dry run)", slot)
-            return {"_skipped": True, "slot": slot, "reason": "auto_publish_disabled"}
+            return _skipped(slot, reason="auto_publish_disabled")
     except Exception as _e:
         logger.debug("[slots] optional step failed: %s", _e)
 
@@ -202,7 +215,7 @@ def run_publish_slot(slot: str) -> dict:
     lock.__enter__()
     if lock.already_ran:
         logger.info("[slots] %s slot already ran today — skipping", slot)
-        return {"_skipped": True, "slot": slot, "reason": "already_ran"}
+        return _skipped(slot, reason="already_ran")
 
     # The lock is taken BEFORE the work and marked completed only after it.
     #

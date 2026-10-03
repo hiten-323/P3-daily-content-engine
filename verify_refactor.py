@@ -11,6 +11,8 @@ import importlib
 import textwrap
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import tempfile
+os.environ["LEARNING_DIR"] = tempfile.mkdtemp(prefix="pb_verify_learning_")
 
 PASS = "[PASS]"
 FAIL = "[FAIL]"
@@ -129,8 +131,9 @@ EXPECTED_KEYS = {
 _FAKE_REEL = {
     "id": "reel_1",
     "hook_archetype": "EXPOSE",
-    "hook_text": "Did you know most instant coffees are mixed with chicory root?",
-    "hook_spoken": "Did you know most instant coffees are mixed with chicory root?",
+    "hook_text": "Stop drinking 50% chicory root filler.",
+    "hook_spoken": "Did you know your morning coffee is probably half root filler?",
+    "hook_visual_concept": "Close up of an ingredient label under bright magnifying light.",
     "frames": [
         {"on_screen": "Coffee Betrayal", "spoken": "You think you're buying pure coffee beans, but read the label."},
         {"on_screen": "50% Chicory", "spoken": "Many popular brands add up to fifty percent chicory root fillers."},
@@ -140,7 +143,7 @@ _FAKE_REEL = {
     ],
     "loop_note": "loops back to frame 1",
     "alt_hook": "The coffee secret they do not want you to know",
-    "caption": "Say goodbye to fillers! Purity Beans delivers 100% Coffee with Zero Chicory. Drink the clean way today at https://p3online.in.",
+    "caption": "Wondering why your instant coffee turns bitter after two minutes? Look closely at the ingredient label. Many standard brands actually add up to 50 percent chicory root filler. Purity Beans is 100% pure instant coffee with zero chicory and no hidden additives. Read the label and try real coffee today at https://p3online.in.",
     "visual_direction": "dark cinematic close-ups of coffee jar",
     "music_vibe": "lo-fi study beats",
     "whatsapp_forward": "forward this to a coffee lover",
@@ -295,7 +298,11 @@ try:
     actual_keys = set(result.keys())
 
     missing = EXPECTED_KEYS - actual_keys
-    extra   = actual_keys - EXPECTED_KEYS - {"usage", "generation_id", "prompt_version", "schema_version"}  # usage is opt-in, allowed absent
+    extra   = actual_keys - EXPECTED_KEYS - {
+        "usage", "generation_id", "prompt_version", "schema_version",
+        "policy_version_at_creation", "target_kpi_at_creation",
+        "psychology_frame", "psychology_frame_version",
+    }  # usage is opt-in, allowed absent
 
     check("All expected keys present",     not missing, f"Missing: {missing}" if missing else "")
     check("No unexpected extra keys",      not extra,   f"Extra: {extra}"     if extra   else "")
