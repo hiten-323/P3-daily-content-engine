@@ -126,7 +126,9 @@ HARD RULES:
   "ai_video_prompts": [
     "3-5 matching motion prompts with real physics: steam disperses, liquid has weight, humans breathe with micro blinks. Slow motion or subtle handheld, 24fps film feel, something changes every 2-3s. Faces stay stable — no morphing."
   ],
-  "sound_suggestion": "Music mood + any sound-design moments (e.g. pour sound at 6s)",
+  "audio": {{"plan": "Music mood and the one sound-design moment (e.g. pour at 6s)", "source": "generated"}},
+  "sound_suggestion": "Same music mood in one line — voice-forward, no lyric clash",
+  "loop_note": "One sentence: how the last frame connects back to the opening shot so the reel can loop",
   "text_overlay_style": "Subtitle/overlay treatment — font energy, when it changes",
   "caption": "120-200 words. Personal, curious, documentary voice. Zero selling. Ends with a question that invites comments.",
   "cta_options": ["3 soft CTAs for A/B testing — follow/save/share/comment style only"],

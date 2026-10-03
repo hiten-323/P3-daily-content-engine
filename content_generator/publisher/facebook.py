@@ -161,5 +161,5 @@ def _post_to_page(
 
 
 def _today() -> str:
-    import datetime
-    return datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    return today_ist().isoformat()

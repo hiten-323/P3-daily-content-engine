@@ -368,7 +368,8 @@ def _pil_to_bytes(img) -> bytes:
 
 def _save_image(image_bytes: bytes, label: str, ext: str = "jpg") -> str | None:
     os.makedirs(_OUT_DIR, exist_ok=True)
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     filepath = os.path.join(_OUT_DIR, f"{label}_{date_str}.{ext}")
     try:
         with open(filepath, "wb") as f:

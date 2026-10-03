@@ -63,7 +63,8 @@ def get_current_slot(now_utc: datetime.datetime = None) -> str:
 
 def _load_todays_content() -> dict | None:
     """Load the content JSON saved by this morning's generate run."""
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     path = os.path.join("output", f"content_{date_str}.json")
     if not os.path.exists(path):
         logger.error("[slots] No content file for today (%s) — generate run missing?", path)
@@ -78,13 +79,31 @@ def _load_todays_content() -> dict | None:
 
 def _find_reel_thumbnail() -> str | None:
     """Find today's reel thumbnail image on disk."""
+    from content_generator.core.ist_dates import today_ist
     creative_dir = os.getenv("CREATIVE_OUTPUT_DIR", os.path.join("output", "creative"))
-    date_str = datetime.date.today().isoformat()
+    date_str = today_ist().isoformat()
     for pattern in (f"reel_1_thumb_*_{date_str}.jpg", f"reel_1*{date_str}.jpg",
                     f"reel_hook_*_{date_str}.jpg"):
         matches = sorted(_glob.glob(os.path.join(creative_dir, pattern)))
         if matches:
             return matches[0]
+    return None
+
+
+def _select_evening_reel(approved: dict) -> tuple[str, dict] | None:
+    """Prefer growth_reel, then reel_1, then any other approved reel."""
+    if not isinstance(approved, dict):
+        return None
+    for key in ("growth_reel", "reel_1", "reel_2"):
+        piece = approved.get(key)
+        if isinstance(piece, dict) and piece:
+            return key, piece
+    for key, piece in approved.items():
+        if not isinstance(piece, dict) or not piece:
+            continue
+        kind = f"{key} {piece.get('type') or ''} {piece.get('id') or ''}".lower()
+        if "reel" in kind or str(piece.get("track") or "").lower() == "growth":
+            return key, piece
     return None
 
 
@@ -255,12 +274,13 @@ def _execute_publish_slot(slot: str) -> dict:
 
     # Correlation: the loaded file must actually be today's work. A stale file
     # left in the working tree would otherwise republish yesterday's asset under
-    # today's decision record.
-    today = datetime.date.today().isoformat()
-    content_date = str(content.get("date") or "")[:10]
-    if content_date and content_date != today:
-        return _held(slot, content.get("day_number", 0), content,
-                     f"stale_content — file is dated {content_date}, today is {today}")
+    # today's decision record. content.get("date") may be ISO or the legacy
+    # "October 03, 2026" form; both are compared as an IST calendar day.
+    from content_generator.core.ist_dates import content_matches_today
+    fresh, why = content_matches_today(content)
+    if content.get("date") and not fresh:
+        # stale_content: why names the file date and today's IST date.
+        return _held(slot, content.get("day_number", 0), content, why)
 
     day = content.get("day_number", 0)
 
@@ -307,25 +327,25 @@ def _execute_publish_slot(slot: str) -> dict:
 
         from content_generator.publisher.instagram import (
             _post_single_image, _assemble_caption, is_configured, post_reel_video,
+            prepare_feed_image, post_local_story,
         )
         if not is_configured():
             return _held(slot, day, content, "instagram_not_configured")
 
         # Publish the OBJECT the canonical gate approved — never look the asset
-        # up again separately. The previous form checked `growth_reel not in
-        # valid AND reel_1 not in valid`, then unconditionally took
-        # content["growth_reel"]: with an invalid growth_reel and a valid reel_1
-        # the guard passed (reel_1 was fine) and the INVALID growth_reel
-        # published. Validation and selection must read the same source.
-        reel = approved.get("growth_reel") or approved.get("reel_1")
-        chosen = "growth_reel" if "growth_reel" in approved else "reel_1"
-        if not reel:
+        # up again separately. Any approved reel can fill the evening slot;
+        # growth_reel and reel_1 are preferred, then reel_2 and anything else
+        # the gate returned. A valid reel_2 used to be ignored, so the slot
+        # held even when an approved reel was sitting in the file.
+        picked = _select_evening_reel(approved)
+        if not picked:
             logger.error("[slots] evening slot: no reel passed the canonical gate "
                          "(approved=%s)", sorted(approved))
             return _held(slot, day, content, "canonical_validation_failed")
+        chosen, reel = picked
         logger.info("[slots] evening slot publishing gate-approved asset: %s", chosen)
 
-        body = str(reel.get("caption") or reel.get("hook_text") or "").strip()
+        body = str(reel.get("caption") or reel.get("hook_text") or reel.get("chosen_hook") or reel.get("hook") or "").strip()
         cta  = str(reel.get("cta") or "").strip()
         if cta and cta.lower() not in body.lower():
             body = f"{body}\n\n{cta}"
@@ -355,13 +375,22 @@ def _execute_publish_slot(slot: str) -> dict:
         except Exception as e:
             logger.warning("[slots] reel video path failed (%s) — falling back to image", e)
 
-        # 2. Fallback: reel-style single image
+        # 2. Fallback image. Reel thumbnails are 1080x1920 (9:16). Instagram
+        #    feed posts must be between 4:5 and 1.91:1, so a raw thumbnail is
+        #    rendered to 4:5. If that render fails, it goes out as a Story
+        #    instead of a feed image the API will reject.
         if not result or not result.get("success"):
             image = _find_reel_thumbnail()
             if not image:
                 return _held(slot, day, content, "no_image")
-            result = _post_single_image(image, caption)
-            fb_result = _mirror_to_facebook(content, day, slot, image=image, message=caption)
+            feed = prepare_feed_image(image)
+            if feed:
+                result = _post_single_image(feed, caption)
+                fb_result = _mirror_to_facebook(content, day, slot, image=feed, message=caption)
+            else:
+                logger.warning("[slots] reel thumbnail is not a feed aspect — posting as Story")
+                result = post_local_story(image)
+                fb_result = _mirror_to_facebook(content, day, slot, message=caption)
         else:
             fb_result = _mirror_to_facebook(content, day, slot, message=caption)
 

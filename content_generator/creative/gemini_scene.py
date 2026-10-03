@@ -108,7 +108,8 @@ def generate_scene_with_real_jar(
                     if len(image_bytes) < 5000:
                         continue
                     os.makedirs(_OUT_DIR, exist_ok=True)
-                    date_str = datetime.date.today().isoformat()
+                    from content_generator.core.ist_dates import today_ist
+                    date_str = today_ist().isoformat()
                     path = os.path.join(_OUT_DIR, f"{label}_{date_str}.jpg")
                     with open(path, "wb") as f:
                         f.write(image_bytes)

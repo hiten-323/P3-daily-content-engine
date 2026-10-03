@@ -467,9 +467,10 @@ def compose_post_image(
               font=f_font, fill=_GOLD, anchor="mm")
 
     # Save
-    import datetime, io
+    import io
+    from content_generator.core.ist_dates import today_ist
     os.makedirs(_OUT_DIR, exist_ok=True)
-    date_str = datetime.date.today().isoformat()
+    date_str = today_ist().isoformat()
     path = os.path.join(_OUT_DIR, f"{label}_{date_str}.jpg")
     canvas.save(path, "JPEG", quality=88)
     logger.info("[real_jar] Composed %s from real photo %s", path, os.path.basename(jar_path))

@@ -33,9 +33,18 @@ from __future__ import annotations
 from config.api_versions import META_GRAPH_BASE
 import logging
 import os
-import time
+import re
 
 logger = logging.getLogger(__name__)
+
+_HASHTAG = re.compile(r"#[\w]+", re.UNICODE)
+_CAPTION_LIMIT = 2200
+_HASHTAG_TARGET = 15
+_HASHTAG_MIN = 5
+_HASHTAG_HARD_MAX = 30
+# Instagram feed accepts 4:5 (0.8) through 1.91:1. 9:16 reels are ~0.5625.
+_FEED_MIN_RATIO = 4 / 5
+_FEED_MAX_RATIO = 1.91
 
 _GRAPH_API = META_GRAPH_BASE
 
@@ -90,62 +99,133 @@ _FALLBACK_HASHTAGS = (
 )
 
 
+def _unique_hashtags(*blobs: str) -> list[str]:
+    found: list[str] = []
+    seen: set[str] = set()
+    for blob in blobs:
+        for tag in _HASHTAG.findall(blob or ""):
+            key = tag.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            found.append(tag)
+    return found
+
+
+def _strip_hashtags(text: str) -> str:
+    """Remove inline hashtags from caption body so they are not counted twice."""
+    cleaned = _HASHTAG.sub("", text or "")
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
+def _choose_hashtags(piece: dict, day: int) -> list[str]:
+    """Target 5-15 tags. Hard ceiling is Instagram's 30."""
+    primary = ""
+    try:
+        from content_generator.analytics.hashtag_bank import select_hashtags
+        primary = select_hashtags(day=day) or ""
+    except Exception as e:
+        logger.debug("[instagram] adaptive hashtags unavailable: %s", e)
+    llm = piece.get("hashtags")
+    if isinstance(llm, list):
+        llm = " ".join(str(t) for t in llm)
+    ordered = _unique_hashtags(primary, str(llm or ""))
+    if len(ordered) < _HASHTAG_MIN:
+        ordered = _unique_hashtags(" ".join(ordered), _FALLBACK_HASHTAGS)
+    if len(ordered) > _HASHTAG_TARGET:
+        ordered = ordered[:_HASHTAG_TARGET]
+    return ordered[:_HASHTAG_HARD_MAX]
+
+
+def _meaningful_piece(piece: dict) -> bool:
+    if not isinstance(piece, dict) or not piece:
+        return False
+    for key in ("caption", "body", "hook", "hook_text", "title", "cta", "slides"):
+        value = piece.get(key)
+        if value not in (None, "", [], {}):
+            return True
+    return False
+
+
+def _caption_piece(content: dict) -> dict | None:
+    """
+    The asset actually being posted.
+
+    An empty carousel caption used to fall through to reel 1, whose caption
+    already contained a full hashtag block. The publisher then appended another
+    ~25 tags and blew past Instagram's limit of 30.
+    """
+    carousel = content.get("carousel") if isinstance(content.get("carousel"), dict) else {}
+    if _meaningful_piece(carousel):
+        return carousel
+    ig = content.get("instagram_post") if isinstance(content.get("instagram_post"), dict) else {}
+    if _meaningful_piece(ig):
+        return ig
+    reels = content.get("reels") or []
+    if reels and isinstance(reels[0], dict) and reels[0]:
+        return reels[0]
+    return None
+
+
 def _extract_caption(content: dict, day: int = 0) -> str:
     """
-    Build the full viral-ready Instagram caption:
-    caption body + comment trigger + save trigger + adaptive 25 hashtags.
+    Build the Instagram caption from the piece being posted:
+    body + triggers + 5-15 hashtags, never more than 30, max 2200 characters.
     """
-    # Try carousel first, then first reel
-    piece = None
-    carousel = content.get("carousel") or {}
-    if isinstance(carousel, dict) and (carousel.get("caption") or carousel.get("hook")):
-        piece = carousel
-    else:
-        reels = content.get("reels") or []
-        if reels and isinstance(reels[0], dict):
-            piece = reels[0]
-
+    piece = _caption_piece(content)
     if not piece:
-        return _assemble_caption("Pure instant coffee. Zero chicory. 100% coffee. ☕", {}, day)
+        return _assemble_caption("Pure instant coffee. Zero chicory. 100% coffee.", {}, day)
 
-    body = str(piece.get("caption") or piece.get("hook") or "").strip()
-    cta  = str(piece.get("cta") or "").strip()
+    body = str(
+        piece.get("caption") or piece.get("body") or piece.get("hook")
+        or piece.get("hook_text") or piece.get("title") or ""
+    ).strip()
+    if not body:
+        bits = [str(piece.get("title") or "").strip()]
+        for slide in (piece.get("slides") or [])[:3]:
+            if isinstance(slide, dict):
+                bits.append(str(slide.get("heading") or "").strip())
+        body = ". ".join(b for b in bits if b)
+    cta = _strip_hashtags(str(piece.get("cta") or ""))
     if cta and cta.lower() not in body.lower():
         body = f"{body}\n\n{cta}"
     return _assemble_caption(body, piece, day)
 
 
 def _assemble_caption(body: str, piece: dict, day: int = 0) -> str:
-    """Append engagement triggers + adaptive 25 hashtags. 2200-char safe."""
+    """Triggers + capped hashtags. Inline tags in the body are stripped first."""
+    body = _strip_hashtags(body)
     parts = [body]
+    for key in ("comment_trigger", "save_trigger"):
+        extra = _strip_hashtags(str(piece.get(key) or ""))
+        if extra and extra.lower() not in body.lower():
+            parts.append(extra)
 
-    comment = str(piece.get("comment_trigger") or "").strip()
-    save    = str(piece.get("save_trigger") or "").strip()
-    if comment and comment.lower() not in body.lower():
-        parts.append(comment)
-    if save and save.lower() not in body.lower():
-        parts.append(save)
-
-    # Adaptive hashtag bank is primary — the mix evolves with real performance.
-    # LLM-generated tags, then the static set, are fallbacks only.
-    tags = ""
-    try:
-        from content_generator.analytics.hashtag_bank import select_hashtags
-        tags = select_hashtags(day=day)
-    except Exception as e:
-        logger.debug("[instagram] adaptive hashtags unavailable: %s", e)
-    if not tags:
-        llm_tags = piece.get("hashtags")
-        if isinstance(llm_tags, list):
-            llm_tags = " ".join(str(t) for t in llm_tags)
-        tags = str(llm_tags or "").strip() or _FALLBACK_HASHTAGS
-
-    caption = "\n\n".join(p for p in parts if p)
-    # Hashtags must survive the 2200-char limit — trim the body, never the tags
-    max_body = 2200 - len(tags) - 2
-    if len(caption) > max_body:
-        caption = caption[:max_body].rsplit(" ", 1)[0]
-    return f"{caption}\n\n{tags}"
+    tags = _choose_hashtags(piece or {}, day)
+    tag_line = " ".join(tags)
+    caption_body = "\n\n".join(p for p in parts if p).strip()
+    suffix = f"\n\n{tag_line}" if tag_line else ""
+    if len(caption_body) + len(suffix) > _CAPTION_LIMIT:
+        budget = _CAPTION_LIMIT - len(suffix)
+        if budget < 40 and tags:
+            while tags and len(" ".join(tags)) + 2 > _CAPTION_LIMIT - 40:
+                tags.pop()
+            tag_line = " ".join(tags)
+            suffix = f"\n\n{tag_line}" if tag_line else ""
+            budget = _CAPTION_LIMIT - len(suffix)
+        caption_body = caption_body[:max(0, budget)].rsplit(" ", 1)[0].strip()
+    full = f"{caption_body}{suffix}".strip()
+    # Hard ceiling even if a trigger smuggled a tag back in.
+    final_tags = _unique_hashtags(full)
+    if len(final_tags) > _HASHTAG_HARD_MAX:
+        keep = final_tags[:_HASHTAG_HARD_MAX]
+        full = _strip_hashtags(full)
+        full = f"{full}\n\n{' '.join(keep)}".strip()
+    if len(full) > _CAPTION_LIMIT:
+        full = full[:_CAPTION_LIMIT].rsplit(" ", 1)[0].strip()
+    return full
 
 
 def _find_carousel_images(content: dict) -> list[str]:
@@ -163,8 +243,8 @@ def _find_carousel_images(content: dict) -> list[str]:
         "carousel_*.png",
     ]
 
-    import datetime as _dt
-    today = _dt.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    today = today_ist().isoformat()
 
     images = []
     for pattern in patterns:
@@ -201,6 +281,9 @@ def _post_single_image(image_path: str, caption: str) -> dict:
         return {"success": False, "media_id": "", "permalink": "", "error": "image_upload_failed"}
 
     try:
+        from content_generator.publisher.meta_graph import (
+            ContainerNotReady, MetaRequestError, graph_request, wait_for_container,
+        )
         # 2. Create media container (+ product tags if IG Shopping is set up)
         params = {
             "image_url":    image_url,
@@ -214,23 +297,23 @@ def _post_single_image(image_path: str, caption: str) -> dict:
                 params["product_tags"] = tags
         except Exception as e:
             logger.debug("[instagram] product tagging skipped: %s", e)
-        container_resp = requests.post(
-            f"{_GRAPH_API}/{acct_id}/media",
-            params=params,
-            timeout=30,
+        container_data = graph_request(
+            "POST", f"{_GRAPH_API}/{acct_id}/media", params, timeout=30,
         )
-        container_data = container_resp.json()
-        container_id   = container_data.get("id", "")
+        container_id = container_data.get("id", "")
         if not container_id:
             err = container_data.get("error", {}).get("message", str(container_data))
             return {"success": False, "media_id": "", "permalink": "", "error": err}
 
-        # 3. Wait for container to be ready
-        _wait_for_container(container_id, token)
+        # 3. Wait until FINISHED. ERROR and timeout must not publish.
+        wait_for_container(container_id, token)
 
         # 4. Publish
         return _publish_container(container_id, acct_id, token)
 
+    except (ContainerNotReady, MetaRequestError) as e:
+        logger.error("[instagram] Single post not published: %s", e)
+        return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
     except Exception as e:
         logger.error("[instagram] Single post error: %s", e)
         return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
@@ -243,60 +326,78 @@ def _post_carousel(image_paths: list[str], caption: str) -> dict:
     except ImportError:
         return {"success": False, "media_id": "", "permalink": "", "error": "requests_not_installed"}
 
+    from content_generator.publisher.meta_graph import (
+        ContainerNotReady, MetaRequestError, graph_request, wait_for_container,
+    )
+
     acct_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
     token   = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
 
-    # 1. Create individual image containers (carousel items)
+    # 1. Every slide must become a child. A partial carousel used to publish
+    #    the one child that succeeded — that container is an item, not a post,
+    #    and it has no caption. Abort and fall back to a real single-image post.
     children = []
+    ok_paths = []
+    failed = []
     for path in image_paths:
         url = _upload_to_public_url(path)
         if not url:
+            failed.append(os.path.basename(path))
+            logger.warning("[instagram] carousel child upload failed: %s", path)
             continue
         try:
-            resp = requests.post(
+            resp_json = graph_request(
+                "POST",
                 f"{_GRAPH_API}/{acct_id}/media",
-                params={
-                    "image_url":    url,
-                    "is_carousel_item": True,
-                    "access_token": token,
-                },
+                {"image_url": url, "is_carousel_item": True, "access_token": token},
                 timeout=30,
             )
-            resp_json = resp.json()
             logger.info("[instagram] carousel item upload response: %s", resp_json)
             cid = resp_json.get("id", "")
             if cid:
                 children.append(cid)
-        except Exception as e:
-            logger.debug("[instagram] Carousel item failed: %s", e)
+                ok_paths.append(path)
+            else:
+                failed.append(os.path.basename(path))
+                logger.warning("[instagram] carousel child rejected: %s", resp_json)
+        except MetaRequestError as e:
+            failed.append(os.path.basename(path))
+            logger.warning("[instagram] carousel child failed: %s", e)
 
-    logger.info("[instagram] child_ids=%s", children)
-    if len(children) < 2:
-        logger.info("[instagram] Not enough carousel items (%d) — falling back to single", len(children))
-        if children:
-            return _publish_container(children[0], acct_id, token)
+    logger.info("[instagram] child_ids=%s failed=%s", children, failed)
+    if failed or len(children) < 2:
+        if ok_paths:
+            logger.warning(
+                "[instagram] carousel aborted (%d failed) — single image fallback",
+                len(failed) or (2 - len(children)),
+            )
+            return _post_single_image(ok_paths[0], caption)
         return {"success": False, "media_id": "", "permalink": "", "error": "carousel_children_failed"}
 
     # 2. Create carousel container
     try:
-        carousel_resp = requests.post(
+        carousel_data = graph_request(
+            "POST",
             f"{_GRAPH_API}/{acct_id}/media",
-            params={
-                "media_type":   "CAROUSEL",
-                "children":     ",".join(children),
-                "caption":      caption,
+            {
+                "media_type": "CAROUSEL",
+                "children": ",".join(children),
+                "caption": caption,
                 "access_token": token,
             },
             timeout=30,
         )
-        carousel_id = carousel_resp.json().get("id", "")
+        carousel_id = carousel_data.get("id", "")
         if not carousel_id:
-            err = carousel_resp.json().get("error", {}).get("message", "carousel_container_failed")
+            err = (carousel_data.get("error") or {}).get("message", "carousel_container_failed")
             return {"success": False, "media_id": "", "permalink": "", "error": err}
 
-        _wait_for_container(carousel_id, token)
+        wait_for_container(carousel_id, token)
         return _publish_container(carousel_id, acct_id, token)
 
+    except (ContainerNotReady, MetaRequestError) as e:
+        logger.error("[instagram] Carousel not published: %s", e)
+        return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
     except Exception as e:
         logger.error("[instagram] Carousel post error: %s", e)
         return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
@@ -314,6 +415,9 @@ def post_reel_video(video_url: str, caption: str) -> dict:
     except ImportError:
         return {"success": False, "media_id": "", "error": "requests_not_installed"}
 
+    from content_generator.publisher import meta_graph
+    from content_generator.publisher.meta_graph import ContainerNotReady, MetaRequestError
+
     acct_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
     token   = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
     try:
@@ -327,28 +431,27 @@ def post_reel_video(video_url: str, caption: str) -> dict:
                 params["product_tags"] = tags
         except Exception as _e:
             logger.debug("[instagram] optional step failed: %s", _e)
-        resp = requests.post(f"{_GRAPH_API}/{acct_id}/media", params=params, timeout=60)
-        container_id = resp.json().get("id", "")
+        data = meta_graph.graph_request(
+            "POST", f"{_GRAPH_API}/{acct_id}/media", params, timeout=60,
+        )
+        container_id = data.get("id", "")
         if not container_id:
-            err = resp.json().get("error", {}).get("message", str(resp.json()))
+            err = (data.get("error") or {}).get("message", str(data))
             return {"success": False, "media_id": "", "error": err}
 
-        # Poll status — video encoding takes time (up to ~60s)
-        import time as _t
-        for _ in range(20):
-            st = requests.get(f"{_GRAPH_API}/{container_id}",
-                              params={"fields": "status_code", "access_token": token},
-                              timeout=20).json()
-            code = st.get("status_code")
-            if code == "FINISHED":
-                break
-            if code == "ERROR":
-                return {"success": False, "media_id": "", "error": "video_processing_error"}
-            _t.sleep(6)
-
+        # Video encoding often needs several minutes. Stop at ~5 minutes and
+        # do not publish a container that is still processing.
+        meta_graph.wait_for_container(
+            container_id, token,
+            max_wait=meta_graph._VIDEO_POLL_S,
+            interval=meta_graph._POLL_INTERVAL,
+        )
         result = _publish_container(container_id, acct_id, token)
         logger.info("[instagram] Reel video published: %s", result.get("success"))
         return result
+    except (ContainerNotReady, MetaRequestError) as e:
+        logger.error("[instagram] Reel video not published: %s", e)
+        return {"success": False, "media_id": "", "error": str(e)}
     except Exception as e:
         logger.error("[instagram] Reel video error: %s", e)
         return {"success": False, "media_id": "", "error": str(e)}
@@ -417,20 +520,26 @@ def post_story(content: dict, day: int = 0) -> dict:
         return {"success": False, "media_id": "", "error": "image_upload_failed"}
 
     try:
-        resp = requests.post(
+        from content_generator.publisher.meta_graph import (
+            ContainerNotReady, MetaRequestError, graph_request, wait_for_container,
+        )
+        data = graph_request(
+            "POST",
             f"{_GRAPH_API}/{acct_id}/media",
-            params={"image_url": image_url, "media_type": "STORIES",
-                    "access_token": token},
+            {"image_url": image_url, "media_type": "STORIES", "access_token": token},
             timeout=30,
         )
-        container_id = resp.json().get("id", "")
+        container_id = data.get("id", "")
         if not container_id:
-            err = resp.json().get("error", {}).get("message", str(resp.json()))
+            err = (data.get("error") or {}).get("message", str(data))
             return {"success": False, "media_id": "", "error": err}
-        _wait_for_container(container_id, token)
+        wait_for_container(container_id, token)
         result = _publish_container(container_id, acct_id, token)
         logger.info("[instagram] Story published: %s", result.get("success"))
         return result
+    except (ContainerNotReady, MetaRequestError) as e:
+        logger.error("[instagram] Story not published: %s", e)
+        return {"success": False, "media_id": "", "error": str(e)}
     except Exception as e:
         logger.error("[instagram] Story post error: %s", e)
         return {"success": False, "media_id": "", "error": str(e)}
@@ -439,44 +548,30 @@ def post_story(content: dict, day: int = 0) -> dict:
 def _publish_container(container_id: str, acct_id: str, token: str) -> dict:
     """Publish a ready media container."""
     try:
-        import requests
-        resp = requests.post(
+        from content_generator.publisher.meta_graph import MetaRequestError, graph_request
+        data = graph_request(
+            "POST",
             f"{_GRAPH_API}/{acct_id}/media_publish",
-            params={"creation_id": container_id, "access_token": token},
+            {"creation_id": container_id, "access_token": token},
             timeout=20,
         )
-        data     = resp.json()
         media_id = data.get("id", "")
         if media_id:
             permalink = _get_permalink(media_id, token)
             logger.info("[instagram] Published | id=%s | url=%s", media_id, permalink)
             return {"success": True, "media_id": media_id, "permalink": permalink, "error": None}
-        else:
-            err = data.get("error", {}).get("message", str(data))
-            return {"success": False, "media_id": "", "permalink": "", "error": err}
+        err = (data.get("error") or {}).get("message", str(data))
+        return {"success": False, "media_id": "", "permalink": "", "error": err}
+    except MetaRequestError as e:
+        return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
     except Exception as e:
         return {"success": False, "media_id": "", "permalink": "", "error": str(e)}
 
 
 def _wait_for_container(container_id: str, token: str, max_wait: int = 60) -> None:
-    """Poll container status until FINISHED or timeout."""
-    try:
-        import requests
-        for _ in range(max_wait // 5):
-            resp   = requests.get(
-                f"{_GRAPH_API}/{container_id}",
-                params={"fields": "status_code", "access_token": token},
-                timeout=10,
-            )
-            status = resp.json().get("status_code", "")
-            if status == "FINISHED":
-                return
-            if status == "ERROR":
-                logger.warning("[instagram] Container %s errored", container_id)
-                return
-            time.sleep(5)
-    except Exception:
-        time.sleep(5)
+    """Poll until FINISHED. ERROR and timeout raise ContainerNotReady."""
+    from content_generator.publisher.meta_graph import wait_for_container
+    wait_for_container(container_id, token, max_wait=max_wait)
 
 
 def _get_permalink(media_id: str, token: str) -> str:
@@ -569,6 +664,104 @@ def _cloudinary_upload(image_path: str) -> str | None:
         return None
 
 
+def image_aspect_ratio(path: str) -> float | None:
+    """Width / height, or None when the file cannot be read."""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            width, height = im.size
+        if height <= 0:
+            return None
+        return width / height
+    except Exception as e:
+        logger.debug("[instagram] could not read aspect of %s: %s", path, e)
+        return None
+
+
+def aspect_is_feed_safe(ratio: float | None) -> bool:
+    if ratio is None:
+        return False
+    return (_FEED_MIN_RATIO - 0.01) <= ratio <= (_FEED_MAX_RATIO + 0.01)
+
+
+def prepare_feed_image(path: str) -> str | None:
+    """
+    Return a feed-safe image path.
+
+    4:5 through 1.91:1 is returned unchanged. Anything taller (a 1080x1920
+    reel thumbnail) is center-cropped to 1080x1350 (4:5). None means the
+    caller should post the original as a Story instead of a feed image.
+    """
+    ratio = image_aspect_ratio(path)
+    if ratio is None:
+        return None
+    if aspect_is_feed_safe(ratio):
+        return path
+    try:
+        from PIL import Image
+        im = Image.open(path).convert("RGB")
+        width, height = im.size
+        target = 4 / 5
+        if height <= 0 or width <= 0:
+            return None
+        if (width / height) < target:
+            new_h = int(round(width / target))
+            top = max(0, (height - new_h) // 2)
+            im = im.crop((0, top, width, min(height, top + new_h)))
+        else:
+            new_w = int(round(height * target))
+            left = max(0, (width - new_w) // 2)
+            im = im.crop((left, 0, min(width, left + new_w), height))
+        resample = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+        im = im.resize((1080, 1350), resample)
+        out = os.path.splitext(path)[0] + "_feed45.jpg"
+        im.save(out, "JPEG", quality=90)
+        logger.info("[instagram] rendered feed-safe 4:5 image %s", out)
+        return out
+    except Exception as e:
+        logger.warning("[instagram] could not render 4:5 feed image: %s", e)
+        return None
+
+
+def post_local_story(image_path: str) -> dict:
+    """Publish an existing image as an Instagram Story (9:16 is valid here)."""
+    if not is_configured():
+        return {"success": False, "media_id": "", "error": "not_configured"}
+    if not image_path or not os.path.exists(image_path):
+        return {"success": False, "media_id": "", "error": "no_story_image"}
+    try:
+        import requests  # noqa: F401
+    except ImportError:
+        return {"success": False, "media_id": "", "error": "requests_not_installed"}
+
+    acct_id = os.getenv("INSTAGRAM_ACCOUNT_ID", "")
+    token = os.getenv("INSTAGRAM_ACCESS_TOKEN", "")
+    image_url = _upload_to_public_url(image_path)
+    if not image_url:
+        return {"success": False, "media_id": "", "error": "image_upload_failed"}
+    try:
+        from content_generator.publisher.meta_graph import (
+            ContainerNotReady, MetaRequestError, graph_request, wait_for_container,
+        )
+        data = graph_request(
+            "POST",
+            f"{_GRAPH_API}/{acct_id}/media",
+            {"image_url": image_url, "media_type": "STORIES", "access_token": token},
+            timeout=30,
+        )
+        container_id = data.get("id", "")
+        if not container_id:
+            err = (data.get("error") or {}).get("message", str(data))
+            return {"success": False, "media_id": "", "error": err}
+        wait_for_container(container_id, token)
+        return _publish_container(container_id, acct_id, token)
+    except (ContainerNotReady, MetaRequestError) as e:
+        return {"success": False, "media_id": "", "error": str(e)}
+    except Exception as e:
+        logger.error("[instagram] local story error: %s", e)
+        return {"success": False, "media_id": "", "error": str(e)}
+
+
 def _today() -> str:
-    import datetime
-    return datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    return today_ist().isoformat()

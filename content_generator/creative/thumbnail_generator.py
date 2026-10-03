@@ -153,7 +153,8 @@ def _render_pillow_thumbnail(
     draw.text((1080 - 60, 1920 - 80), "PURITY BEANS", fill=_GOLD,
               anchor="rb", font=_font(size=40))
 
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     filepath = os.path.join(_OUT_DIR, f"{label}_day{day}_{date_str}.png")
     img.save(filepath, "PNG")
     return filepath

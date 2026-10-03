@@ -21,13 +21,15 @@ anything.
 
 DELIBERATELY DISTINCT STATES
 
-    skipped   an explicit, reasoned decision not to publish  -> green
-    held      content existed but failed a gate              -> green, reported
+    skipped   an explicit, allow-listed decision not to publish -> green
+    held      unexpected hold (stale file, empty gate, ...)  -> RED
     published everything expected succeeded                  -> green
     partial   some expected platform failed                  -> RED
     missing   no contract at all                             -> RED
 
-"Skipped" and "broken" are different, and the previous check collapsed them.
+A hold is green only for an explicit allow-list (already published today,
+founder dry-run). Every other hold used to exit 0, so morning and evening
+could publish nothing and still look successful.
 """
 from __future__ import annotations
 import datetime
@@ -48,6 +50,22 @@ from content_generator.core.slot_registry import (   # noqa: E402
 SLOT_EXPECTATIONS: dict[str, list[str]] = {
     sid: list(s.get("expects", [])) for sid, s in SLOTS_BY_ID.items()
 }
+
+# A slot may finish without posting and still be green only for these.
+# Match is a case-insensitive substring of the contract reason.
+LEGIT_HOLDS = (
+    "already_ran",
+    "already_published",
+    "already published",
+    "auto_publish_disabled",
+    "auto_publish=false",
+)
+
+
+def hold_is_expected(reason: str) -> bool:
+    """True when a hold/skip is an intentional non-publish, not a silent failure."""
+    text = (reason or "").strip().lower()
+    return any(token in text for token in LEGIT_HOLDS)
 
 
 def build(slot: str, day: int, expected: dict, results: dict,
@@ -88,18 +106,15 @@ def evaluate(contract: dict) -> dict:
         return {"status": "missing", "ok": False, "missing": [],
                 "detail": "no publish contract in the run result"}
 
-    if contract.get("_skipped") or contract.get("skipped"):
-        reason = contract.get("reason") or "skipped"
-        return {"status": "skipped", "ok": True, "missing": [],
-                "detail": reason}
+    if contract.get("_skipped") or contract.get("skipped") or contract.get("status") in ("skipped", "held"):
+        status = contract.get("status") if contract.get("status") in ("skipped", "held") else "skipped"
+        reason = contract.get("reason") or status
+        ok = hold_is_expected(reason)
+        return {"status": status, "ok": ok, "missing": [], "detail": reason}
 
     if "expected" not in contract:
         return {"status": "missing", "ok": False, "missing": [],
                 "detail": "no publish contract in the run result"}
-
-    if contract.get("status") in ("skipped", "held"):
-        return {"status": contract["status"], "ok": True, "missing": [],
-                "detail": contract.get("reason") or contract["status"]}
 
     expected = contract.get("expected") or {}
     results  = contract.get("results") or {}
@@ -126,7 +141,8 @@ def format_report(contract: dict) -> str:
     lines = [f"slot={contract.get('slot')} day={contract.get('day')} "
              f"run_id={contract.get('run_id')} -> {ev['status'].upper()}"]
     if ev["status"] in ("skipped", "held"):
-        lines.append(f"  REASON: {ev['detail']}")
+        mark = "OK  " if ev["ok"] else "FAIL"
+        lines.append(f"  {mark} REASON: {ev['detail']}")
         return "\n".join(lines)
     expected = contract.get("expected") or {}
     results  = contract.get("results") or {}

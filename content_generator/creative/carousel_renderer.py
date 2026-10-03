@@ -146,7 +146,8 @@ def _render_slide(slide: dict, idx: int, day: int, label: str) -> str | None:
     draw.rectangle([(_PADDING, _SLIDE_H - _PADDING + 20), (_SLIDE_W - _PADDING, _SLIDE_H - _PADDING + 26)], fill=_GOLD)
 
     # Save
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     filename = f"{label}_slide{idx:02d}_day{day}_{date_str}.png"
     filepath = os.path.join(_OUT_DIR, filename)
     img.save(filepath, "PNG", optimize=True)

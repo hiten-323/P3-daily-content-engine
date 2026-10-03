@@ -172,8 +172,8 @@ def compose_cinematic_frame(headline, sub="", day=0, idx=0, product=None,
     draw.text((width // 2, int(height * (0.31 if height > width * 1.4 else 0.43))),
               "PURITY BEANS  |  p3online.in", font=ff, fill=_GOLD, anchor="mm")
 
-    import datetime
+    from content_generator.core.ist_dates import today_ist
     os.makedirs(_OUT_DIR, exist_ok=True)
-    out = os.path.join(_OUT_DIR, f"{label}_{datetime.date.today().isoformat()}.jpg")
+    out = os.path.join(_OUT_DIR, f"{label}_{today_ist().isoformat()}.jpg")
     canvas.save(out, "JPEG", quality=90)
     return out

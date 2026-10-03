@@ -118,7 +118,8 @@ def build_reel_video(reel: dict, day: int, label: str = "reel_video") -> str | N
             logger.debug("[reel_video] music attach failed: %s", e)
 
     os.makedirs(_OUT_DIR, exist_ok=True)
-    date_str = datetime.date.today().isoformat()
+    from content_generator.core.ist_dates import today_ist
+    date_str = today_ist().isoformat()
     out = os.path.join(_OUT_DIR, f"{label}_day{day}_{date_str}.mp4")
     try:
         video.write_videofile(out, fps=24, codec="libx264", audio_codec="aac",
