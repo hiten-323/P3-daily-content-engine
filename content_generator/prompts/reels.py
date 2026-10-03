@@ -45,6 +45,7 @@ ABSOLUTE RULES:
 - Brand name 'Purity Beans' MUST appear in caption
 - Website '{WEBSITE_URL}' MUST appear in caption and CTA
 - comment_trigger, save_trigger, share_trigger, ai_image_hook_prompt, ai_video_motion_prompt, psychology_frame are MANDATORY fields
+- frames MUST contain at least 5 objects. Each object needs both on_screen and spoken. Four scenes is invalid and will not be published.
 
 {{
   "id": "{reel_id}",

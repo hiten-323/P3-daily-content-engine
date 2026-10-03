@@ -95,7 +95,18 @@ def _editorial_ok(label: str, piece: dict) -> bool:
                     "applicable; all other gates still enforced",
                     label, piece.get("source"))
         return True
-    score = float((piece.get("editorial_score") or {}).get("overall", 0))
+    raw = piece.get("editorial_score")
+    if not isinstance(raw, dict) or raw.get("overall") in (None, ""):
+        detail = str(piece.get("editorial_error") or "").strip()
+        if not detail:
+            detail = "no measured editorial score (scoring did not return a number)"
+        raise EditorialRejectException(f"Editorial Reject for '{label}': {detail}")
+    try:
+        score = float(raw.get("overall"))
+    except (TypeError, ValueError) as e:
+        raise EditorialRejectException(
+            f"Editorial Reject for '{label}': editorial overall is not a number"
+        ) from e
     enforce_editorial_gate(label, score)
     return True
 

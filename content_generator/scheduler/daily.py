@@ -23,6 +23,7 @@ Environment variables:
   ENABLE_EDITORIAL_REVIEW (default true)
   ENABLE_WEEKLY_SUMMARY   (default true)
 """
+import json
 import logging
 import os
 import re
@@ -357,7 +358,12 @@ def _do_research() -> dict:
     return run_research()
 
 
-_QUALITY_MAX_REGEN = int(os.getenv("QUALITY_MAX_REGEN", "1"))   # max regeneration attempts per asset
+def _max_regen() -> int:
+    """Extra rewrites after the first draft. A 7.9 used to stop after one try."""
+    try:
+        return max(0, int(os.getenv("QUALITY_MAX_REGEN", "3")))
+    except ValueError:
+        return 3
 
 
 def _validate_piece_copy(label: str, piece: dict) -> tuple[bool, list[str]]:
@@ -735,13 +741,71 @@ def _inject_brand_into_content(content: dict, day: int = 0) -> None:
                         _strip_unsupported_stats(piece[field]))
 
 
+def _schema_issues(label: str, piece: dict) -> list[str]:
+    """Schema errors for this asset, or an empty list when it is valid."""
+    from content_generator.core.schema_validation import (
+        BlogSchema, CarouselSchema, InstagramSchema, LinkedinSchema, ReelSchema,
+        YoutubeShortSchema, validate_or_fail,
+    )
+    schemas = {
+        "reel_1": ReelSchema,
+        "reel_2": ReelSchema,
+        "growth_reel": ReelSchema,
+        "carousel": CarouselSchema,
+        "instagram_post": InstagramSchema,
+        "linkedin_post": LinkedinSchema,
+        "blog_post": BlogSchema,
+        "yt_short": YoutubeShortSchema,
+    }
+    schema = schemas.get(label)
+    if schema is None:
+        return []
+    try:
+        validate_or_fail(schema, piece)
+    except Exception as e:
+        text = str(e).strip().replace("\n", " ")
+        return [text[:500]]
+    return []
+
+
+def _drop_unmeasured_score(piece: dict) -> None:
+    """
+    A brand-validation failure used to be stored as editorial overall 0.0.
+    That is not a score. Remove it so the gate says the score is missing
+    instead of reporting a number nobody measured.
+    """
+    score = piece.get("editorial_score")
+    if not isinstance(score, dict):
+        return
+    feedback = str(score.get("feedback") or "")
+    dims = ("shareability", "saveability", "emotion_pull", "hook_strength", "brand_clarity")
+    measured = False
+    for dim in dims:
+        raw = score.get(dim)
+        if raw in (None, ""):
+            continue
+        try:
+            if float(raw) != 0.0 or not feedback.startswith("Brand copy validation failed"):
+                measured = True
+                break
+        except (TypeError, ValueError):
+            continue
+    if feedback.startswith("Brand copy validation failed") or not measured:
+        piece.pop("editorial_score", None)
+
+
 def _do_editorial(content: dict) -> None:
     """
     Review each content piece. Regenerates up to QUALITY_MAX_REGEN times.
     Skips LLM review entirely if all providers are exhausted (circuit open).
+
+    Structural and brand failures are retried. They are not written down as
+    an editorial score of 0. A scoring parse failure is retried inside
+    review_content and then surfaced on the piece.
     """
-    from content_generator.agents.editorial import review_content
+    from content_generator.agents.editorial import EditorialScoreError, review_content
     from content_generator.core.editorial_engine import normalize_editorial_result, get_current_pass_score
+    from content_generator.core.piece_integrity import ensure_structural_fields
     from content_generator.providers import llm_router
 
     providers_ok = llm_router.any_provider_available()
@@ -757,12 +821,13 @@ def _do_editorial(content: dict) -> None:
         ("linkedin_post",  "linkedin_post",  None),
         ("blog_post",      "blog_post",      None),
         ("growth_reel",    "growth_reel",    None),
+        ("yt_short",       "yt_short",       None),
     ]
 
     threshold = get_current_pass_score()
+    attempts_allowed = _max_regen() + 1
 
     for label, key, idx in review_targets:
-        # Extract piece
         if idx is not None:
             pieces = content.get(key) or []
             piece  = pieces[idx] if len(pieces) > idx else {}
@@ -772,66 +837,70 @@ def _do_editorial(content: dict) -> None:
         if not isinstance(piece, dict) or not piece:
             continue
 
-        for attempt in range(_QUALITY_MAX_REGEN + 1):
+        for attempt in range(attempts_allowed):
+            _drop_unmeasured_score(piece)
+            ensure_structural_fields(piece, label)
+            schema_issues = _schema_issues(label, piece)
             is_copy_ok, copy_issues = _validate_piece_copy(label, piece)
-            
-            if is_copy_ok:
-                review = review_content(piece, label=label)
-                review = normalize_editorial_result(review)
-                piece["editorial_score"] = review
-                score  = review.get("overall", 0)
-                verdict = review.get("verdict", "")
+            feedback = ""
 
+            if schema_issues or not is_copy_ok:
+                parts = []
+                if schema_issues:
+                    parts.append("schema: " + "; ".join(schema_issues))
+                if not is_copy_ok:
+                    parts.append(f"brand: {copy_issues}")
+                feedback = " | ".join(parts)
+                piece["editorial_error"] = feedback
+                logger.warning(
+                    "[editorial] %s not scoreable | %s | attempt %d/%d",
+                    label, feedback, attempt + 1, attempts_allowed,
+                )
+            else:
+                try:
+                    review = normalize_editorial_result(review_content(piece, label=label))
+                except EditorialScoreError as e:
+                    piece["editorial_error"] = f"scoring_failed: {e}"
+                    logger.error("[editorial] %s %s", label, piece["editorial_error"])
+                    if attempt + 1 < attempts_allowed:
+                        continue
+                    break
+                piece.pop("editorial_error", None)
+                piece["editorial_score"] = review
+                score = float(review.get("overall"))
+                verdict = review.get("verdict", "")
                 if verdict == "PASS":
                     logger.info("[editorial] %s PASS — score %.1f (threshold %.1f)", label, score, threshold)
                     break
-
-                feedback = review.get("feedback", "")
+                feedback = str(review.get("feedback") or "")
                 logger.warning(
                     "[editorial] %s REJECT — score %.1f | feedback: %s | attempt %d/%d",
-                    label, score, feedback, attempt + 1, _QUALITY_MAX_REGEN + 1,
-                )
-            else:
-                feedback = f"Brand copy validation failed: {copy_issues}"
-                piece["editorial_score"] = {
-                    "shareability": 0.0,
-                    "saveability": 0.0,
-                    "emotion_pull": 0.0,
-                    "hook_strength": 0.0,
-                    "brand_clarity": 0.0,
-                    "overall": 0.0,
-                    "verdict": "REJECT",
-                    "feedback": feedback,
-                }
-                logger.warning(
-                    "[editorial] %s REJECT (Brand validation failed) | issues: %s | attempt %d/%d",
-                    label, copy_issues, attempt + 1, _QUALITY_MAX_REGEN + 1,
+                    label, score, feedback, attempt + 1, attempts_allowed,
                 )
 
-            if attempt < _QUALITY_MAX_REGEN:
+            if attempt + 1 < attempts_allowed:
                 logger.info("[editorial] Regenerating %s (attempt %d)...", label, attempt + 2)
                 improved = _regenerate_piece(label, piece, feedback, content)
-                if improved:
-                    merged = _apply_regeneration(label, piece, improved)
-                    if merged is None:
-                        logger.warning(
-                            "[editorial] regenerated %s failed schema — keeping original",
-                            label,
-                        )
-                        break
-                    if idx is not None:
-                        content[key][idx] = merged
-                        piece = merged
-                    else:
-                        content[key] = merged
-                        piece = merged
+                if not improved:
+                    logger.warning("[editorial] Regeneration failed for %s — keeping current piece", label)
+                    continue
+                merged = _apply_regeneration(label, piece, improved)
+                if merged is None:
+                    logger.warning(
+                        "[editorial] regenerated %s failed schema — keeping current piece",
+                        label,
+                    )
+                    continue
+                if idx is not None:
+                    content[key][idx] = merged
+                    piece = merged
                 else:
-                    logger.warning("[editorial] Regeneration failed for %s — keeping original", label)
-                    break
+                    content[key] = merged
+                    piece = merged
             else:
-                logger.warning(
-                    "[editorial] %s final score below threshold %.1f — keeping as is (will be filtered before publishing)",
-                    label, threshold,
+                logger.error(
+                    "[editorial] %s still not publishable after %d attempts: %s",
+                    label, attempts_allowed, feedback or piece.get("editorial_error") or "below threshold",
                 )
 
 
@@ -881,20 +950,21 @@ def _regenerate_piece(label: str, piece: dict, feedback: str, content: dict) -> 
         from content_generator.core.editorial_engine import get_current_pass_score
 
         threshold = get_current_pass_score()
-        piece_json = str(piece)[:800]
+        piece_json = json.dumps(piece, ensure_ascii=False)[:6000]
         regen_prompt = (
             f"{brand_block()}\n\n"
-            f"TASK: Improve this content piece. It was rejected (score too low).\n\n"
+            f"TASK: Rewrite this content piece so it can pass schema and an editorial score of {threshold}.\n\n"
             f"ORIGINAL PIECE ({label}):\n{piece_json}\n\n"
-            f"REJECTION FEEDBACK:\n{feedback}\n\n"
+            f"REJECTION:\n{feedback}\n\n"
             f"REQUIREMENTS:\n"
-            f"- Score must be {threshold} or higher\n"
-            f"- Keep the same format/structure as the original\n"
-            f"- Fix the specific issues mentioned in the feedback\n"
-            f"- More scroll-stopping hook, stronger CTA, clearer value\n"
+            f"- Fix the rejection. Do not answer with a shorter stub.\n"
+            f"- Reel frames: at least 5 objects, each with on_screen and spoken.\n"
+            f"- Carousel and Instagram: caption at least 50 characters, with the brand facts already in the original.\n"
+            f"- Blog: introduction, body of at least 800 words, and conclusion. Do not rename them to intro or body_html.\n"
             f"- Return the FULL object. Do not drop caption, hashtags, triggers, "
-            f"frames, slides, script, audio, loop_note, or editorial_score subscores.\n\n"
-            f"Return ONLY the improved JSON object (same keys as original)."
+            f"frames, slides, script, audio, loop_note, or editorial subscores.\n"
+            f"- Do not include an editorial_score. Scoring happens after you return.\n\n"
+            f"Return ONLY the improved JSON object."
         )
         result = llm_call(regen_prompt, label=f"regen_{label}", max_tokens=1500)
         if isinstance(result, dict) and result:
